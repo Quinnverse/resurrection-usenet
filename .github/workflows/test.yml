@@ -1,15 +1,14 @@
-name: Resurrection Tests
+name: Resurrection QA
 
 on:
   push:
-    branches: [master]
   pull_request:
-    branches: [master]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,33 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
-      - name: Install dependencies
-        working-directory: ./combined-server
-        run: |
-          # Combined server uses only built-in Node.js modules, no npm install needed
-          echo "Server ready - uses built-in Node.js modules"
-
-      - name: Start test server
-        working-directory: ./combined-server
-        run: |
-          node server.js &
-          SERVER_PID=$!
-          echo "Server PID: $SERVER_PID"
-          sleep 3
-          curl -f http://localhost:3000/api/health || exit 1
-
-      - name: Health check
-        run: |
-          curl -f http://localhost:3000/api/health
-
-      - name: Run tests
-        run: |
-          cd combined-server
-          npm test || bash ../test.sh
-
-      - name: Cleanup
-        if: always()
-        run: |
-          pkill -f "node server.js" || true
+      - name: Run authoritative test suite
+        run: npm test

@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "Resurrection - The Internet Remembers the Dead",
   "main": "combined-server/server.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "bash start.sh",
-    "test": "bash test.sh",
-    "test:headless": "bash test.sh"
+    "test": "node --test test/resurrection.test.js"
   },
   "keywords": [
     "horror",

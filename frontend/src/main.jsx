@@ -63,40 +63,38 @@ function App() {
   const [query, setQuery] = React.useState('');
   const [lastAction, setLastAction] = React.useState(null);
   const [showResults, setShowResults] = React.useState(false);
+  const [loadError, setLoadError] = React.useState(null);
 
-  // Initialize data
-  React.useEffect(() => {
-    apiRequest('/messages').then(data => {
-      setMessages(data);
-      // Calculate threads
-      const threadMap = new Map();
-      data.forEach(msg => {
-        if (!threadMap.has(msg.threadId)) {
-          threadMap.set(msg.threadId, { id: msg.threadId, subject: msg.subject, count: 1, last: msg });
-        } else {
-          const t = threadMap.get(msg.threadId);
-          t.count++;
-          if (msg.metadata?.timestamp > t.last.metadata?.timestamp) t.last = msg;
-        }
-      });
-      setThreads(Array.from(threadMap.values()));
-      
-      // Discover agents based on messages
-      const discoveredAgents = { ...agents };
-      data.forEach(msg => {
-        if (discoveredAgents[msg.agentId]) {
-          discoveredAgents[msg.agentId].discovered = true;
-        }
-      });
-      setAgents(discoveredAgents);
-    }).catch(err => {
-      setLastAction({ type: 'error', message: 'Failed to load transmission: ' + err.message });
-    });
-    
-    apiRequest('/game/state').then(data => {
-      setGameState(data);
-    });
+  // Load the archive from the backend, the single source of truth for threads, messages and player state
+  const loadArchive = React.useCallback(() => {
+    setLoadError(null);
+    Promise.all([apiRequest('/threads'), apiRequest('/messages'), apiRequest('/game/state')])
+      .then(([threadList, messageList, state]) => {
+        setThreads(threadList);
+        setMessages(messageList);
+        setGameState(state);
+      })
+      .catch(err => setLoadError(err.message));
   }, []);
+
+  React.useEffect(() => {
+    loadArchive();
+  }, [loadArchive]);
+
+  // Resets the server-side game and returns the player to the intro
+  const resetGame = async () => {
+    try {
+      await apiRequest('/game/reset', { method: 'POST' });
+      setShowResults(false);
+      setChoiceResult(null);
+      setSelectedThread(null);
+      setLastAction(null);
+      setShowIntro(true);
+      loadArchive();
+    } catch (err) {
+      setLastAction({ type: 'error', message: err.message });
+    }
+  };
 
   // Calculate selected messages
   const selectedMessages = React.useMemo(() => {
@@ -220,15 +218,7 @@ function App() {
       choice: choiceResult.choice,
       gameState: gameState,
       agents: agents,
-      onReset: () => {
-        setShowResults(false);
-        setShowIntro(true);
-        setGameState({ credits: 1000, storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false }, currentEnding: null, verticalSlice: {} });
-        setMessages([]);
-        setSelectedThread(null);
-        setChoiceResult(null);
-        setLastAction(null);
-      }
+      onReset: resetGame
     });
   }
 
@@ -263,6 +253,8 @@ function App() {
   } else if (!selectedThread) {
     mainContent = React.createElement(WelcomeScreen, {
       threads: threads,
+      loadError: loadError,
+      onRetry: loadArchive,
       onSelectThread: setSelectedThread,
       onQuery: handleQueryAgent,
       agents: agents,
@@ -293,16 +285,7 @@ function App() {
   if (gameState.currentEnding) {
     endingModal = React.createElement(EndingModal, {
       ending: gameState.currentEnding,
-      onReset: () => {
-        setGameState({
-          credits: 1000,
-          storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false },
-          currentEnding: null
-        });
-        setShowIntro(true);
-        setMessages([]);
-        setSelectedThread(null);
-      }
+      onReset: resetGame
     });
   }
 
@@ -401,7 +384,7 @@ function IntroScreen({ onEnter }) {
 }
 
 // Welcome screen component - shows available transmissions
-function WelcomeScreen({ threads, onSelectThread, onQuery, agents, queryText, setQuery }) {
+function WelcomeScreen({ threads, onSelectThread, onQuery, agents, queryText, setQuery, loadError, onRetry }) {
   const [localQuery, setLocalQuery] = React.useState('');
   
   const handleQuery = (e) => {
@@ -412,21 +395,28 @@ function WelcomeScreen({ threads, onSelectThread, onQuery, agents, queryText, se
     }
   };
   
+  if (loadError) {
+    return React.createElement('div', { className: 'welcome-screen' },
+      React.createElement('div', { className: 'welcome-content' },
+        React.createElement('h1', { className: 'welcome-title' }, 'Connection lost'),
+        React.createElement('p', { className: 'welcome-desc warning-box' }, 'The archive could not be reached: ' + loadError),
+        React.createElement('button', { className: 'btn-primary', onClick: onRetry }, 'RETRY CONNECTION')
+      )
+    );
+  }
+
   if (threads.length === 0) {
-    return React.createElement('div', { className: 'loader' },
-      React.createElement('div', { className: 'spinner' }),
-      React.createElement('p', null, 'Waiting for transmission...')
+    return React.createElement('div', { className: 'welcome-screen' },
+      React.createElement('div', { className: 'welcome-content' },
+        React.createElement('h1', { className: 'welcome-title' }, 'The archive is empty'),
+        React.createElement('p', { className: 'welcome-desc' }, 'The server returned no transmissions. Reset the game to restore the seeded archive.')
+      )
     );
   }
   
   return React.createElement('div', { className: 'welcome-screen' },
     React.createElement('div', { className: 'welcome-content' },
       React.createElement('h1', { className: 'welcome-title' }, 'INVESTIGATION CENTER'),
-      React.createElement('p', { className: 'welcome-desc' },
-        'Selected: ',
-        React.createElement('span', { className: 'thread-id' }, threads[0]?.id),
-        React.createElement('span', { className: 'thread-subject' }, ' - ' + threads[0]?.subject)
-      ),
       React.createElement('p', { className: 'welcome-desc' },
         'Find conflicting death records for Dr. Elena Vance. Choose one record to reconstruct - ',
         'your choice determines which version of history becomes authoritative.'
@@ -436,7 +426,7 @@ function WelcomeScreen({ threads, onSelectThread, onQuery, agents, queryText, se
           key: t.id,
           className: 'btn-primary',
           onClick: () => onSelectThread(t.id)
-        }, 'OPEN THREAD: ' + t.subject))
+        }, 'OPEN THREAD: ' + t.title))
       ),
       React.createElement('div', { className: 'agent-query' },
         React.createElement('form', { onSubmit: handleQuery },
@@ -466,8 +456,8 @@ function ThreadList({ threads, selected, onSelect }) {
       onClick: () => onSelect(t.id)
     },
       React.createElement('div', { className: 'thread-id' }, '[' + t.id.slice(0, 8) + ']'),
-      React.createElement('div', { className: 'thread-subject' }, t.subject),
-      React.createElement('div', { className: 'thread-meta' }, t.count + ' messages')
+      React.createElement('div', { className: 'thread-subject' }, t.title),
+      React.createElement('div', { className: 'thread-meta' }, t.messageCount + ' messages')
     ))
   );
 }

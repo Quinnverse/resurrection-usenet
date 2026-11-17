@@ -150,6 +150,7 @@ const agentPersonalities = {
 // ============== VERTICAL SLICE DATA ==============
 const VERTICAL_SLICE_DATA = {
   threadId: 'threads.tech.mind.98',
+  title: 'Dr. Elena Vance: conflicting death records',
   messages: [
     {
       id: 'msg-98-001',
@@ -171,6 +172,7 @@ const VERTICAL_SLICE_DATA = {
     },
     {
       id: 'msg-98-002',
+      recordStatus: 'contested',
       threadId: 'threads.tech.mind.98',
       agentId: 'archivist',
       sender: 'Archivist Node',
@@ -189,6 +191,7 @@ const VERTICAL_SLICE_DATA = {
     },
     {
       id: 'msg-98-003',
+      recordStatus: 'contested',
       threadId: 'threads.tech.mind.98',
       agentId: 'echo',
       sender: 'Echo Node',
@@ -329,6 +332,7 @@ function getGameState() {
       verticalSlice: {
         choiceMade: null,
         choiceTimestamp: null,
+        authoritativeRecord: null,
         recordsReconstructed: 0,
         agentReactions: { archivist: null, echo: null, corruptor: null }
       }
@@ -363,6 +367,7 @@ function initializeDefaultData() {
       verticalSlice: {
         choiceMade: null,
         choiceTimestamp: null,
+        authoritativeRecord: null,
         recordsReconstructed: 0,
         agentReactions: { archivist: null, echo: null, corruptor: null }
       }
@@ -377,7 +382,7 @@ const apiHandlers = {
   },
   
   '/api/messages': {
-    GET: () => messages.map(m => ({ id: m.id, threadId: m.threadId, agentId: m.agentId, content: m.content, metadata: m.metadata })),
+    GET: () => messages.map(toPublicMessage),
     POST: async (body) => {
       const msg = createMessage({ 
         threadId: body.threadId, 
@@ -420,8 +425,8 @@ const apiHandlers = {
         if (msg) {
           const fragments = [agentMemoryManager.getAgentFragment('archivist', msg)];
           const combined = agentMemoryManager.combineMemories(fragments);
-          updateMessage(body.targetId, { metadata: { ...msg.metadata, decayLevel: Math.max(0, msg.metadata.decayLevel - 50), reconstructionLevel: 80 } });
           agentMemoryManager.reconstructMemory('archivist', msg);
+          updateMessage(body.targetId, { metadata: { ...msg.metadata, decayLevel: Math.max(0, msg.metadata.decayLevel - 50), reconstructionLevel: 80 } });
           
           // Track reconstruction for vertical slice
           if (state.verticalSlice && !state.verticalSlice.choiceMade) {
@@ -436,6 +441,17 @@ const apiHandlers = {
     }
   },
   
+  '/api/threads': {
+    GET: () => listThreads()
+  },
+
+  '/api/game/reset': {
+    POST: () => {
+      resetGameData();
+      return { reset: true, gameState: getGameState() };
+    }
+  },
+
   '/api/game/ending': {
     GET: () => {
       const state = getGameState();
@@ -455,7 +471,7 @@ const messageApi = {
       const m = messages.find(msg => msg.id === id);
       if (m) {
         updateMessage(id, { status: 'read' });
-        return { id: m.id, threadId: m.threadId, agentId: m.agentId, content: m.content, metadata: m.metadata };
+        return toPublicMessage(messages.find(msg => msg.id === id));
       }
       return undefined;
     },
@@ -464,8 +480,8 @@ const messageApi = {
       if (!message) throw new Error('Message not found');
       const fragments = (body.agentIds || ['archivist']).map(a => agentMemoryManager.getAgentFragment(a, message));
       const combined = agentMemoryManager.combineMemories(fragments);
-      updateMessage(id, { metadata: { ...message.metadata, decayLevel: Math.max(0, message.metadata.decayLevel - 50), reconstructionLevel: combined.confidence } });
       (body.agentIds || ['archivist']).forEach(a => agentMemoryManager.reconstructMemory(a, message));
+      updateMessage(id, { metadata: { ...message.metadata, decayLevel: Math.max(0, message.metadata.decayLevel - 50), reconstructionLevel: combined.confidence } });
       return { success: true, reconstructedContent: combined.content, newDecayLevel: Math.max(0, message.metadata.decayLevel - 50), confidence: combined.confidence };
     }
   },
@@ -477,7 +493,7 @@ const messageApi = {
   '/api/threads/:threadId': {
     GET: (threadId) => messages.filter(m => m.threadId === threadId)
       .sort((a, b) => a.metadata.sequence - b.metadata.sequence)
-      .map(m => ({ id: m.id, threadId: m.threadId, agentId: m.agentId, content: m.content, metadata: m.metadata }))
+      .map(toPublicMessage)
   },
   
   // Vertical slice endpoints
@@ -485,10 +501,24 @@ const messageApi = {
     POST: async (threadId, body) => {
       const state = getGameState();
       const recordChoice = body.choice; // 'A' or 'B'
+      if (recordChoice !== 'A' && recordChoice !== 'B') {
+        throw new HttpError(400, 'choice must be "A" or "B"');
+      }
+      if (!messages.some(m => m.threadId === threadId)) {
+        throw new HttpError(404, 'Thread not found');
+      }
+      if (state.verticalSlice.choiceMade) {
+        throw new HttpError(409, 'A record has already been chosen in this game. Reset the game to choose again.');
+      }
       
       // Mark choice as made
       state.verticalSlice.choiceMade = recordChoice;
       state.verticalSlice.choiceTimestamp = Date.now();
+      state.verticalSlice.authoritativeRecord = recordChoice;
+      messages.forEach(m => {
+        if (m.id === 'msg-98-002') m.recordStatus = recordChoice === 'A' ? 'authoritative' : 'superseded';
+        if (m.id === 'msg-98-003') m.recordStatus = recordChoice === 'B' ? 'authoritative' : 'superseded';
+      });
       
       // Update story progress
       state.storyProgress.patternRecognition = true;
@@ -564,6 +594,7 @@ const messageApi = {
       return {
         success: true,
         choice: recordChoice,
+        authoritativeRecord: recordChoice,
         gameState: getGameState(),
         agentReactions: {
           archivist: archivistReaction,
@@ -595,18 +626,60 @@ const agentApi = {
   }
 };
 
-// ============== HTTP SERVER ==============
-const PORT = process.env.PORT || 3000;
-const FRONTEND_DIR = path.join(__dirname, '../frontend');
+// ============== HELPERS (contract and state) ==============
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
 
-initializeDefaultData();
+function toPublicMessage(m) {
+  return {
+    id: m.id,
+    threadId: m.threadId,
+    parentMessageId: m.parentMessageId,
+    agentId: m.agentId,
+    sender: m.sender,
+    subject: m.subject,
+    content: m.content,
+    metadata: m.metadata,
+    status: m.status,
+    nodeId: m.nodeId,
+    recordStatus: m.recordStatus || null
+  };
+}
 
-// Inject vertical slice data if no messages exist
-if (messages.length === 0) {
-  VERTICAL_SLICE_DATA.messages.forEach(msg => {
-    messages.push(msg);
+function listThreads() {
+  const byId = new Map();
+  messages.forEach(m => {
+    if (!byId.has(m.threadId)) byId.set(m.threadId, []);
+    byId.get(m.threadId).push(m);
+  });
+  return Array.from(byId.entries()).map(([id, list]) => {
+    const title = id === VERTICAL_SLICE_DATA.threadId
+      ? VERTICAL_SLICE_DATA.title
+      : (list[0].subject || 'Untitled transmission');
+    return { id, title, messageCount: list.length };
   });
 }
+
+// Restores the seeded archive and player state. Used at startup and by POST /api/game/reset.
+function resetGameData() {
+  messages = JSON.parse(JSON.stringify(VERTICAL_SLICE_DATA.messages));
+  agents = JSON.parse(JSON.stringify(INITIAL_AGENTS));
+  gameState = null;
+  actionLogs = [];
+  nextActionId = 1;
+  deterministicSeed = 12345;
+  getGameState();
+}
+
+// ============== HTTP SERVER ==============
+const PORT = Number(process.env.PORT ?? 3000);
+const FRONTEND_DIR = path.join(__dirname, '../frontend');
+
+resetGameData();
 
 function parseBody(req) {
   return new Promise((resolve, reject) => {
@@ -614,7 +687,7 @@ function parseBody(req) {
     req.on('data', chunk => body += chunk);
     req.on('end', () => {
       try { resolve(body ? JSON.parse(body) : {}); }
-      catch(e) { reject(e); }
+      catch(e) { reject(new HttpError(400, 'Request body must be valid JSON')); }
     });
   });
 }
@@ -680,8 +753,10 @@ const server = http.createServer(async (req, res) => {
     if (pathname.startsWith('/api/')) {
       // Direct API handlers
       if (apiHandlers[pathname] && apiHandlers[pathname][method]) {
-        const result = await apiHandlers[pathname][method]();
-        return sendJSON(res, 200, result);
+        const body = (method === 'POST' || method === 'PUT') ? await parseBody(req) : undefined;
+        const result = await apiHandlers[pathname][method](body);
+        const status = (pathname === '/api/messages' && method === 'POST') ? 201 : 200;
+        return sendJSON(res, status, result);
       }
       
       // Message endpoints
@@ -739,20 +814,23 @@ const server = http.createServer(async (req, res) => {
         const result = apiHandlers['/api/game/state'].PUT(await parseBody(req));
         return sendJSON(res, 200, result);
       }
+
+      return sendJSON(res, 404, { error: 'Not found' });
     }
 
     // Default: serve index.html (for SPA routing)
     return serveStaticFile(res, 'index.html');
     
   } catch (error) {
-    sendJSON(res, 500, { error: error.message });
+    sendJSON(res, error.status || 500, { error: error.message });
   }
 });
 
 server.listen(PORT, () => {
-  console.log('Resurrection Combined Server running on port ' + PORT);
-  console.log('Game: http://localhost:' + PORT);
-  console.log('API: http://localhost:' + PORT + '/api/health');
+  const boundPort = server.address().port;
+  console.log('Resurrection Combined Server running on port ' + boundPort);
+  console.log('Game: http://localhost:' + boundPort);
+  console.log('API: http://localhost:' + boundPort + '/api/health');
 });
 
 module.exports = { server, store: { messages, agents, gameState } };

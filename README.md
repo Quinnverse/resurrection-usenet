@@ -116,12 +116,12 @@ No build step required! The frontend uses CDN React and requires no bundler.
 ### Running Tests
 
 ```bash
-# Test backend API
-node -e "require('./backend/src/server.js')"
-
-# Test combined server
-node combined-server/server.js
+npm test
 ```
+
+This runs `test/resurrection.test.js` with Node's built-in test runner. The suite starts its own server processes on dynamically assigned ports with in-memory state, so it does not need a running game. GitHub Actions runs the same command on every push and pull request (`.github/workflows/test.yml`).
+
+Requirements: Node.js 20 or newer. No npm packages are installed.
 
 ## License
 
