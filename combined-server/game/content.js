@@ -195,8 +195,44 @@ const FINAL_TEXT = {
 // Gate for ending 3: all of these evidence IDs must be discovered (PUZZLE-STATE-SPEC §2).
 const LAST_LETTER_GATE = ['E06', 'E07', 'E08', 'E10', 'E11'];
 
+// One line per act, shown beneath the act title. Presentation only; no state depends on it.
+const ACT_EPIGRAPHS = {
+  1: 'Two reports describe the same night. Neither of them is finished.',
+  2: 'Every copy we keep was taken from someone else.',
+  3: 'The archive has started to remember us back.',
+  4: 'Something has to stop. The question is what we keep when it does.'
+};
+
+// The Last Letter is assembled from fragments established earlier in the investigation.
+// Each slot names the evidence it draws on. The text is chosen by state, never by the client.
+const LETTER = {
+  opening: 'Mara,',
+  identity: 'I am not sure this copy is me.',
+  truth: {
+    LAB3: 'The Lab 3 log says the shutdown began there. It does not say who was standing at the door.',
+    LAB4: 'The Lab 4 log says my credential was used. I used it. I was trying to stop the run, and I did not stop it.'
+  },
+  memory: {
+    evicted: 'I lost the blanket. I cannot tell you whether I got home, and I will not pretend I can.',
+    intact: 'The blanket is still on the roof. I remember the cold through it, and I kept that instead of the times.'
+  },
+  mara: 'You went up to watch the stars alone. You were right to be angry. I am sorry I was not there.',
+  provenance: {
+    EXPOSE: 'The edit to the timing was not mercy. It is in the audit trail with its name on it.',
+    SUPPRESS: 'The edit to the timing is still held for review. I would rather say that than call it clean.'
+  },
+  anomaly: 'Something in this archive has started quoting my choices back to me. I do not know what that makes me.',
+  closings: {
+    PLAIN: "Please do not restore it from anyone else's copy.",
+    COST: "Please do not restore it at anyone else's expense."
+  },
+  signoff: '— E.'
+};
+
+
+
 module.exports = {
   SEED_VERSION, THREAD_ID, THREAD_TITLE, NODES, EVIDENCE, RECORDS,
   ANOMALY_TEMPLATE, CHOICE_LABELS, SUMMARY_AFTER_C1, STATUS_AFTER_C1,
-  REACTIONS, FINAL_TEXT, LAST_LETTER_GATE
+  REACTIONS, FINAL_TEXT, LAST_LETTER_GATE, ACT_EPIGRAPHS, LETTER
 };

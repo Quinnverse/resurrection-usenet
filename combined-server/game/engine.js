@@ -174,7 +174,13 @@ function availableActions(s) {
   }
   if (s.storyAct === 4 && s.chosen.provenance) {
     for (const ending of endingOptions(s)) {
-      out.push({ type: 'COMMIT_FINAL', payload: { ending }, label: `CHOOSE ENDING: ${C.FINAL_TEXT[ending].title}` });
+      if (ending === 'LAST_LETTER') {
+        // Sealing the letter is irreversible; the closing line is the one choice the player makes in it.
+        out.push({ type: 'COMMIT_FINAL', payload: { ending, closing: 'PLAIN' }, label: 'SEAL THE LAST LETTER · plain closing' });
+        out.push({ type: 'COMMIT_FINAL', payload: { ending, closing: 'COST' }, label: 'SEAL THE LAST LETTER · closing that names the cost' });
+      } else {
+        out.push({ type: 'COMMIT_FINAL', payload: { ending }, label: `CHOOSE ENDING: ${C.FINAL_TEXT[ending].title}` });
+      }
     }
   }
   return out;
@@ -338,6 +344,7 @@ const HANDLERS = {
     const { ending } = p;
     d.endingSelected = ending;
     d.chosen.ending = ending;
+    if (ending === 'LAST_LETTER') d.letter = { closing: p.closing, lines: composeLetter(d, p.closing) };
     d.records['rec-summary'].body = C.FINAL_TEXT[ending].summary;
     d.records['rec-stop'].status = ending === 'LAST_LETTER' ? 'archived with the letter' : (ending === 'ARCHIVE' ? 'archived' : 'retained');
     return C.REACTIONS[`FINAL:${ending}`];
@@ -465,16 +472,54 @@ function originFor(type, payload, d) {
   return null;
 }
 
+// Slots of the Last Letter. Each text is chosen from state; each slot names the evidence it draws on.
+function letterSlots(s) {
+  const L = C.LETTER;
+  return [
+    { id: 'identity', source: 'E01', text: L.identity },
+    { id: 'truth', source: s.chosen.deathRecord === 'LAB4' ? 'E03, E09' : 'E02, E09', text: L.truth[s.chosen.deathRecord] },
+    { id: 'memory', source: 'E05, E07', text: s.fragments.echoBlanket === 'evicted' ? L.memory.evicted : L.memory.intact },
+    { id: 'mara', source: 'E08', text: L.mara },
+    { id: 'provenance', source: 'E10', text: L.provenance[s.chosen.provenance] },
+    { id: 'anomaly', source: 'E11', text: L.anomaly }
+  ];
+}
+
+function composeLetter(s, closing) {
+  const L = C.LETTER;
+  return [L.opening, ...letterSlots(s).map(slot => slot.text), L.closings[closing], L.signoff];
+}
+
+// Record bodies that differ from their authored text: what the archive now remembers differently.
+function divergenceOf(s) {
+  return Object.values(s.records)
+    .filter(rec => rec.id !== 'rec-anomaly' && C.RECORDS[rec.id].body !== null && rec.body !== C.RECORDS[rec.id].body)
+    .map(rec => ({ recordId: rec.id, subject: rec.subject, now: rec.body }));
+}
+
 function endingResult(s) {
   const text = C.FINAL_TEXT[s.endingSelected];
+  const letterLines = s.endingSelected === 'LAST_LETTER' && s.letter ? s.letter.lines : null;
   return {
     id: s.endingSelected,
     title: text.title,
     closing: text.closing,
     summary: text.summary,
-    letter: text.letter || null,
+    letter: letterLines,
+    divergence: divergenceOf(s),
+    fragments: { ...s.fragments },
     verifiedFacts: s.evidence.map(id => C.EVIDENCE[id].title),
     unresolvedCount: Object.keys(C.EVIDENCE).length - s.evidence.length
+  };
+}
+
+function letterView(s) {
+  if (!isLastLetterUnlocked(s) || !s.chosen.provenance) return null;
+  if (s.endingSelected && s.endingSelected !== 'LAST_LETTER') return null;
+  return {
+    slots: letterSlots(s).map(({ id, source, text }) => ({ id, source, text })),
+    closings: [{ id: 'PLAIN', text: C.LETTER.closings.PLAIN }, { id: 'COST', text: C.LETTER.closings.COST }],
+    sealed: s.letter ? s.letter.closing : null
   };
 }
 
@@ -526,6 +571,8 @@ function projection(s) {
     })),
     endingSelected: s.endingSelected,
     ending: s.endingSelected ? endingResult(s) : null,
+    epigraph: C.ACT_EPIGRAPHS[s.storyAct],
+    letter: letterView(s),
     permittedActions: actions.map(a => ({ type: a.type, payload: a.payload, label: a.label, previewable: Boolean(a.previewable) })),
     createdAt: s.createdAt,
     updatedAt: s.updatedAt

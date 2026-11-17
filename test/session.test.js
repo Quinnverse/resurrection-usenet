@@ -110,7 +110,7 @@ const COMMON_PREFIX = [
   ['INSPECT_HEADERS', { recordId: 'rec-lab3' }],
   ['INSPECT_HEADERS', { recordId: 'rec-lab4' }]
 ];
-function playPath({ c1 = 'LAB3', c2 = 'FORENSIC', c3 = 'EXPOSE', ending = 'ARCHIVE', mailbox = true } = {}) {
+function playPath({ c1 = 'LAB3', c2 = 'FORENSIC', c3 = 'EXPOSE', ending = 'ARCHIVE', closing = 'PLAIN', mailbox = true, stopBeforeFinal = false } = {}) {
   let s = fresh();
   const outcomes = {};
   const run = (type, payload) => { const out = step(s, type, payload); s = out.session; return out.result; };
@@ -123,7 +123,7 @@ function playPath({ c1 = 'LAB3', c2 = 'FORENSIC', c3 = 'EXPOSE', ending = 'ARCHI
   run('TRACE_RELAY', { node: 'NODE-04' });
   outcomes.c2 = run('COMMIT_MEMORY_CAPACITY', { choice: c2 });
   outcomes.c3 = run('COMMIT_PROVENANCE', { choice: c3 });
-  outcomes.final = run('COMMIT_FINAL', { ending });
+  if (!stopBeforeFinal) outcomes.final = run('COMMIT_FINAL', ending === 'LAST_LETTER' ? { ending, closing } : { ending });
   return { session: s, outcomes };
 }
 
@@ -318,6 +318,39 @@ describe('engine: endings and gating', () => {
       assert.throws(() => step(session, 'COMMIT_FINAL', { ending: 'ARCHIVE' }), (e) => e.code === 'game_over');
     });
   }
+
+  it('the Last Letter is composed from state: branch, capacity, provenance and closing all change it', () => {
+    const letter = (opts) => playPath({ ending: 'LAST_LETTER', ...opts }).outcomes.final.ending.letter;
+    const base = letter({});
+    assert.ok(base.length >= 8, 'opening, six slots, closing and sign-off');
+    assert.notDeepEqual(letter({ c1: 'LAB4' }), base, 'truth slot follows the death-record choice');
+    assert.notDeepEqual(letter({ c2: 'HUMAN' }), base, 'memory slot follows the capacity choice');
+    assert.notDeepEqual(letter({ c3: 'SUPPRESS' }), base, 'provenance slot follows the provenance choice');
+    assert.notDeepEqual(letter({ closing: 'COST' }), base, 'the closing line is the player\'s choice');
+  });
+
+  it('sealing the Last Letter is irreversible: the game ends and no further action is accepted', () => {
+    const { session } = playPath({ ending: 'LAST_LETTER', closing: 'PLAIN' });
+    assert.equal(session.endingSelected, 'LAST_LETTER');
+    assert.throws(() => step(session, 'COMMIT_FINAL', { ending: 'ECHO' }), (e) => e.code === 'game_over');
+  });
+
+  it('the letter composer is hidden until the gate opens, then shows six slots and two closings until sealed', () => {
+    assert.equal(engine.projection(playPath({ mailbox: false, c3: 'EXPOSE' }).session).letter, null, 'gate closed');
+    const { session } = playPath({ stopBeforeFinal: true });
+    const view = engine.projection(session).letter;
+    assert.equal(view.slots.length, 6);
+    assert.deepEqual(view.closings.map(c => c.id), ['PLAIN', 'COST']);
+    assert.equal(view.sealed, null);
+    const sealed = playPath({ ending: 'LAST_LETTER', closing: 'COST' }).session;
+    assert.equal(engine.projection(sealed).letter.sealed, 'COST');
+  });
+
+  it('the Last Letter ending offers two sealing actions that differ only in closing', () => {
+    const { session } = playPath({ stopBeforeFinal: true });
+    const seals = engine.availableActions(session).filter(a => a.type === 'COMMIT_FINAL' && a.payload.ending === 'LAST_LETTER');
+    assert.deepEqual(seals.map(a => a.payload.closing).sort(), ['COST', 'PLAIN']);
+  });
 
   it('the Last Letter is the only ending with a letter body', () => {
     assert.ok(playPath({ ending: 'LAST_LETTER' }).outcomes.final.ending.letter.length >= 4);
@@ -548,7 +581,7 @@ describe('HTTP: full investigations and recovery', () => {
     assert.ok(anomaly.content.includes(firstChoice.id), 'anomaly quotes the real event ID');
     assert.ok(anomaly.content.includes('the Lab 4 access record'));
 
-    const final = await act(server.baseUrl, id, 'COMMIT_FINAL', { ending: 'LAST_LETTER' });
+    const final = await act(server.baseUrl, id, 'COMMIT_FINAL', { ending: 'LAST_LETTER', closing: 'COST' });
     assert.equal(final.ending.id, 'LAST_LETTER');
     assert.ok(final.ending.letter.length >= 4);
     const state = (await call(server.baseUrl, 'GET', `/api/sessions/${id}`)).json;
