@@ -3,6 +3,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const { createSessionApi } = require('./game/api');
+const { createStore } = require('./game/store');
 
 // ============== IN-MEMORY STORAGE ==============
 let messages = [];
@@ -677,6 +679,10 @@ function resetGameData() {
 
 // ============== HTTP SERVER ==============
 const PORT = Number(process.env.PORT ?? 3000);
+const MAX_BODY_BYTES = 16 * 1024;
+const sessionApi = createSessionApi({
+  store: createStore(process.env.RESURRECTION_DATA_DIR || path.join(__dirname, 'data'))
+});
 const FRONTEND_DIR = path.join(__dirname, '../frontend');
 
 resetGameData();
@@ -684,7 +690,15 @@ resetGameData();
 function parseBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    let tooLarge = false;
+    req.on('data', chunk => {
+      if (tooLarge) return;
+      body += chunk;
+      if (body.length > MAX_BODY_BYTES) {
+        tooLarge = true;
+        reject(new HttpError(413, 'Request body is too large'));
+      }
+    });
     req.on('end', () => {
       try { resolve(body ? JSON.parse(body) : {}); }
       catch(e) { reject(new HttpError(400, 'Request body must be valid JSON')); }
@@ -749,7 +763,13 @@ const server = http.createServer(async (req, res) => {
       return serveStaticFile(res, pathname.slice(1));
     }
 
-    // API routes
+    // Session API (persistent, versioned game state)
+    if (pathname.startsWith('/api/sessions')) {
+      const sessionResult = await sessionApi.handle({ method, pathname, readBody: () => parseBody(req) });
+      if (sessionResult) return sendJSON(res, sessionResult.status, sessionResult.body);
+    }
+
+    // Legacy API routes (global in-memory state, kept for the existing test suite)
     if (pathname.startsWith('/api/')) {
       // Direct API handlers
       if (apiHandlers[pathname] && apiHandlers[pathname][method]) {
@@ -822,7 +842,8 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, 'index.html');
     
   } catch (error) {
-    sendJSON(res, error.status || 500, { error: error.message });
+    if (!(error.status) && process.env.NODE_ENV !== 'test') console.error(error);
+    sendJSON(res, error.status || 500, { error: error.status ? error.message : 'Internal server error', code: error.code || (error.status ? undefined : 'internal_error') });
   }
 });
 

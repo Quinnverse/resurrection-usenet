@@ -288,12 +288,16 @@ describe('API contract', () => {
     assert.equal(state.verticalSlice.authoritativeRecord, null);
   });
 
-  it('frontend reads only fields the API provides', () => {
+  it('frontend reads only fields that the session projection provides', () => {
     const js = fs.readFileSync(path.join(FRONTEND_DIR, 'src', 'main.jsx'), 'utf8');
-    assert.match(js, /apiRequest\('\/threads'\)/, 'frontend must load threads from /api/threads');
-    assert.match(js, /\bt\.title\b/, 'thread titles must come from the title field');
-    assert.match(js, /\bt\.messageCount\b/, 'thread counts must come from messageCount');
-    assert.doesNotMatch(js, /t\.subject\b/, 'thread rows must not render the first message subject');
+    const projectionFields = new Set(Object.keys(require('../combined-server/game/engine').projection(
+      require('../combined-server/game/engine').newSession({ sessionId: 'f'.repeat(32) }))));
+    const readFields = new Set([...js.matchAll(/\bview\.([A-Za-z]+)/g)].map(m => m[1]));
+    assert.ok(readFields.size >= 8, 'frontend should read several projection fields');
+    for (const field of readFields) {
+      assert.ok(projectionFields.has(field), `frontend reads view.${field}, which the projection does not provide`);
+    }
+    assert.doesNotMatch(js, /\bundefined\b\s*\+|\+\s*undefined\b/, 'frontend must not concatenate undefined into text');
   });
 
   it('invalid choice values are rejected with 400', async () => {

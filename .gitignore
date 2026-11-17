@@ -54,3 +54,7 @@ build/
 # Temporary files
 *.bak
 *.orig
+
+# Runtime save data (player sessions). Never commit.
+combined-server/data/
+*.tmp

@@ -1,0 +1,12 @@
+node_modules
+.git
+.github
+e2e
+test
+test-results
+playwright-report
+combined-server/data
+docs
+.kiro
+*.log
+*.tmp
