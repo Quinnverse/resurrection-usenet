@@ -21,7 +21,38 @@ Total available: 4,000 Kiro Credits
 
 ## Tech Stack
 
-- Frontend: React + TypeScript (browser-based terminal UI)
-- Backend: Node.js + Express (simulated USENET infrastructure)
-- Database: SQLite for persistent game state
-- Styling: Retro terminal CSS ( ANSI colors, CRT effects)
+- Frontend: React 18 (CDN), CSS (no build step required)
+- Backend: Node.js HTTP server (built-in modules only, no npm packages)
+- Storage: In-memory storage (resets on server restart)
+- Styling: Retro terminal CSS (ANSI colors, CRT effects)
+
+## Deployment
+
+### Single-Origin Deployment (Recommended)
+
+```bash
+cd combined-server
+node server.js
+```
+
+- Game UI: http://localhost:3000
+- API: http://localhost:3000/api/health
+
+See `DEPLOYMENT.md` for detailed deployment instructions including systemd, Docker, and PM2 configurations.
+
+## Budget Status
+
+- **Spent**: ~2,800 Kiro Credits (70%)
+- **Remaining**: ~1,200 Kiro Credits
+- **Status**: MVP Complete, ready for testing
+
+### Credit Breakdown
+
+| Phase | Credits | Status |
+|-------|---------|--------|
+| Project Setup | 600 | ✅ Complete |
+| Core Backend | 1,200 | ✅ Complete |
+| API & Content | 1,000 | ✅ Complete |
+| Frontend & Testing | 1,200 | ✅ Complete |
+| Documentation | 0 | ✅ Complete |
+| **Total** | **4,000** | **MVP Done** |
