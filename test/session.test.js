@@ -4,7 +4,7 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
-const { randomUUID } = require('node:crypto');
+const { randomUUID, createHash } = require('node:crypto');
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -35,7 +35,7 @@ function startServer(dataDir) {
       const m = out.match(/running on port (\d+)/);
       if (m) {
         clearTimeout(timer);
-        resolve({ baseUrl: `http://127.0.0.1:${m[1]}`, dataDir, stop: () => stopServer(child) });
+        resolve({ baseUrl: `http://127.0.0.1:${m[1]}`, dataDir, logs: () => out + err, stop: () => stopServer(child) });
       }
     });
     child.stderr.on('data', (chunk) => { err += chunk; });
@@ -249,7 +249,9 @@ describe('engine: operator anomaly (E11) is derived from the event log', () => {
     const body = session.records['rec-anomaly'].body;
     assert.ok(body.includes(`Event ${c1Event.id} has been archived.`));
     assert.ok(body.includes('You selected the Lab 4 access record'));
-    assert.ok(body.includes(`session ${session.sessionId.slice(0, 8)}`));
+    const label = createHash('sha256').update(session.sessionId).digest('hex').slice(0, 8);
+    assert.ok(body.includes(`session ${label}`), 'label is a hash prefix, not part of the credential');
+    assert.ok(!body.includes(session.sessionId.slice(0, 8)), 'the anomaly must not quote any prefix of the token');
     assert.ok(body.includes('DATE: 1998-10-31 23:42'));
   });
 
@@ -360,7 +362,7 @@ describe('HTTP session API', () => {
   it('creates a session with an opaque 128-bit ID and returns the projection', async () => {
     const res = await call(server.baseUrl, 'POST', '/api/sessions');
     assert.equal(res.status, 201);
-    assert.match(res.json.sessionId, /^[a-f0-9]{32}$/);
+    assert.match(res.json.sessionId, /^[a-f0-9]{64}$/);
     assert.equal(res.json.revision, 0);
     assert.equal(res.json.sceneId, 'TRANSMISSION');
     assert.equal(res.json.state.endings.length, 3);
@@ -591,4 +593,284 @@ describe('HTTP: full investigations and recovery', () => {
       fs.rmSync(dataDir, { recursive: true, force: true });
     }
   });
+});
+
+// ---------- anonymous sessions: token validation, isolation, permissions, size, retention, deletion, logs ----------
+
+const http = require('node:http');
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+async function getJson(baseUrl, route) {
+  const res = await call(baseUrl, 'GET', route);
+  assert.equal(res.status, 200, `GET ${route} should return 200, got ${res.status}`);
+  return res.json;
+}
+const STORE_PATH = path.join(ROOT, 'combined-server', 'game', 'store.js');
+
+function rawGet(baseUrl, requestPath) {
+  const { port } = new URL(baseUrl);
+  return new Promise((resolve, reject) => {
+    http.get({ host: '127.0.0.1', port: Number(port), path: requestPath }, (res) => {
+      let body = '';
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode, body }));
+    }).on('error', reject);
+  });
+}
+
+function saveFile(dataDir, id) {
+  return path.join(dataDir, `${id}.json`);
+}
+
+function backdate(dataDir, id, days) {
+  const file = saveFile(dataDir, id);
+  const session = JSON.parse(fs.readFileSync(file, 'utf8'));
+  session.lastActiveAt = new Date(Date.now() - days * DAY_MS).toISOString();
+  fs.writeFileSync(file, JSON.stringify(session), { mode: 0o600 });
+}
+
+async function newSessionId(baseUrl) {
+  return (await call(baseUrl, 'POST', '/api/sessions')).json.sessionId;
+}
+
+describe('anonymous sessions: identifiers and access', () => {
+  it('session IDs are 256-bit random values and do not repeat', () => withServer(async (server) => {
+    const ids = [];
+    for (let i = 0; i < 20; i += 1) ids.push(await newSessionId(server.baseUrl));
+    for (const id of ids) assert.match(id, /^[a-f0-9]{64}$/);
+    assert.equal(new Set(ids).size, ids.length);
+  }));
+
+  it('malformed identifiers get the same 404 as an unknown session and never touch the save directory', () => withServer(async (server) => {
+    const unknown = await call(server.baseUrl, 'GET', '/api/sessions/' + 'b'.repeat(64));
+    const before = fs.readdirSync(server.dataDir).sort();
+    const malformed = [
+      'short', 'A'.repeat(64), 'g'.repeat(64), 'a'.repeat(63), 'a'.repeat(65),
+      'a'.repeat(64) + '.json', '..%2F..%2Fetc%2Fpasswd', '%2e%2e', 'a'.repeat(32) + '%00'
+    ];
+    for (const id of malformed) {
+      const encoded = encodeURIComponent(id);
+      for (const [method, route, body] of [
+        ['GET', `/api/sessions/${encoded}`],
+        ['DELETE', `/api/sessions/${encoded}`],
+        ['POST', `/api/sessions/${encoded}/actions`, { actionId: 'x1', expectedRevision: 0, type: 'OPEN_THREAD' }]
+      ]) {
+        const res = await call(server.baseUrl, method, route, body);
+        assert.equal(res.status, 404, `${method} ${id.slice(0, 12)} should be 404`);
+        assert.equal(res.json.code, 'session_not_found');
+        assert.deepEqual(res.json, unknown.json, 'malformed and unknown IDs must look identical');
+      }
+    }
+    assert.deepEqual(fs.readdirSync(server.dataDir).sort(), before, 'no files created or removed by malformed IDs');
+  }));
+
+  it('static file serving cannot reach save files through path traversal', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    const relative = path.relative(path.join(ROOT, 'frontend', 'src'), saveFile(server.dataDir, id));
+    const res = await rawGet(server.baseUrl, '/src/' + relative);
+    assert.notEqual(res.status, 200);
+    assert.ok(!res.body.includes('"sessionId"'), 'save contents must never be served');
+  }));
+
+  it('one session cannot read or change another session', () => withServer(async (server) => {
+    const a = await newSessionId(server.baseUrl);
+    const b = await newSessionId(server.baseUrl);
+    await act(server.baseUrl, a, 'OPEN_THREAD');
+    const stateB = await getJson(server.baseUrl, `/api/sessions/${b}`);
+    assert.equal(stateB.sessionId, b);
+    assert.equal(stateB.revision, 0);
+    const eventsB = await getJson(server.baseUrl, `/api/sessions/${b}/events`);
+    assert.equal(eventsB.playerEvents.length, 0);
+  }));
+
+  it('save files and the save directory are owner-only (0600 and 0700)', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    assert.equal(fs.statSync(saveFile(server.dataDir, id)).mode & 0o777, 0o600);
+    assert.equal(fs.statSync(server.dataDir).mode & 0o777, 0o700);
+  }));
+
+  it('saves hold only game state and an activity timestamp, with no network or contact fields', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    await act(server.baseUrl, id, 'OPEN_THREAD');
+    const saved = JSON.parse(fs.readFileSync(saveFile(server.dataDir, id), 'utf8'));
+    const allowed = new Set([
+      'schemaVersion', 'seedVersion', 'sessionId', 'revision', 'storyAct', 'evidence', 'threadOpened',
+      'inspectedHeaders', 'chosen', 'fragments', 'records', 'nodeReplicas', 'propagationEvents',
+      'playerEvents', 'conflictLog', 'agentsRevealed', 'agentTrust', 'agentKnowledge', 'actionResults',
+      'endingSelected', 'createdAt', 'updatedAt', 'lastActiveAt'
+    ]);
+    assert.deepEqual(Object.keys(saved).filter(k => !allowed.has(k)), [], 'save files contain only game state and timestamps');
+    assert.match(saved.lastActiveAt, /^\d{4}-\d{2}-\d{2}T/);
+  }));
+});
+
+describe('anonymous sessions: logs', () => {
+  it('server output never contains a full session token or the save directory path', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    await act(server.baseUrl, id, 'OPEN_THREAD');
+    await call(server.baseUrl, 'GET', `/api/sessions/${id}`);
+    await call(server.baseUrl, 'GET', '/api/sessions/' + 'z'.repeat(64));
+    await call(server.baseUrl, 'DELETE', `/api/sessions/${id}`);
+    const output = server.logs();
+    assert.ok(!output.includes(id), 'full token must not appear in logs');
+    assert.ok(!output.includes(server.dataDir), 'save directory must not appear in logs');
+    assert.doesNotMatch(output, /[a-f0-9]{64}/);
+  }));
+});
+
+describe('anonymous sessions: size limit', () => {
+  it('refuses a save over 256 KB and keeps the previous save intact', () => {
+    const dataDir = tempDataDir();
+    try {
+      const { createStore } = require('../combined-server/game/store');
+      const store = createStore(dataDir);
+      const session = engine.newSession({ sessionId: store.newId(), now: null });
+      store.save(session);
+      const before = fs.readFileSync(saveFile(dataDir, session.sessionId), 'utf8');
+      session.padding = 'x'.repeat(store.maxSessionBytes + 1024);
+      assert.throws(() => store.save(session), (err) => err.status === 413 && err.code === 'session_too_large');
+      assert.equal(fs.readFileSync(saveFile(dataDir, session.sessionId), 'utf8'), before);
+      assert.deepEqual(fs.readdirSync(dataDir).filter(f => f.endsWith('.tmp')), []);
+    } finally {
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('a normal full investigation stays far below the limit', () => {
+    const { session } = playPath({ c1: 'LAB4', c2: 'HUMAN', c3: 'SUPPRESS', ending: 'LAST_LETTER' });
+    assert.ok(Buffer.byteLength(JSON.stringify(session)) < 64 * 1024);
+  });
+});
+
+describe('anonymous sessions: expiry, cleanup and recovery', () => {
+  it('a session inactive for more than seven days is gone, and its file is removed', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    backdate(server.dataDir, id, 8);
+    const res = await call(server.baseUrl, 'GET', `/api/sessions/${id}`);
+    assert.equal(res.status, 404);
+    assert.equal(res.json.code, 'session_not_found');
+    assert.equal(fs.existsSync(saveFile(server.dataDir, id)), false);
+  }));
+
+  it('a session six days idle still loads and its activity is recorded', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    backdate(server.dataDir, id, 6);
+    const res = await call(server.baseUrl, 'GET', `/api/sessions/${id}`);
+    assert.equal(res.status, 200);
+    const saved = JSON.parse(fs.readFileSync(saveFile(server.dataDir, id), 'utf8'));
+    assert.ok(Date.now() - Date.parse(saved.lastActiveAt) < 60 * 1000, 'reading a save refreshes its activity time');
+  }));
+
+  it('store cleanup removes only expired saves and orphaned temp files, and reports counts without IDs', () => {
+    const dataDir = tempDataDir();
+    try {
+      const { createStore } = require('../combined-server/game/store');
+      let clock = Date.parse('2026-11-01T00:00:00Z');
+      const writer = createStore(dataDir, { now: () => clock });
+      const oldSession = engine.newSession({ sessionId: writer.newId(), now: null });
+      writer.save(oldSession);
+      clock += 3 * DAY_MS;
+      const recentSession = engine.newSession({ sessionId: writer.newId(), now: null });
+      writer.save(recentSession);
+      const orphan = path.join(dataDir, `${recentSession.sessionId}.json.1.abcd.tmp`);
+      fs.writeFileSync(orphan, 'partial', { mode: 0o600 });
+      fs.utimesSync(orphan, new Date(clock - 2 * 60 * 60 * 1000), new Date(clock - 2 * 60 * 60 * 1000));
+
+      const later = createStore(dataDir, { now: () => clock + 5 * DAY_MS }); // old save is 8 days idle, recent is 5
+      const result = later.cleanupExpired();
+      assert.deepEqual(result, { expired: 1, orphans: 1 });
+      assert.equal(fs.existsSync(saveFile(dataDir, oldSession.sessionId)), false);
+      assert.equal(fs.existsSync(saveFile(dataDir, recentSession.sessionId)), true);
+      assert.equal(fs.existsSync(orphan), false);
+      assert.equal(later.isExpired(JSON.parse(fs.readFileSync(saveFile(dataDir, recentSession.sessionId), 'utf8'))), false);
+    } finally {
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('cleanup runs every 24 hours from an unref-ed timer', () => {
+    const { createStore, scheduleRetention } = require('../combined-server/game/store');
+    const dataDir = tempDataDir();
+    try {
+      const store = createStore(dataDir);
+      let scheduled = null;
+      let unrefCalled = false;
+      const fakeTimer = (fn, ms) => { scheduled = { fn, ms }; return { unref: () => { unrefCalled = true; } }; };
+      const ran = [];
+      scheduleRetention(store, { timer: fakeTimer, onRun: (r) => ran.push(r) });
+      assert.equal(scheduled.ms, DAY_MS);
+      assert.equal(unrefCalled, true);
+      scheduled.fn();
+      assert.deepEqual(ran, [{ expired: 0, orphans: 0 }]);
+    } finally {
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('server startup removes expired saves before serving, and live saves survive a restart', async () => {
+    const dataDir = tempDataDir();
+    let live;
+    let stale;
+    const first = await startServer(dataDir);
+    try {
+      live = await newSessionId(first.baseUrl);
+      stale = await newSessionId(first.baseUrl);
+    } finally {
+      await first.stop();
+    }
+    backdate(dataDir, stale, 8);
+    const second = await startServer(dataDir);
+    try {
+      assert.match(second.logs(), /removed 1 expired save/);
+      assert.equal((await call(second.baseUrl, 'GET', `/api/sessions/${stale}`)).status, 404);
+      assert.equal((await call(second.baseUrl, 'GET', `/api/sessions/${live}`)).status, 200);
+    } finally {
+      await second.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('a live session with progress recovers fully after a restart', async () => {
+    const dataDir = tempDataDir();
+    const first = await startServer(dataDir);
+    let id;
+    let before;
+    try {
+      id = await newSessionId(first.baseUrl);
+      await act(first.baseUrl, id, 'OPEN_THREAD');
+      await act(first.baseUrl, id, 'INSPECT_HEADERS', { recordId: 'rec-lab3' });
+      before = await getJson(first.baseUrl, `/api/sessions/${id}`);
+    } finally {
+      await first.stop();
+    }
+    const second = await startServer(dataDir);
+    try {
+      assert.deepEqual(await getJson(second.baseUrl, `/api/sessions/${id}`), before);
+    } finally {
+      await second.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('anonymous sessions: deletion', () => {
+  it('DELETE removes the save; the session is then unknown and a second DELETE is 404', () => withServer(async (server) => {
+    const id = await newSessionId(server.baseUrl);
+    await act(server.baseUrl, id, 'OPEN_THREAD');
+    const first = await call(server.baseUrl, 'DELETE', `/api/sessions/${id}`);
+    assert.equal(first.status, 200);
+    assert.deepEqual(first.json, { deleted: true });
+    assert.equal(fs.existsSync(saveFile(server.dataDir, id)), false);
+    assert.equal((await call(server.baseUrl, 'GET', `/api/sessions/${id}`)).status, 404);
+    assert.equal((await call(server.baseUrl, 'DELETE', `/api/sessions/${id}`)).status, 404);
+  }));
+
+  it('deleting one session leaves every other session untouched', () => withServer(async (server) => {
+    const keep = await newSessionId(server.baseUrl);
+    const drop = await newSessionId(server.baseUrl);
+    await act(server.baseUrl, keep, 'OPEN_THREAD');
+    await call(server.baseUrl, 'DELETE', `/api/sessions/${drop}`);
+    const kept = await getJson(server.baseUrl, `/api/sessions/${keep}`);
+    assert.equal(kept.revision, 1);
+  }));
 });

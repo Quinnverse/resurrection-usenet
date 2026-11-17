@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { createSessionApi } = require('./game/api');
-const { createStore } = require('./game/store');
+const { createStore, scheduleRetention } = require('./game/store');
 
 // ============== IN-MEMORY STORAGE ==============
 let messages = [];
@@ -680,9 +680,23 @@ function resetGameData() {
 // ============== HTTP SERVER ==============
 const PORT = Number(process.env.PORT ?? 3000);
 const MAX_BODY_BYTES = 16 * 1024;
-const sessionApi = createSessionApi({
-  store: createStore(process.env.RESURRECTION_DATA_DIR || path.join(__dirname, 'data'))
-});
+const SAVE_DIR = process.env.RESURRECTION_DATA_DIR || path.join(__dirname, 'data');
+const sessionStore = createStore(SAVE_DIR);
+const sessionApi = createSessionApi({ store: sessionStore });
+
+// Removes saves inactive for seven days before the first request, then every 24 hours.
+function logRetention(result) {
+  if (result.expired || result.orphans) {
+    console.log(`Save retention: removed ${result.expired} expired save(s) and ${result.orphans} orphaned temp file(s).`);
+  }
+}
+logRetention(sessionStore.cleanupExpired());
+scheduleRetention(sessionStore, { onRun: logRetention });
+
+// Error text is logged without session IDs or the save directory path.
+function redactForLog(value) {
+  return String(value).split(SAVE_DIR).join('[save directory]').replace(/[a-f0-9]{64}/g, '[session]');
+}
 const FRONTEND_DIR = path.join(__dirname, '../frontend');
 
 resetGameData();
@@ -842,7 +856,7 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, 'index.html');
     
   } catch (error) {
-    if (!(error.status) && process.env.NODE_ENV !== 'test') console.error(error);
+    if (!(error.status) && process.env.NODE_ENV !== 'test') console.error('Unhandled error:', redactForLog(error.stack || error.message));
     sendJSON(res, error.status || 500, { error: error.status ? error.message : 'Internal server error', code: error.code || (error.status ? undefined : 'internal_error') });
   }
 });

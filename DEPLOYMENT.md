@@ -31,7 +31,7 @@ Check each provider's current terms and pricing yourself. Do not assume a free t
 
 1. Owner decides the host and approves the cost (zero is acceptable only if the provider confirms it).
 2. Confirm the save directory is on persistent storage. Losing it resets every player's game.
-3. Add a cleanup job for saves older than the agreed retention period (not implemented).
+3. Confirm retention on the host's disk: saves expire after seven days of inactivity, and cleanup runs at startup and every 24 hours (implemented in `combined-server/game/store.js`).
 4. Put the site behind HTTPS (most hosts provide this).
 5. Run `npm test` and `npm run test:e2e` against the exact commit being deployed.
 6. Record the public URL in the README only after the deployed site has been tested.

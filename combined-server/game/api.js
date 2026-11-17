@@ -8,10 +8,20 @@ const ACTION_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_PAYLOAD_KEYS = 8;
 
 function createSessionApi({ store, now = () => new Date().toISOString() }) {
+  // Malformed, unknown and expired IDs all get the same response, so IDs cannot be probed for existence.
+  const notFound = () => new GameError(404, 'session_not_found', 'No session with that ID.');
+  const TOUCH_INTERVAL_MS = 60 * 1000;
+
   function loadOr404(id) {
-    if (!store.isValidId(id)) throw new GameError(404, 'session_not_found', 'No session with that ID.');
+    if (!store.isValidId(id)) throw notFound();
     const session = store.load(id);
-    if (!session) throw new GameError(404, 'session_not_found', 'No session with that ID.');
+    if (!session) throw notFound();
+    if (store.isExpired(session)) {
+      store.remove(id);
+      throw notFound();
+    }
+    // Record activity at most once a minute so reads do not rewrite the file on every request.
+    if (Date.parse(now()) - Date.parse(session.lastActiveAt) > TOUCH_INTERVAL_MS) store.save(session);
     return session;
   }
 
@@ -103,7 +113,7 @@ function createSessionApi({ store, now = () => new Date().toISOString() }) {
     store.save(fresh);
     store.remove(session.sessionId);
     const view = engine.projection(fresh);
-    return { status: 201, body: { sessionId: freshId, revision: 0, sceneId: view.sceneId, state: view, previousSessionId: id } };
+    return { status: 201, body: { sessionId: freshId, revision: 0, sceneId: view.sceneId, state: view } };
   }
 
   // Returns { status, body } for session routes, or null for any other path.
@@ -117,6 +127,12 @@ function createSessionApi({ store, now = () => new Date().toISOString() }) {
       const id = parts[2];
       if (parts.length === 3 && method === 'GET') {
         return { status: 200, body: engine.projection(loadOr404(id)) };
+      }
+      // Deleting a save: the session ID in the path is the credential.
+      if (parts.length === 3 && method === 'DELETE') {
+        const session = loadOr404(id);
+        store.remove(session.sessionId);
+        return { status: 200, body: { deleted: true } };
       }
       if (parts.length === 4 && parts[3] === 'threads' && method === 'GET') {
         return { status: 200, body: threadsFor(loadOr404(id)) };

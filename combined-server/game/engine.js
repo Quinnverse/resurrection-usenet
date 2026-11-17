@@ -182,12 +182,17 @@ function availableActions(s) {
 
 // ---------- derived evidence and anomaly ----------
 
+// The in-game session label is a hash prefix, never a piece of the credential itself.
+function shortSessionLabel(sessionId) {
+  return require('node:crypto').createHash('sha256').update(String(sessionId)).digest('hex').slice(0, 8);
+}
+
 function generateAnomaly(d) {
   const first = d.playerEvents.find(e => e.type === 'COMMIT_DEATH_RECORD');
   if (!first) return;
   const body = C.ANOMALY_TEMPLATE
     .replace('{choice_label}', C.CHOICE_LABELS[first.payload.choice])
-    .replace('{short_session_id}', d.sessionId.slice(0, 8))
+    .replace('{short_session_id}', shortSessionLabel(d.sessionId))
     .replace('{event_id}', first.id);
   d.records['rec-anomaly'].body = `FROM: operator@archive.local / DATE: 1998-10-31 23:42 / SUBJECT: A choice already made / BODY: ${body}`;
 }

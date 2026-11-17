@@ -23,8 +23,8 @@ The container runs as the unprivileged `node` user and keeps saves in the `/data
 - No account, email, or personal data is requested.
 - Each browser stores one random session ID in `localStorage` (`resurrection.sessionId`).
 - The server stores each session as one JSON file, containing only game state and a timestamp for each action.
-- Reset deletes the session file. Clearing browser storage leaves the server file orphaned until the host removes it.
-- There is no retention policy beyond the host's disk. A public deployment should add a cleanup job for sessions older than an agreed period before going live.
+- Reset and Delete save remove the session file. Clearing browser storage forgets the session ID; the server copy then expires on its own.
+- Saves expire after seven days of inactivity. Cleanup runs at startup and every 24 hours. Full notice: `docs/PRIVACY.md`.
 
 ## Known limits
 - Sessions live on one server's disk. Multi-instance hosting needs a shared store (not built).

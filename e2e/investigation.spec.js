@@ -150,6 +150,7 @@ test.describe('recovery and layout', () => {
   test('mobile width has no horizontal overflow', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
+    await expect(page.getByText('Privacy and saved progress')).toBeVisible();
     await page.getByRole('button', { name: 'ENTER ARCHIVE' }).click();
     await expect(page.getByRole('button', { name: 'OPEN TRANSMISSION', exact: true })).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

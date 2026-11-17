@@ -60,6 +60,10 @@ test/                node:test suite
 
 The behaviour is specified by `docs/game-design/` (game design, narrative bible, puzzle and state specification). Where the code and those documents disagree, the documents win and the code is the defect.
 
-## Licence
+## Creator and licence
 
-MIT. See `LICENSE`.
+Created by **Quinnverse**. Licensed under the MIT Licence (see `LICENSE`, Copyright (c) 2026 Quinnverse).
+
+## Privacy
+
+Progress is saved on the game server under an anonymous random session ID kept in your browser. Saves expire after seven days without activity, and are not backed up long-term. Choose **Reset game** then **Delete save only** in the game, or call `DELETE /api/sessions/{sessionId}`. Full notice: `docs/PRIVACY.md`.

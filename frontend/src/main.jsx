@@ -140,6 +140,32 @@ async function startGame() {
   }
 }
 
+// Deletes the server copy of this save and forgets the session ID in this browser.
+async function deleteSave() {
+  const view = state.view;
+  if (!view) return;
+  setState({ busy: true });
+  try {
+    await api('/sessions/' + view.sessionId, { method: 'DELETE' });
+    window.localStorage.removeItem(STORAGE_KEY);
+    setState({ view: null, status: 'landing', lastResult: null, preview: null, selectedId: null, confirmReset: false, notice: '' });
+  } catch (err) {
+    setState({ notice: err.message });
+  } finally {
+    setState({ busy: false });
+  }
+}
+
+function PrivacyNotice() {
+  return h('details', { className: 'privacy' },
+    h('summary', null, 'Privacy and saved progress'),
+    h('p', null, 'Your progress is saved on this game server under a random session ID that this browser keeps. No account, name, email address or IP address is requested, and none is written to the game log.'),
+    h('p', null, 'Saves expire after seven days without activity. Saves are not backed up long-term.'),
+    h('p', null, 'To delete your save, choose Reset game during play, then Delete save only. Clearing this site\'s browser data forgets the session ID; the server copy then expires on its own.'),
+    h('p', null, 'Hosting providers may process network metadata, such as IP addresses, at the infrastructure level. Full notice: docs/PRIVACY.md.')
+  );
+}
+
 async function runAction(action, previewOnly = false) {
   const view = state.view;
   if (!view) return;
@@ -211,7 +237,8 @@ function App() {
       h('p', { className: 'tagline' }, 'She died in 1998. Her last message arrived tonight.'),
       h('p', { className: 'lede' }, 'You are a restoration operator on a decommissioned network. Copies of a dead researcher survive on five relay nodes, and they disagree. Every copy you make authoritative changes what the others remember.'),
       h('button', { className: 'primary', 'data-focus': 'enter', onClick: () => startGame(), disabled: state.busy }, state.busy ? 'OPENING…' : 'ENTER ARCHIVE'),
-      h('p', { className: 'note' }, 'Progress is saved on the server under a random session ID. No account is needed. Playing takes 12–18 minutes.')
+      h('p', { className: 'note' }, 'No account is needed. Playing takes 12–18 minutes.'),
+      PrivacyNotice()
     );
   }
 
@@ -240,6 +267,7 @@ function App() {
     state.confirmReset && h('div', { className: 'confirm', role: 'alertdialog', 'aria-label': 'Confirm reset' },
       h('p', null, 'Start a new game? This session will be deleted and cannot be recovered.'),
       h('button', { className: 'danger', 'data-focus': 'reset-confirm', onClick: () => resetGame(), disabled: state.busy }, 'DELETE AND START OVER'),
+      h('button', { className: 'quiet', 'data-focus': 'save-delete', onClick: () => deleteSave(), disabled: state.busy }, 'Delete save only, then return to the start'),
       h('button', { className: 'quiet', 'data-focus': 'reset-cancel', onClick: () => setState({ confirmReset: false }) }, 'Keep playing')
     ),
 
@@ -431,6 +459,7 @@ function EndingScreen({ view }) {
       ? h('div', { className: 'confirm' },
           h('p', null, 'Start a new game? This ending and its saved session will be deleted.'),
           h('button', { className: 'danger', 'data-focus': 'reset-confirm', onClick: () => resetGame(), disabled: state.busy }, 'DELETE AND START OVER'),
+          h('button', { className: 'quiet', 'data-focus': 'save-delete', onClick: () => deleteSave(), disabled: state.busy }, 'Delete save only, then return to the start'),
           h('button', { className: 'quiet', 'data-focus': 'reset-cancel', onClick: () => setState({ confirmReset: false }) }, 'Keep this ending'))
       : h('button', { className: 'primary', 'data-focus': 'new-game', onClick: () => setState({ confirmReset: true }) }, 'START A NEW GAME')
   );
