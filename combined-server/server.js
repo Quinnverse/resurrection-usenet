@@ -1,4 +1,4 @@
-// Resurrection Combined Server - Single Origin for API + Static Files
+// Resurrection Combined Server - 90-Second Vertical Slice
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -147,6 +147,85 @@ const agentPersonalities = {
   }
 };
 
+// ============== VERTICAL SLICE DATA ==============
+const VERTICAL_SLICE_DATA = {
+  threadId: 'threads.tech.mind.98',
+  messages: [
+    {
+      id: 'msg-98-001',
+      threadId: 'threads.tech.mind.98',
+      agentId: 'archivist',
+      sender: 'System Alert',
+      subject: '=== CRITICAL DATA INTEGRITY WARNING ===',
+      content: 'NOTICE: Multiple conflicting records detected in archived death records.\n\nSubject: Dr. Elena Vance\nStatus: DECEASED\nDate: 1998-11-15\nLocation: Research Lab 3\n\nTwo independent copies found:\n\nRecord A: Lab 3 - Failed protocol termination\nRecord B: Lab 4 - Unauthorized system override\n\nInvestigation recommended before authoritative record selection.',
+      metadata: {
+        timestamp: Date.now() - 120000,
+        sequence: 1,
+        decayLevel: 5,
+        corruptedBytes: 0,
+        reconstructionLevel: 95,
+        propagationPath: ['node-central']
+      },
+      status: 'pending',
+      nodeId: 'node-central'
+    },
+    {
+      id: 'msg-98-002',
+      threadId: 'threads.tech.mind.98',
+      agentId: 'archivist',
+      sender: 'Archivist Node',
+      subject: 'Record Fragment A - Lab 3',
+      content: 'Record A: Death Certificate\n\nSubject: Dr. Elena Vance\nAffiliation: Vance Labs\nCause: Protocol failure during neural upload\nTime: 23:47:12\nLocation: Research Lab 3\n\nSignature: Dr. Aris Thorne (Lab Director)\nVerified: 1998-11-16 08:03:22\n\nNote: This record shows standard procedure was followed.',
+      metadata: {
+        timestamp: Date.now() - 300000,
+        sequence: 2,
+        decayLevel: 15,
+        corruptedBytes: 0,
+        reconstructionLevel: 80,
+        propagationPath: ['node-archivist']
+      },
+      status: 'pending',
+      nodeId: 'node-archivist'
+    },
+    {
+      id: 'msg-98-003',
+      threadId: 'threads.tech.mind.98',
+      agentId: 'echo',
+      sender: 'Echo Node',
+      subject: 'Record Fragment B - Lab 4',
+      content: 'Record B: System Override Log\n\nSubject: Dr. Elena Vance\nAffiliation: Vance Labs\nAction: Unauthorized access\nTime: 23:45:08\nLocation: Research Lab 4\n\nSignature: UNKNOWN\nVerified: 1998-11-16 08:05:11\n\nNote: This record shows unauthorized system access BEFORE the protocol failure.\n\nConflicting timestamps suggest premeditated action.',
+      metadata: {
+        timestamp: Date.now() - 420000,
+        sequence: 3,
+        decayLevel: 35,
+        corruptedBytes: 3,
+        reconstructionLevel: 55,
+        propagationPath: ['node-echo']
+      },
+      status: 'pending',
+      nodeId: 'node-echo'
+    },
+    {
+      id: 'msg-98-004',
+      threadId: 'threads.tech.mind.98',
+      agentId: 'corruptor',
+      sender: 'Corruptor Node',
+      subject: 'Anomaly Detected - Timeline Inconsistency',
+      content: 'ANOMALY ALERT:\n\nA message was reconstructed with the following signature:\n\n"System override detected. Elena\'s consciousness fragmented during unauthorized upload. Lab 4 was compromised before the official protocol failure."\n\nThis message appears in the reconstruction log with timestamp:\n1998-11-16 08:00:00\n\nYet it references actions taken BEFORE the protocol failure (23:47:12).\n\nThis creates a temporal paradox unless... she was already fragments before death.',
+      metadata: {
+        timestamp: Date.now() - 180000,
+        sequence: 4,
+        decayLevel: 55,
+        corruptedBytes: 7,
+        reconstructionLevel: 30,
+        propagationPath: ['node-corruptor', 'node-echo']
+      },
+      status: 'pending',
+      nodeId: 'node-corruptor'
+    }
+  ]
+};
+
 // ============== PROPAGATION ==============
 async function propagateMessage(originalMessage, sourceNodeId) {
   const events = [];
@@ -246,7 +325,13 @@ function getGameState() {
       storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false },
       playerActions: [],
       activeThreads: [],
-      credits: 1000
+      credits: 1000,
+      verticalSlice: {
+        choiceMade: null,
+        choiceTimestamp: null,
+        recordsReconstructed: 0,
+        agentReactions: { archivist: null, echo: null, corruptor: null }
+      }
     };
   }
   return gameState;
@@ -274,7 +359,13 @@ function initializeDefaultData() {
       storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false },
       playerActions: [],
       activeThreads: [],
-      credits: 1000
+      credits: 1000,
+      verticalSlice: {
+        choiceMade: null,
+        choiceTimestamp: null,
+        recordsReconstructed: 0,
+        agentReactions: { archivist: null, echo: null, corruptor: null }
+      }
     };
   }
 }
@@ -320,7 +411,10 @@ const apiHandlers = {
       if (state.credits < cost) throw new Error('Insufficient credits');
       updateGameState({ credits: state.credits - cost });
       logAction({ id: 0, timestamp: Date.now(), actionType: body.actionType, targetId: body.targetId, creditsSpent: cost });
+      
       let result = {};
+      
+      // Vertical slice specific handling
       if (body.actionType === 'reconstruct_memory' && body.targetId) {
         const msg = messages.find(m => m.id === body.targetId);
         if (msg) {
@@ -328,9 +422,16 @@ const apiHandlers = {
           const combined = agentMemoryManager.combineMemories(fragments);
           updateMessage(body.targetId, { metadata: { ...msg.metadata, decayLevel: Math.max(0, msg.metadata.decayLevel - 50), reconstructionLevel: 80 } });
           agentMemoryManager.reconstructMemory('archivist', msg);
+          
+          // Track reconstruction for vertical slice
+          if (state.verticalSlice && !state.verticalSlice.choiceMade) {
+            state.verticalSlice.recordsReconstructed = (state.verticalSlice.recordsReconstructed || 0) + 1;
+          }
+          
           result = { reconstructedContent: combined.content, newDecayLevel: Math.max(0, msg.metadata.decayLevel - 50) };
         }
       }
+      
       return { success: true, actionType: body.actionType, cost, gameState: getGameState(), result };
     }
   },
@@ -377,6 +478,100 @@ const messageApi = {
     GET: (threadId) => messages.filter(m => m.threadId === threadId)
       .sort((a, b) => a.metadata.sequence - b.metadata.sequence)
       .map(m => ({ id: m.id, threadId: m.threadId, agentId: m.agentId, content: m.content, metadata: m.metadata }))
+  },
+  
+  // Vertical slice endpoints
+  '/api/threads/:threadId/choice': {
+    POST: async (threadId, body) => {
+      const state = getGameState();
+      const recordChoice = body.choice; // 'A' or 'B'
+      
+      // Mark choice as made
+      state.verticalSlice.choiceMade = recordChoice;
+      state.verticalSlice.choiceTimestamp = Date.now();
+      
+      // Update story progress
+      state.storyProgress.patternRecognition = true;
+      state.storyProgress.truthUncovered = true;
+      state.storyProgress.choiceMade = true;
+      
+      // Apply effects based on choice
+      let archivistReaction, echoReaction, corruptorReaction;
+      
+      if (recordChoice === 'A') {
+        // Player chose Record A - Archivist's version (standard procedure)
+        archivistReaction = 'The archives confirm this record. Standard procedure was followed.';
+        echoReaction = 'Emotionally, this resonates... but feels incomplete. The truth is buried.';
+        corruptorReaction = 'Of course you chose the official story. They always win.';
+        
+        // Corruptor reveals the anomaly message
+        const anomalyMsg = messages.find(m => m.id === 'msg-98-004');
+        if (anomalyMsg) {
+          anomalyMsg.metadata.reconstructionLevel = 90;
+          anomalyMsg.metadata.decayLevel = Math.max(0, anomalyMsg.metadata.decayLevel - 20);
+        }
+        
+        // Update other messages to show confirmation
+        messages.forEach(m => {
+          if (m.threadId === threadId && m.id !== 'msg-98-004') {
+            m.metadata.reconstructionLevel = Math.min(100, m.metadata.reconstructionLevel + 20);
+          }
+        });
+      } else if (recordChoice === 'B') {
+        // Player chose Record B - Echo's version (unauthorized access)
+        archivistReaction = 'This contradicts the official record. The archives reject this interpretation.';
+        echoReaction = 'Yes! This is what I felt... the truth beneath the silence.';
+        corruptorReaction = 'Good. The official narrative is always corrupted.';
+        
+        // Archivist reveals hidden message about temporal paradox
+        const tempMsg = {
+          id: generateUUID(),
+          threadId: threadId,
+          agentId: 'archivist',
+          sender: 'Archivist Node',
+          subject: 'Temporal Anomaly Detected',
+          content: 'ALERT: Temporal consistency violation detected.\n\nMessage reconstructed with timestamp:\n1998-11-16 07:59:58\n\nThis message predates the protocol failure by 7 minutes 14 seconds.\n\nElena\'s consciousness fragmented BEFORE her physical death.',
+          metadata: {
+            timestamp: Date.now() - 60000,
+            sequence: 99,
+            decayLevel: 25,
+            corruptedBytes: 0,
+            reconstructionLevel: 75,
+            propagationPath: ['node-archivist']
+          },
+          status: 'pending',
+          nodeId: 'node-archivist'
+        };
+        messages.push(tempMsg);
+        
+        // Update other messages to show confirmation
+        messages.forEach(m => {
+          if (m.threadId === threadId && m.id !== tempMsg.id) {
+            m.metadata.reconstructionLevel = Math.min(100, m.metadata.reconstructionLevel + 15);
+          }
+        });
+      }
+      
+      // Record agent reactions
+      state.verticalSlice.agentReactions = {
+        archivist: archivistReaction,
+        echo: echoReaction,
+        corruptor: corruptorReaction
+      };
+      
+      logAction({ id: 0, timestamp: Date.now(), actionType: 'make_choice', targetId: threadId, creditsSpent: 0, payload: { choice: recordChoice } });
+      
+      return {
+        success: true,
+        choice: recordChoice,
+        gameState: getGameState(),
+        agentReactions: {
+          archivist: archivistReaction,
+          echo: echoReaction,
+          corruptor: corruptorReaction
+        }
+      };
+    }
   }
 };
 
@@ -405,6 +600,13 @@ const PORT = process.env.PORT || 3000;
 const FRONTEND_DIR = path.join(__dirname, '../frontend');
 
 initializeDefaultData();
+
+// Inject vertical slice data if no messages exist
+if (messages.length === 0) {
+  VERTICAL_SLICE_DATA.messages.forEach(msg => {
+    messages.push(msg);
+  });
+}
 
 function parseBody(req) {
   return new Promise((resolve, reject) => {
@@ -503,6 +705,13 @@ const server = http.createServer(async (req, res) => {
       const threadMatch = pathname.match(/^\/api\/threads\/([^\/]+)$/);
       if (threadMatch && method === 'GET') {
         const result = messageApi['/api/threads/:threadId'].GET(threadMatch[1]);
+        return sendJSON(res, 200, result);
+      }
+      
+      // Vertical slice choice endpoint
+      const choiceMatch = pathname.match(/^\/api\/threads\/([^\/]+)\/choice$/);
+      if (choiceMatch && method === 'POST') {
+        const result = await messageApi['/api/threads/:threadId/choice'].POST(choiceMatch[1], await parseBody(req));
         return sendJSON(res, 200, result);
       }
       
