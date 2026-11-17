@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Resurrection Spec Track",
+      "trigger": "PreTaskExec",
+      "description": "Validate spec-driven development for Resurrection project",
+      "action": {
+        "type": "command",
+        "command": "echo '{\"hookSpecificOutput\":{\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"Resurrection hackathon project spec creation\"}}'"
+      }
+    }
+  ]
+}
