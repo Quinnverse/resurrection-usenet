@@ -1,0 +1,20 @@
+# HTTPS reverse proxy for the single-instance demo. Caddy obtains and renews the certificate automatically
+# for DEMO_DOMAIN, which must resolve to this host before the first start.
+{$DEMO_DOMAIN} {
+	encode zstd gzip
+
+	# Access logs are discarded: request paths contain session tokens and logs would also hold client addresses.
+	log {
+		output discard
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy game:3000 {
+		# Replace, do not append: the game trusts only this value for rate limiting.
+		header_up X-Forwarded-For {remote_host}
+	}
+}

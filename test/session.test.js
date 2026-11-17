@@ -19,11 +19,11 @@ const engine = require('../combined-server/game/engine');
 const live = new Set();
 process.on('exit', () => { for (const c of live) c.kill('SIGKILL'); });
 
-function startServer(dataDir) {
+function startServer(dataDir, extraEnv = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [SERVER_ENTRY], {
       cwd: ROOT,
-      env: { ...process.env, PORT: '0', RESURRECTION_DATA_DIR: dataDir },
+      env: { ...process.env, PORT: '0', RESURRECTION_DATA_DIR: dataDir, ...extraEnv },
       stdio: ['ignore', 'pipe', 'pipe']
     });
     live.add(child);
@@ -907,4 +907,114 @@ describe('anonymous sessions: deletion', () => {
     const kept = await getJson(server.baseUrl, `/api/sessions/${keep}`);
     assert.equal(kept.revision, 1);
   }));
+});
+
+// ---------- public-demo protections: rate limits, capacity, response headers ----------
+
+async function rawPost(baseUrl, route, body, headers = {}) {
+  const res = await fetch(baseUrl + route, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  return { status: res.status, headers: res.headers, json: await res.json().catch(() => null) };
+}
+
+describe('public-demo protections', () => {
+  it('limits new games per client and returns 429 with Retry-After', async () => {
+    const dataDir = tempDataDir();
+    const server = await startServer(dataDir, { RESURRECTION_RATE_CREATE_PER_HOUR: '2' });
+    try {
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions')).status, 201);
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions')).status, 201);
+      const limited = await rawPost(server.baseUrl, '/api/sessions');
+      assert.equal(limited.status, 429);
+      assert.equal(limited.json.code, 'rate_limited');
+      assert.match(limited.headers.get('retry-after'), /^\d+$/);
+    } finally {
+      await server.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('write limit: the excess action is refused with 429 and changes nothing', async () => {
+    const dataDir = tempDataDir();
+    const server = await startServer(dataDir, { RESURRECTION_RATE_WRITE_PER_MINUTE: '2' });
+    try {
+      const id = (await rawPost(server.baseUrl, '/api/sessions')).json.sessionId;
+      const first = await rawPost(server.baseUrl, `/api/sessions/${id}/actions`, { actionId: 'w1', expectedRevision: 0, type: 'OPEN_THREAD' });
+      assert.equal(first.status, 200);
+      const second = await rawPost(server.baseUrl, `/api/sessions/${id}/actions`, { actionId: 'w2', expectedRevision: 1, type: 'INSPECT_HEADERS', payload: { recordId: 'rec-lab3' } });
+      assert.equal(second.status, 200);
+      const third = await rawPost(server.baseUrl, `/api/sessions/${id}/actions`, { actionId: 'w3', expectedRevision: 2, type: 'INSPECT_HEADERS', payload: { recordId: 'rec-lab4' } });
+      assert.equal(third.status, 429);
+      const state = await getJson(server.baseUrl, `/api/sessions/${id}`);
+      assert.equal(state.revision, 2, 'the refused action was not applied');
+    } finally {
+      await server.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rate limits are per client when the proxy supplies addresses', async () => {
+    const dataDir = tempDataDir();
+    const server = await startServer(dataDir, { RESURRECTION_RATE_CREATE_PER_HOUR: '1', TRUST_PROXY: '1' });
+    try {
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions', undefined, { 'x-forwarded-for': '198.51.100.1' })).status, 201);
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions', undefined, { 'x-forwarded-for': '198.51.100.2' })).status, 201);
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions', undefined, { 'x-forwarded-for': '198.51.100.1' })).status, 429);
+    } finally {
+      await server.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses new games when the archive is at its save limit', async () => {
+    const dataDir = tempDataDir();
+    const server = await startServer(dataDir, { RESURRECTION_MAX_SESSIONS: '2' });
+    try {
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions')).status, 201);
+      assert.equal((await rawPost(server.baseUrl, '/api/sessions')).status, 201);
+      const full = await rawPost(server.baseUrl, '/api/sessions');
+      assert.equal(full.status, 503);
+      assert.equal(full.json.code, 'capacity');
+    } finally {
+      await server.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('pages carry a content-security policy and no-sniff headers', async () => {
+    const dataDir = tempDataDir();
+    const server = await startServer(dataDir);
+    try {
+      const res = await fetch(server.baseUrl + '/');
+      assert.match(res.headers.get('content-security-policy'), /script-src 'self'/);
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.equal(res.headers.get('x-frame-options'), 'DENY');
+      const api = await fetch(server.baseUrl + '/api/health');
+      assert.equal(api.headers.get('cache-control'), 'no-store');
+    } finally {
+      await server.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('the save directory is not listed or served at any public path', async () => {
+    const dataDir = tempDataDir();
+    const server = await startServer(dataDir);
+    try {
+      await rawPost(server.baseUrl, '/api/sessions');
+      // Unknown paths fall back to the game page or a JSON 404; neither may reveal save file names.
+      for (const route of ['/api/sessions', '/data/', '/combined-server/data/', '/api/sessions/']) {
+        const res = await fetch(server.baseUrl + route);
+        const body = await res.text();
+        assert.ok(!body.includes('.json'), `${route} must not reveal save file names`);
+        assert.ok(!/<a href="[^"]*\.json"/.test(body), `${route} must not list saves`);
+      }
+    } finally {
+      await server.stop();
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
 });

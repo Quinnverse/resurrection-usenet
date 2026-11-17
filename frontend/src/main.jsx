@@ -319,7 +319,6 @@ function App() {
         h('span', { className: 'epigraph' }, text(view.epigraph))
       ),
       h('div', { className: 'bar-right' },
-        h('span', { className: 'muted' }, 'Revision ' + view.revision),
         h('button', { className: 'quiet', 'data-focus': 'reset-toggle', onClick: () => setState({ confirmReset: !state.confirmReset }) }, 'Reset game')
       )
     ),
@@ -366,6 +365,7 @@ function App() {
         state.lastResult && ResultPanel({ result: state.lastResult })
       ),
       h('aside', { className: 'side', 'aria-label': 'Context' },
+        LeadsPanel({ view }),
         NetworkPanel({ nodes: view.nodes, record: selected, result: state.lastResult }),
         Voices({ agents: view.agents }),
         Journal({ evidence: view.evidence }),
@@ -448,6 +448,8 @@ function Decisions({ choices }) {
     Object.keys(groups).map(type =>
       h('div', { key: type, className: 'decision-group' },
         h('p', { className: 'kicker' }, DECISION_TITLES[type] || 'Decision'),
+        type === 'COMMIT_DEATH_RECORD' && h('p', { className: 'muted decision-help' },
+          'A working account is provisional. It can be contradicted later, and the other report stays on file as unverified. Preview first to see exactly what changes.'),
         groups[type].map((c, i) => {
           const isPreviewed = preview && preview.action.type === c.type && canonical(preview.action.payload) === canonical(c.payload);
           return h('div', { key: i, className: 'choice' },
@@ -626,13 +628,37 @@ function skipPlayback() {
   updatePlaybackDom();
 }
 
+// Voices are shown by name only. Trust values were not used by any decision and only confused players.
 function Voices({ agents }) {
   if (!agents || agents.length === 0) {
     return h('section', { className: 'panel quiet-panel' }, h('h3', null, 'Voices'), h('p', { className: 'muted' }, 'No other voice has answered yet.'));
   }
   return h('section', { className: 'panel', 'aria-label': 'Voices' },
     h('h3', null, 'Voices'),
-    h('ul', { className: 'voices' }, agents.map(a => h('li', { key: a.id, className: 'voice-' + a.id }, h('strong', null, text(a.name)), ' · trust ' + text(a.trust, 0))))
+    h('ul', { className: 'voices' }, agents.map(a => h('li', { key: a.id, className: 'voice-' + a.id }, h('strong', null, text(a.name)))))
+  );
+}
+
+// Investigation leads and what each one needs. Dependencies are shown; solutions are not.
+function LeadsPanel({ view }) {
+  if (view.storyAct >= 4 || view.evidence.discovered.length <= 1) return null;
+  const found = new Set(view.evidence.discovered.map(e => e.id));
+  const act = view.storyAct;
+  const leads = [
+    { id: 'cache', label: 'Trace the Elena cache (NODE-02)', done: found.has('E06'), open: act >= 2, needs: 'Available after your first decision.' },
+    { id: 'maintenance', label: 'Read the maintenance log', done: found.has('E07'), open: act >= 2, needs: 'Available after your first decision.' },
+    { id: 'mailbox', label: 'Rebuild the mailbox index', done: found.has('E08'), open: found.has('E06'), needs: 'Needs the cache note first.' },
+    { id: 'provenance', label: 'Trace the shutdown command', done: found.has('E09'), open: found.has('E03') && found.has('E04'), needs: 'Needs both reports compared.' },
+    { id: 'relay4', label: 'Trace the Lab 4 relay', done: found.has('E10'), open: found.has('E04') && found.has('E09'), needs: 'Needs the shutdown command traced first.' }
+  ];
+  const doneCount = leads.filter(l => l.done).length;
+  return panel('leads', true, 'Leads · ' + doneCount + ' of ' + leads.length + ' followed',
+    h('ul', { className: 'leads' }, leads.map(l => h('li', { key: l.id, className: l.done ? 'lead done' : (l.open ? 'lead open' : 'lead locked') },
+      h('span', null, l.done ? 'Followed: ' : (l.open ? 'Open: ' : 'Locked: ')),
+      l.label,
+      !l.done && !l.open && h('span', { className: 'muted' }, ' · ' + l.needs)
+    ))),
+    h('p', { className: 'muted' }, 'Leads can be followed in any order that their requirements allow.')
   );
 }
 

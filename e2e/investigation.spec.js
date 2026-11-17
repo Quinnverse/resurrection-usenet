@@ -71,6 +71,9 @@ test.describe('branch A: Lab 3 account, forensic memory, exposed provenance, The
     await shot(page, testInfo, '01-cold-open');
 
     await openAndCompare(page);
+    await expect(page.getByText(/Leads · \d+ of 5 followed/)).toBeVisible();
+    await expect(page.getByText(/Revision \d+/)).toHaveCount(0);
+    await expect(page.getByText(/undefined|\bnull\b/)).toHaveCount(0);
     await shot(page, testInfo, '02-first-investigation');
     await shot(page, testInfo, '03-contradictory-records');
 
@@ -90,9 +93,9 @@ test.describe('branch A: Lab 3 account, forensic memory, exposed provenance, The
 
     await investigateToMemoryBudget(page);
 
-    const revisionBefore = await page.getByText(/Revision \d+/).first().innerText();
+    const journalBefore = await page.getByText(/Journal · \d+ of 12 found/).first().innerText();
     await page.reload();
-    await expect(page.getByText(revisionBefore)).toBeVisible();
+    await expect(page.getByText(journalBefore)).toBeVisible();
     await expect(page.getByText(/Act 2/).first()).toBeVisible();
 
     await choose(page, 'forensic chronology', 'PREVIEW');

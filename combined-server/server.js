@@ -682,7 +682,23 @@ const PORT = Number(process.env.PORT ?? 3000);
 const MAX_BODY_BYTES = 16 * 1024;
 const SAVE_DIR = process.env.RESURRECTION_DATA_DIR || path.join(__dirname, 'data');
 const sessionStore = createStore(SAVE_DIR);
-const sessionApi = createSessionApi({ store: sessionStore });
+const LIMITS = {
+  createPerHour: Number(process.env.RESURRECTION_RATE_CREATE_PER_HOUR ?? 20),
+  writesPerMinute: Number(process.env.RESURRECTION_RATE_WRITE_PER_MINUTE ?? 120),
+  maxSessions: Number(process.env.RESURRECTION_MAX_SESSIONS ?? 2000),
+  maxBytes: Number(process.env.RESURRECTION_MAX_STORAGE_MB ?? 512) * 1024 * 1024
+};
+const sessionApi = createSessionApi({ store: sessionStore, limits: LIMITS });
+
+// Client address for rate limiting. Behind a reverse proxy (TRUST_PROXY=1) the proxy's forwarded address is used.
+// Addresses are used only as in-memory keys: they are never logged or written to saves.
+function clientKeyFor(req) {
+  if (process.env.TRUST_PROXY === '1') {
+    const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    if (forwarded) return forwarded;
+  }
+  return req.socket.remoteAddress || 'unknown';
+}
 
 // Removes saves inactive for seven days before the first request, then every 24 hours.
 function logRetention(result) {
@@ -720,10 +736,17 @@ function parseBody(req) {
   });
 }
 
-function sendJSON(res, status, data) {
-  res.writeHead(status, { 'Content-Type': 'application/json' });
+function sendJSON(res, status, data, extraHeaders = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...extraHeaders });
   res.end(JSON.stringify(data));
 }
+
+const PAGE_SECURITY_HEADERS = {
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY'
+};
 
 function serveStaticFile(res, filePath) {
   const absolutePath = path.join(FRONTEND_DIR, filePath);
@@ -756,7 +779,7 @@ function serveStaticFile(res, filePath) {
         res.end('Internal Server Error');
         return;
       }
-      res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
+      res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream', ...PAGE_SECURITY_HEADERS });
       res.end(data);
     });
   });
@@ -779,8 +802,8 @@ const server = http.createServer(async (req, res) => {
 
     // Session API (persistent, versioned game state)
     if (pathname.startsWith('/api/sessions')) {
-      const sessionResult = await sessionApi.handle({ method, pathname, readBody: () => parseBody(req) });
-      if (sessionResult) return sendJSON(res, sessionResult.status, sessionResult.body);
+      const sessionResult = await sessionApi.handle({ method, pathname, readBody: () => parseBody(req), clientKey: clientKeyFor(req) });
+      if (sessionResult) return sendJSON(res, sessionResult.status, sessionResult.body, sessionResult.headers || {});
     }
 
     // Legacy API routes (global in-memory state, kept for the existing test suite)

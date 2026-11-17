@@ -27,7 +27,7 @@ jobs:
   browser:
     name: Browser end-to-end (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -56,3 +56,53 @@ jobs:
             playwright-report/
           if-no-files-found: warn
           retention-days: 14
+
+  container:
+    name: Container smoke (build, health, restart recovery, no tokens in logs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t resurrection:ci .
+
+      - name: Confirm the image runs as the unprivileged user
+        run: test "$(docker image inspect resurrection:ci --format '{{.Config.User}}')" = "node"
+
+      - name: Start with a persistent save volume (read-only root, no capabilities)
+        run: |
+          docker volume create resurrection-ci-saves
+          docker run -d --name game -p 3000:3000 \
+            -v resurrection-ci-saves:/data \
+            --read-only --tmpfs /tmp \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            resurrection:ci
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:3000/api/health && break; sleep 1; done
+          curl -fs http://127.0.0.1:3000/api/health
+
+      - name: Create a session and advance it
+        run: |
+          SID=$(curl -fsS -X POST http://127.0.0.1:3000/api/sessions | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).sessionId))")
+          echo "SID=$SID" >> "$GITHUB_ENV"
+          curl -fsS -X POST "http://127.0.0.1:3000/api/sessions/$SID/actions" -H 'content-type: application/json' \
+            -d '{"actionId":"ci-open-1","expectedRevision":0,"type":"OPEN_THREAD","payload":{}}' | grep -q '"revision":1'
+
+      - name: Restart the container and recover the session from the volume
+        run: |
+          docker restart game
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:3000/api/health && break; sleep 1; done
+          curl -fsS "http://127.0.0.1:3000/api/sessions/$SID" | grep -q '"revision":1'
+
+      - name: Logs carry no session tokens or save paths
+        run: |
+          if docker logs game 2>&1 | grep -Eq '[a-f0-9]{64}|/data/'; then
+            echo "Sensitive value found in container logs"; docker logs game; exit 1
+          fi
+
+      - name: Stop and remove the container
+        if: always()
+        run: |
+          docker rm -f game || true
+          docker volume rm resurrection-ci-saves || true

@@ -1,0 +1,83 @@
+# Single-instance public demo. Two containers: the game (never exposed directly) and a Caddy proxy
+# that terminates HTTPS. Run from the repository root:
+#   DEMO_DOMAIN=demo.example.org docker compose -f deploy/docker-compose.yml up -d --build
+# Do not run more than one game container: saves and rate limits are per instance.
+name: resurrection
+
+services:
+  game:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: resurrection:latest
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      RESURRECTION_DATA_DIR: /data
+      TRUST_PROXY: "1"
+      RESURRECTION_RATE_CREATE_PER_HOUR: "20"
+      RESURRECTION_RATE_WRITE_PER_MINUTE: "120"
+      RESURRECTION_MAX_SESSIONS: "2000"
+      RESURRECTION_MAX_STORAGE_MB: "512"
+    volumes:
+      - saves:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "node"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+        reservations:
+          memory: 96M
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      game:
+        condition: service_healthy
+    environment:
+      DEMO_DOMAIN: ${DEMO_DOMAIN:?Set DEMO_DOMAIN to the public host name}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  saves:
+  caddy-data:
+  caddy-config:

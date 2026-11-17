@@ -62,6 +62,18 @@ function createStore(dataDir, { now = () => Date.now() } = {}) {
       fs.renameSync(temp, target);
     },
 
+    // Counts saves and bytes on disk, for the public-demo capacity limit. Returns totals only.
+    stats() {
+      let sessions = 0;
+      let bytes = 0;
+      for (const name of fs.readdirSync(dataDir)) {
+        if (!FILE_PATTERN.test(name)) continue;
+        sessions += 1;
+        bytes += fs.statSync(path.join(dataDir, name)).size;
+      }
+      return { sessions, bytes };
+    },
+
     isExpired(session) {
       const last = Date.parse(session.lastActiveAt);
       return Number.isNaN(last) || now() - last > RETENTION_MS;

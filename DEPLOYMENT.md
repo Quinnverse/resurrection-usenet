@@ -1,45 +1,82 @@
-# Deployment
+# Deployment procedure (single instance)
 
-**Status: not deployed.** This repository prepares the configuration only. Creating a public host, spending money, or publishing a URL needs owner authorization.
+**Status: release candidate. Not deployed. No public URL exists.** Publishing needs the owner's authorization listed in section 7.
 
-## Local production-style run
+This is the only deployment procedure. It uses `deploy/docker-compose.yml`, which runs the game and an HTTPS proxy on one host.
 
-```bash
-npm start                                   # PORT=3000 by default
-PORT=8080 RESURRECTION_DATA_DIR=/var/lib/resurrection npm start
-```
+## 1. Requirements
 
-## Container image
+| Item | Requirement |
+|---|---|
+| Host | One Linux machine or VM with Docker Engine and the Compose plugin (v2) |
+| Domain | A host name whose DNS A/AAAA record points at the host, with ports 80 and 443 open |
+| CPU | 1 vCPU for the game, 0.5 vCPU for the proxy (limits set in Compose) |
+| Memory | About 256 MB for the game and 128 MB for the proxy (limits set in Compose). Expect about 100 MB resident for the game. |
+| Disk | Save volume: plan for 512 MB (the application's own cap, `RESURRECTION_MAX_STORAGE_MB`). Add headroom for images and logs: 2 GB total is comfortable. |
+| Network | Outbound HTTPS to the certificate authority for the certificate. No other outbound calls: the game uses no external API. |
+| External services | None required. No database, no model API, no object storage. |
 
-```bash
-docker build -t resurrection .
-docker run -p 3000:3000 -v resurrection-data:/data resurrection
-```
+Estimated load: each game makes about 30 requests, and each save is well under 256 KB. A single 1 vCPU instance should handle modest demo traffic. Measure before promoting it.
 
-The image runs as the `node` user, uses Node 22 (Alpine), and keeps saves on the `/data` volume. A health check calls `/api/health`.
+## 2. Configuration
 
-## Choosing a host (free tiers change; check before use)
-
-The game needs a long-running Node process and a writable disk for saves. A static host alone cannot run it. Candidates to check:
-
-- A container host with a free or trial tier and a persistent volume (for example, Fly.io or Render). Confirm that persistent disks are included in the free tier before choosing.
-- A small VPS you already own, with the Docker image or `npm start` under systemd.
-
-Check each provider's current terms and pricing yourself. Do not assume a free tier still exists.
-
-## Checklist before any public launch
-
-1. Owner decides the host and approves the cost (zero is acceptable only if the provider confirms it).
-2. Confirm the save directory is on persistent storage. Losing it resets every player's game.
-3. Confirm retention on the host's disk: saves expire after seven days of inactivity, and cleanup runs at startup and every 24 hours (implemented in `combined-server/game/store.js`).
-4. Put the site behind HTTPS (most hosts provide this).
-5. Run `npm test` and `npm run test:e2e` against the exact commit being deployed.
-6. Record the public URL in the README only after the deployed site has been tested.
-
-## Environment variables
+Set one variable. All others have safe defaults in `deploy/docker-compose.yml`.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `PORT` | `3000` | HTTP port. `0` picks a free port (used by the tests). |
-| `RESURRECTION_DATA_DIR` | `combined-server/data` | Directory for session save files. |
-| `NODE_ENV` | unset | `production` in the Docker image. |
+| `DEMO_DOMAIN` | required | Public host name for HTTPS |
+| `RESURRECTION_RATE_CREATE_PER_HOUR` | 20 | New games per client address per hour |
+| `RESURRECTION_RATE_WRITE_PER_MINUTE` | 120 | Actions, resets and deletes per client address per minute |
+| `RESURRECTION_MAX_SESSIONS` | 2000 | Saves on disk before new games are refused (HTTP 503) |
+| `RESURRECTION_MAX_STORAGE_MB` | 512 | Total save size before new games are refused |
+
+Saves expire after seven days without activity. The server removes expired saves at startup and every 24 hours.
+
+## 3. Procedure
+
+Run from the repository root on the host:
+
+```bash
+# 1. Get the release candidate at the tagged commit
+git fetch origin && git checkout <release-candidate-sha>
+
+# 2. Run the authoritative tests on the same commit (must pass)
+npm test
+
+# 3. Build and start (the proxy obtains the certificate on first start)
+DEMO_DOMAIN=demo.example.org docker compose -f deploy/docker-compose.yml up -d --build
+
+# 4. Confirm health through the proxy
+curl -fsS https://demo.example.org/api/health
+
+# 5. Confirm the container user and the save volume
+docker compose -f deploy/docker-compose.yml exec game id
+docker volume inspect resurrection_saves
+```
+
+Expected: step 4 prints `{"status":"ok",...}`; step 5 shows user `node` (uid 1000).
+
+## 4. Verify before announcing
+
+Run the browser suite against the deployed URL only if the owner approves it. Otherwise run the same checks in CI on the commit (see `docs/RELEASE-CHECKLIST.md`).
+
+## 5. Operations
+
+- **Update:** repeat section 3 with the new commit. Compose replaces the container; the save volume is kept.
+- **Restart recovery:** `docker compose ... restart game`. Existing saves reload from the volume.
+- **Logs:** the game logs only start-up messages and save-cleanup counts. The proxy discards access logs, so request paths (which contain session tokens) and client addresses are not stored.
+- **Delete all saves:** `docker compose ... down -v` removes the save volume. This is irreversible.
+- **Rollback:** check out the previous commit and repeat section 3.
+
+## 6. What is not in place
+
+- Multiple instances: saves and rate limits are per instance. Do not scale out.
+- Backups: saves are not backed up. Losing the volume loses progress.
+- Monitoring and alerting: not configured. Health checks run inside Docker and through the proxy.
+
+## 7. Owner authorization needed before publishing
+
+1. Choose the host and provider, and approve its cost (zero is acceptable only if the provider confirms it).
+2. Choose and register the domain, and point its DNS record at the host.
+3. Approve the public launch and the demo publication (video, screenshots, public URL).
+4. Confirm the privacy notice in `docs/PRIVACY.md` matches the hosting arrangement.

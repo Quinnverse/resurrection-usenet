@@ -7,7 +7,52 @@ const { GameError } = engine;
 const ACTION_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_PAYLOAD_KEYS = 8;
 
-function createSessionApi({ store, now = () => new Date().toISOString() }) {
+const DEFAULT_LIMITS = {
+  createPerHour: 20,        // new games per client address
+  writesPerMinute: 120,     // actions, resets and deletes per client address
+  maxSessions: 2000,        // saves on disk
+  maxBytes: 512 * 1024 * 1024
+};
+
+// Sliding-window limiter kept in memory. Keys are client addresses; they are never logged or saved.
+function createLimiter(max, windowMs, clock = () => Date.now()) {
+  const hits = new Map();
+  return {
+    take(key) {
+      const t = clock();
+      const recent = (hits.get(key) || []).filter(x => t - x < windowMs);
+      if (recent.length >= max) {
+        hits.set(key, recent);
+        return { ok: false, retryAfter: Math.max(1, Math.ceil((recent[0] + windowMs - t) / 1000)) };
+      }
+      recent.push(t);
+      hits.set(key, recent);
+      if (hits.size > 5000) {
+        for (const [k, v] of hits) if (!v.some(x => t - x < windowMs)) hits.delete(k);
+      }
+      return { ok: true };
+    }
+  };
+}
+
+function createSessionApi({ store, now = () => new Date().toISOString(), limits: overrides = {} }) {
+  const L = { ...DEFAULT_LIMITS, ...overrides };
+  const createLimit = createLimiter(L.createPerHour, 60 * 60 * 1000);
+  const writeLimit = createLimiter(L.writesPerMinute, 60 * 1000);
+  let statsCache = null;
+  let statsAt = 0;
+  const limited = (retry) => ({
+    status: 429,
+    body: { error: 'Too many requests from this connection. Please wait and try again.', code: 'rate_limited' },
+    headers: { 'Retry-After': String(retry) }
+  });
+  const hasCapacity = () => {
+    if (!statsCache || Date.now() - statsAt > 10000) {
+      statsCache = store.stats();
+      statsAt = Date.now();
+    }
+    return statsCache.sessions < L.maxSessions && statsCache.bytes < L.maxBytes;
+  };
   // Malformed, unknown and expired IDs all get the same response, so IDs cannot be probed for existence.
   const notFound = () => new GameError(404, 'session_not_found', 'No session with that ID.');
   const TOUCH_INTERVAL_MS = 60 * 1000;
@@ -29,6 +74,7 @@ function createSessionApi({ store, now = () => new Date().toISOString() }) {
     const id = store.newId();
     const session = engine.newSession({ sessionId: id, now: now() });
     store.save(session);
+    statsCache = null;
     const view = engine.projection(session);
     return { status: 201, body: { sessionId: id, revision: session.revision, sceneId: view.sceneId, state: view } };
   }
@@ -117,12 +163,24 @@ function createSessionApi({ store, now = () => new Date().toISOString() }) {
   }
 
   // Returns { status, body } for session routes, or null for any other path.
-  async function handle({ method, pathname, readBody }) {
+  async function handle({ method, pathname, readBody, clientKey = 'unknown' }) {
     if (!pathname.startsWith('/api/sessions')) return null;
     const parts = pathname.split('/').filter(Boolean); // ['api','sessions', id?, sub?, subId?]
+    const isWrite = method === 'DELETE' || (method === 'POST' && parts.length >= 3);
 
     try {
-      if (parts.length === 2 && method === 'POST') return createSession();
+      if (parts.length === 2 && method === 'POST') {
+        const gate = createLimit.take(clientKey);
+        if (!gate.ok) return limited(gate.retryAfter);
+        if (!hasCapacity()) {
+          return { status: 503, body: { error: 'The archive is full for now. Please try again later.', code: 'capacity' }, headers: { 'Retry-After': '3600' } };
+        }
+        return createSession();
+      }
+      if (isWrite) {
+        const gate = writeLimit.take(clientKey);
+        if (!gate.ok) return limited(gate.retryAfter);
+      }
 
       const id = parts[2];
       if (parts.length === 3 && method === 'GET') {

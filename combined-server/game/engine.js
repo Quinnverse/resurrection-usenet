@@ -144,7 +144,7 @@ function availableActions(s) {
   }
   if (has(s, 'E04') && !s.chosen.deathRecord) {
     for (const choice of ['LAB3', 'LAB4']) {
-      out.push({ type: 'COMMIT_DEATH_RECORD', payload: { choice }, label: `PROVISIONALLY RECONSTRUCT: ${C.CHOICE_LABELS[choice]}`, previewable: true });
+      out.push({ type: 'COMMIT_DEATH_RECORD', payload: { choice }, label: `MAKE THIS THE WORKING ACCOUNT: ${C.CHOICE_LABELS[choice]}`, previewable: true });
     }
   }
   if (has(s, 'E03') && has(s, 'E04') && !has(s, 'E09')) {
