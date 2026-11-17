@@ -106,6 +106,8 @@ test.describe('P3 full playthrough (English, desktop)', () => {
     await expect(page.getByTestId('island-canvas')).toBeVisible();
     await page.getByTestId('island-console').click();
     await expect(page.getByTestId('island-caption')).toContainText('Thank you for coming back');
+    // The fade-in lasts 0.35 s and the parts grow over about 1.5 s. Wait so the screenshot shows the finished island.
+    await page.waitForTimeout(2500);
     await shot(page, testInfo, '08-island');
 
     expect(issues, issues.join('\n')).toEqual([]);
