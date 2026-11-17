@@ -254,3 +254,74 @@ test.describe('presentation and accessibility', () => {
     await shot(page, testInfo, '10-mobile');
   });
 });
+
+test.describe('mobile full playthrough (390 x 844)', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  async function expectNoOverflow(page, label) {
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, `horizontal overflow at ${label}`).toBeLessThanOrEqual(1);
+  }
+
+  test('investigation, propagation and an ending play on a phone without overflow', async ({ page }, testInfo) => {
+    const issues = [];
+    watchPage(page, issues);
+
+    await enterArchive(page);
+    await expectNoOverflow(page, 'cold open');
+    await openAndCompare(page);
+    await expectNoOverflow(page, 'contradictory records');
+    await choose(page, 'the Lab 3 shutdown record', 'PREVIEW');
+    await expectNoOverflow(page, 'preview');
+    await commitPreviewed(page);
+    await page.getByRole('button', { name: 'Skip to final state' }).click();
+    await expect(page.locator('svg.network')).toBeVisible();
+    await expectNoOverflow(page, 'propagation');
+    await shot(page, testInfo, '11-mobile-propagation');
+
+    await investigateToMemoryBudget(page);
+    await choose(page, 'forensic chronology', 'PREVIEW');
+    await commitPreviewed(page);
+    await choose(page, 'EXPOSE the edit history', 'PREVIEW');
+    await commitPreviewed(page);
+    await page.getByRole('button', { name: 'A choice already made' }).click();
+    await expectNoOverflow(page, 'temporal anomaly');
+
+    await page.getByRole('button', { name: 'CHOOSE ENDING: THE ECHO' }).click();
+    await settle(page);
+    await expect(page.locator('main.ending-echo')).toBeVisible();
+    await expectNoOverflow(page, 'echo ending');
+    await shot(page, testInfo, '12-mobile-ending-echo');
+
+    expect(issues, issues.join('\n')).toEqual([]);
+  });
+
+  test('the Last Letter can be composed and sealed on a phone', async ({ page }, testInfo) => {
+    const issues = [];
+    watchPage(page, issues);
+
+    await enterArchive(page);
+    await openAndCompare(page);
+    await choose(page, 'the Lab 4 access record', 'PREVIEW');
+    await commitPreviewed(page);
+    await investigateToMemoryBudget(page);
+    await choose(page, 'human memory', 'PREVIEW');
+    await commitPreviewed(page);
+    await choose(page, 'HOLD the edit pending review', 'PREVIEW');
+    await commitPreviewed(page);
+
+    await expect(page.locator('section.letter-composer')).toBeVisible();
+    await expectNoOverflow(page, 'letter composer');
+    await page.getByRole('radio', { name: /anyone else's expense/ }).check();
+    await page.getByRole('button', { name: 'SEAL THE LETTER…' }).click();
+    await expectNoOverflow(page, 'seal confirmation');
+    await shot(page, testInfo, '13-mobile-letter-composer');
+    await page.getByRole('button', { name: 'SEAL AND END THE COPY' }).click();
+    await settle(page);
+    await expect(page.locator('main.ending-last-letter')).toBeVisible();
+    await expectNoOverflow(page, 'last letter ending');
+    await shot(page, testInfo, '14-mobile-ending-last-letter');
+
+    expect(issues, issues.join('\n')).toEqual([]);
+  });
+});

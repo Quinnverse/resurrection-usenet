@@ -200,7 +200,8 @@ function generateAnomaly(d) {
     .replace('{choice_label}', C.CHOICE_LABELS[first.payload.choice])
     .replace('{short_session_id}', shortSessionLabel(d.sessionId))
     .replace('{event_id}', first.id);
-  d.records['rec-anomaly'].body = `FROM: operator@archive.local / DATE: 1998-10-31 23:42 / SUBJECT: A choice already made / BODY: ${body}`;
+  // Sender, date and subject are carried by the record's headers; the body is the message itself.
+  d.records['rec-anomaly'].body = body;
 }
 
 function deriveEvidence(d) {
@@ -493,7 +494,8 @@ function composeLetter(s, closing) {
 // Record bodies that differ from their authored text: what the archive now remembers differently.
 function divergenceOf(s) {
   return Object.values(s.records)
-    .filter(rec => rec.id !== 'rec-anomaly' && C.RECORDS[rec.id].body !== null && rec.body !== C.RECORDS[rec.id].body)
+    // The ending summary is the verdict, not a memory, so it is not listed as divergence.
+    .filter(rec => rec.id !== 'rec-anomaly' && rec.id !== 'rec-summary' && C.RECORDS[rec.id].body !== null && rec.body !== C.RECORDS[rec.id].body)
     .map(rec => ({ recordId: rec.id, subject: rec.subject, now: rec.body }));
 }
 

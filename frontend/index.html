@@ -23,11 +23,13 @@
       --mono: 'Courier New', Courier, monospace;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: var(--ink-black); color: var(--paper); }
+    html { background: var(--ink-black); }
+    html, body { margin: 0; min-height: 100%; color: var(--paper); }
     body {
       font-family: var(--serif); font-size: 17px; line-height: 1.6;
-      background: radial-gradient(ellipse at 30% 0%, #15243a 0%, var(--ink-blue) 38%, var(--ink-black) 80%);
-      background-attachment: fixed;
+      /* Not fixed: a fixed gradient leaves a seam in full-page captures and on tall screens. */
+      background: radial-gradient(ellipse at 30% 0%, #15243a 0%, var(--ink-blue) 38%, var(--ink-black) 80%) no-repeat;
+      background-size: 100% 100%;
     }
     h1, h2, h3 { font-weight: normal; margin: 0 0 0.5rem; }
     h1.title { font-size: clamp(2.2rem, 6vw, 3.6rem); letter-spacing: 0.14em; }
@@ -158,7 +160,9 @@
     .seal-confirm p { color: var(--paper); }
 
     /* Endings: each has its own treatment. */
-    .ending { max-width: 760px; min-height: 100vh; padding-top: 8vh; }
+    /* Full-bleed: the ending's own background fills the viewport; the text column is centred inside it. */
+    .ending { width: 100%; min-height: 100vh; padding: 8vh max(1.25rem, calc(50% - 380px)) 4rem; }
+    .endings button { display: block; width: 100%; margin: 0.45rem 0; text-align: center; }
     .ending-archive { background: #070a0e; color: #b9c8d8; font-family: var(--mono); font-size: 16px; }
     .ending-archive .title { color: #d6e2ee; font-weight: normal; letter-spacing: 0.2em; }
     .ending-archive .kicker, .ending-archive .panel summary { color: #7f97ae; }

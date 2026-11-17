@@ -390,13 +390,13 @@ function ColdOpen({ view, openAction }) {
         h('dt', null, 'Sent'), h('dd', null, text(headers.timestamp)),
         h('dt', null, 'Sender account'), h('dd', null, text(headers.account, 'no record'))
       ),
-      h('p', { className: 'cold-note' }, 'A closed account cannot send mail. This message was sent after its sender stopped existing in the system.'),
+      h('p', { className: 'cold-note' }, 'A closed account should not be able to send mail. Someone, or something, sent this one anyway.'),
       h('div', { className: 'cold-actions' },
         h('button', { className: 'primary', 'data-focus': 'open-transmission', onClick: () => runAction(openAction), disabled: state.busy }, 'OPEN TRANSMISSION'),
         h('button', { className: 'quiet', 'data-focus': 'skip-intro', onClick: () => setState({ skipIntro: true }) }, 'Skip intro')
       )
     ),
-    state.coldStage >= 1 && h('p', { className: 'cold-hint' }, 'Opening the transmission begins the investigation. Your choices here are recorded on the server.'),
+    state.coldStage >= 1 && h('p', { className: 'cold-hint' }, 'Opening the transmission starts the investigation. Its headers will be compared with the other reports.'),
     state.coldStage === 0 && h('button', { className: 'quiet', 'data-focus': 'skip-intro', onClick: () => setState({ skipIntro: true }) }, 'Skip intro')
   );
 }
@@ -472,7 +472,7 @@ function LetterComposer({ letter, actions }) {
   const seal = actions.find(a => a.payload.closing === state.letterClosing);
   return h('section', { className: 'panel letter-composer', 'aria-label': 'The Last Letter' },
     h('p', { className: 'kicker' }, 'The Last Letter · assembled from the archive'),
-    h('p', { className: 'lede' }, 'Each line below comes from something you already found. Choose how the letter closes, then decide whether to seal it.'),
+    h('p', { className: 'lede' }, 'Every line here came from something you found. Choose how the letter ends, then decide whether to seal it.'),
     letter.slots.map(slot => h('div', { key: slot.id, className: 'letter-slot' },
       h('span', { className: 'slot-source' }, 'from ' + slot.source),
       h('p', null, slot.text))),

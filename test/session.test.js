@@ -252,7 +252,8 @@ describe('engine: operator anomaly (E11) is derived from the event log', () => {
     const label = createHash('sha256').update(session.sessionId).digest('hex').slice(0, 8);
     assert.ok(body.includes(`session ${label}`), 'label is a hash prefix, not part of the credential');
     assert.ok(!body.includes(session.sessionId.slice(0, 8)), 'the anomaly must not quote any prefix of the token');
-    assert.ok(body.includes('DATE: 1998-10-31 23:42'));
+    assert.equal(session.records['rec-anomaly'].headers.timestamp, '1998-10-31 23:42', 'the impossible date is carried by the header');
+    assert.ok(!body.includes('FROM:'), 'the body is the message itself, not a repeated header');
   });
 
   it('two sessions with different first choices produce different anomaly text', () => {
