@@ -97,8 +97,14 @@
     .island { list-style: none; padding: 0; }
     .island li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid #2f2a5a; }
     .glyph { color: var(--accent); font-size: 20px; width: 1.4em; text-align: center; }
+    .prompt { min-height: 1.6em; color: var(--accent); margin: 6px 0; }
+    .settings { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .scene.enter { animation: p3-fade 0.35s ease-out; }
+    @keyframes p3-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .reduce-motion .scene.enter { animation: none; }
+    .reduce-motion .stage { image-rendering: auto; }
     @media (prefers-reduced-motion: reduce) {
-      .computer.glow { animation: none; }
+      .scene.enter { animation: none; }
     }
     @media (max-width: 480px) {
       h1 { font-size: 24px; }
@@ -112,6 +118,7 @@
   </main>
   <script src="/p3/i18n.js"></script>
   <script src="/p3/level.js"></script>
+  <script src="/p3/audio.js"></script>
   <script src="/p3/game.js"></script>
 </body>
 </html>

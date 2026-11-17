@@ -80,7 +80,14 @@
     skipScene: 'Skip',
     saveNotice: 'Progress is saved in this browser.',
     saveCorrupt: 'The saved progress could not be read, so a new game started.',
-    langLabel: 'Language'
+    langLabel: 'Language',
+    soundOn: 'Sound: on',
+    soundOff: 'Sound: off',
+    motionFull: 'Motion: full',
+    motionReduced: 'Motion: reduced',
+    roomPromptComputer: 'Press E to use the computer.',
+    roomPromptPhoto: 'Press E to look at the photo.',
+    photoCaption: 'A photo of her at this desk, sketching a level on graph paper. In the corner of the sketch she wrote: "a star for someone".'
   };
 
   var zh = {
@@ -151,7 +158,14 @@
     skipScene: '跳过',
     saveNotice: '进度保存在这个浏览器中。',
     saveCorrupt: '无法读取已保存的进度，已开始新游戏。',
-    langLabel: '语言'
+    langLabel: '语言',
+    soundOn: '声音：开',
+    soundOff: '声音：关',
+    motionFull: '动态：完整',
+    motionReduced: '动态：减少',
+    roomPromptComputer: '按 E 使用电脑。',
+    roomPromptPhoto: '按 E 仔细看照片。',
+    photoCaption: '照片里她坐在这张桌前，在方格纸上画关卡。草图角落写着：「一颗给某个人的星」。'
   };
 
   var dictionaries = { en: en, zh: zh };

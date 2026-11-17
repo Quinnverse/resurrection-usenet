@@ -270,6 +270,13 @@
       return { state: s, events: events };
     }
     var rows = gridFor(s.flags);
+    stepOn(rows, s, input, events);
+    collectOverlaps(s, rows, events);
+    return { state: s, events: events };
+  }
+
+  // Advances the already-cloned state s by one fixed step on the given grid. Mutates s and appends to events.
+  function stepOn(rows, s, input, events) {
     var keys = input || {};
 
     // Horizontal velocity comes directly from input.
@@ -319,8 +326,60 @@
 
     s.x = p.x;
     s.y = p.y;
-    collectOverlaps(s, rows, events);
+  }
+
+  // ---- room scene --------------------------------------------------------------------
+  // The opening room is a small walkable grid with the same physics. 'C' is the computer and 'P' the photo.
+  // Both are interacted with by pressing E while standing near them. Nothing in the room changes the level flags.
+
+  var ROOM_W = 20;
+  var ROOM_OBJECTS = {
+    C: { x: 15.5, y: 9, id: 'computer' },
+    P: { x: 4.5, y: 5, id: 'photo' }
+  };
+  var INTERACT_RANGE = 1.6;
+
+  function roomRows() {
+    var rows = blankRows();
+    fillRect(rows, 0, 10, ROOM_W - 2, 11, '#');
+    fillRect(rows, ROOM_W - 1, 0, ROOM_W - 1, H - 1, 'x');
+    fillRect(rows, 8, 2, 11, 4, 'W');       // window with moonlight, scenery only
+    paint(rows, 4, 5, 'P');
+    paint(rows, 15, 9, 'C');
+    return Object.freeze(rows);
+  }
+
+  var ROOM_ROWS = roomRows();
+
+  function roomInitialState() {
+    var s = initialState();
+    s.x = 2.5;
+    s.y = 10;
+    s.lastSafe = { x: 2.5, y: 10 };
+    return s;
+  }
+
+  // Moves the room state one fixed step. Returns { state, events } with no level side effects.
+  function stepRoom(state, input) {
+    var s = cloneState(state);
+    var events = [];
+    stepOn(ROOM_ROWS, s, input, events);
     return { state: s, events: events };
+  }
+
+  // Returns the id ('computer' or 'photo') of the nearest room object in reach, or null.
+  function roomObjectNear(state) {
+    var best = null;
+    var bestDist = INTERACT_RANGE;
+    Object.keys(ROOM_OBJECTS).forEach(function (ch) {
+      var o = ROOM_OBJECTS[ch];
+      var d = Math.abs(state.x - o.x);
+      if (d <= bestDist) {
+        best = o.id;
+        bestDist = d;
+      }
+    });
+    return best;
   }
 
   // Pickups, signs and the door, checked against every tile the player box overlaps.
@@ -474,6 +533,12 @@
     restore: restore,
     islandElements: islandElements,
     serialize: serialize,
-    parse: parse
+    parse: parse,
+    ROOM_W: ROOM_W,
+    ROOM_OBJECTS: ROOM_OBJECTS,
+    roomRows: function () { return ROOM_ROWS; },
+    roomInitialState: roomInitialState,
+    stepRoom: stepRoom,
+    roomObjectNear: roomObjectNear
   };
 });

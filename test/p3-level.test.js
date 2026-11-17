@@ -149,6 +149,66 @@ describe('P3 physics', () => {
   });
 });
 
+describe('P3 route', () => {
+  it('reaches the hidden star: run-and-jump from ledge 7 onto ledge 5, step left, jump', () => {
+    let s = L.initialState();
+    s = run(s, 70, RIGHT).state;                                    // run from spawn to x 9.5
+    s = run(s, 1, { left: false, right: true, jump: true }).state; // jump onto ledge 7
+    for (let i = 0; i < 200 && !(s.onGround && Math.abs(s.y - 7) < 0.01); i++) {
+      s = L.step(s, RIGHT).state;
+    }
+    for (let i = 0; i < 200 && s.x < 14; i++) {
+      s = L.step(s, RIGHT).state;                                  // run to the ledge edge at x 14
+    }
+    s = run(s, 1, { left: false, right: true, jump: true }).state; // jump across the gap at column 15
+    for (let i = 0; i < 200 && !(s.onGround && Math.abs(s.y - 5) < 0.01); i++) {
+      s = L.step(s, RIGHT).state;
+    }
+    assert.ok(Math.abs(s.y - 5) < 0.01 && s.onGround, `landed at x=${s.x}, y=${s.y}`);
+    s = run(s, 12, { left: true, right: false, jump: false }).state; // about 0.2 s left, over the star column
+    const jumped = run(s, 1, { left: false, right: false, jump: true });
+    const rest = run(jumped.state, 60, NONE);
+    // The hidden star is picked up during the approach or the jump. Check the cumulative collection.
+    assert.ok(rest.state.collected.includes('17,3'), `stars collected: ${rest.state.collected}`);
+  });
+});
+
+describe('P3 room', () => {
+  it('has a computer and a photo, both reachable by walking', () => {
+    const rows = L.roomRows();
+    assert.equal(rows[9].charAt(15), 'C');
+    assert.equal(rows[5].charAt(4), 'P');
+    let s = L.roomInitialState();
+    assert.equal(L.roomObjectNear(s), null);
+    for (let i = 0; i < 300; i++) {
+      s = L.stepRoom(s, RIGHT).state;
+      if (L.roomObjectNear(s) === 'computer') break;
+    }
+    assert.equal(L.roomObjectNear(s), 'computer');
+  });
+
+  it('keeps the walker inside the room', () => {
+    const roomRun = (state, frames, input) => {
+      let s = state;
+      for (let i = 0; i < frames; i++) {
+        s = L.stepRoom(s, input).state;
+      }
+      return s;
+    };
+    let s = roomRun(L.roomInitialState(), 600, RIGHT);
+    assert.ok(s.x > 18 && s.x < L.ROOM_W - 1, `x=${s.x}`);
+    s = roomRun(s, 900, { left: true, right: false, jump: false });
+    assert.ok(s.x > 0 && s.x < 1, `x=${s.x}`);
+  });
+
+  it('does not change level flags while the player walks around the room', () => {
+    const start = L.roomInitialState();
+    const after = run(start, 200, RIGHT).state;
+    assert.deepEqual(after.flags, start.flags);
+    assert.deepEqual(after.collected, []);
+  });
+});
+
 describe('P3 restoration', () => {
   it('lets the player pass the wall after the lab restore', () => {
     const r = L.restore(L.initialState(), 'lab');
