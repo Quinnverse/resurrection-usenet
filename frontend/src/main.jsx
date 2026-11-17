@@ -660,7 +660,7 @@ function EndingScreen({ view }) {
     h('p', { className: 'lede' }, text(ending.closing)),
     h('p', { className: 'summary' }, text(ending.summary)),
     ending.letter && h('blockquote', { className: 'letter' }, ending.letter.map((line, i) => h('p', { key: i }, line))),
-    divergence.length > 0 && panel('divergence', true, 'Memory divergence · ' + divergence.length + ' records no longer match the original',
+    divergence.length > 0 && panel('divergence', true, 'Memory divergence · ' + divergence.length + (divergence.length === 1 ? ' record no longer matches the original' : ' records no longer match the original'),
       h('ul', null, divergence.map((d, i) => h('li', { key: i }, h('strong', null, d.subject + ': '), text(d.now)))))
     ,
     panel('verified', false, 'What the archive can and cannot verify',

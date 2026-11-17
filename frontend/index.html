@@ -161,7 +161,8 @@
 
     /* Endings: each has its own treatment. */
     /* Full-bleed: the ending's own background fills the viewport; the text column is centred inside it. */
-    .ending { width: 100%; min-height: 100vh; padding: 8vh max(1.25rem, calc(50% - 380px)) 4rem; }
+    /* .screen also sets a max-width; the ending must cancel it to stay full-bleed. */
+    .ending { max-width: none; margin: 0; width: 100%; min-height: 100vh; padding: 8vh max(1.25rem, calc(50% - 380px)) 4rem; }
     .endings button { display: block; width: 100%; margin: 0.45rem 0; text-align: center; }
     .ending-archive { background: #070a0e; color: #b9c8d8; font-family: var(--mono); font-size: 16px; }
     .ending-archive .title { color: #d6e2ee; font-weight: normal; letter-spacing: 0.2em; }
