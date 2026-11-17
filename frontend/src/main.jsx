@@ -1,6 +1,5 @@
 // Resurrection Frontend - Complete MVP
-import { useState, useEffect, useMemo } from 'react';
-import { createRoot } from 'react-dom/client';
+// Works with CDN React (no build step needed)
 
 // Initial state
 const INITIAL_AGENTS = [
@@ -17,15 +16,16 @@ async function apiRequest(path, options = {}) {
   return await res.json();
 }
 
-export default function App() {
-  const [messages, setMessages] = useState([]);
-  const [agents, setAgents] = useState(INITIAL_AGENTS);
-  const [gameState, setGameState] = useState({ credits: 1000, storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false }, currentEnding: null });
-  const [threads, setThreads] = useState([]);
-  const [selectedThread, setSelectedThread] = useState(null);
-  const [query, setQuery] = useState('');
+// React component as a function (works with React.createElement)
+function App() {
+  const [messages, setMessages] = React.useState([]);
+  const [agents, setAgents] = React.useState(INITIAL_AGENTS);
+  const [gameState, setGameState] = React.useState({ credits: 1000, storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false }, currentEnding: null });
+  const [threads, setThreads] = React.useState([]);
+  const [selectedThread, setSelectedThread] = React.useState(null);
+  const [query, setQuery] = React.useState('');
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Load initial data
     apiRequest('/messages').then(data => setMessages(data));
     apiRequest('/agents').then(data => setAgents(data));
@@ -33,7 +33,7 @@ export default function App() {
   }, []);
 
   // Calculate threads
-  const computedThreads = useMemo(() => {
+  const computedThreads = React.useMemo(() => {
     const threadMap = new Map();
     messages.forEach(msg => {
       if (!threadMap.has(msg.threadId)) {
@@ -47,7 +47,7 @@ export default function App() {
     return Array.from(threadMap.values());
   }, [messages]);
 
-  const selectedMessages = useMemo(() => {
+  const selectedMessages = React.useMemo(() => {
     if (!selectedThread) return [];
     return messages.filter(m => m.threadId === selectedThread);
   }, [messages, selectedThread]);
@@ -79,86 +79,89 @@ export default function App() {
     setGameState(prev => ({ ...prev, currentEnding: result.endingType }));
   };
 
-  // Render
-  return (
-    <div className="terminal-window">
-      <header className="terminal-header">
-        <div className="terminal-title">
-          <span className="ansi-cyan">/// RESURRECTION</span>
-          <span className="ansi-white"> THE INTERNET REMEMBERS THE DEAD</span>
-        </div>
-        <div className="terminal-status">
-          <div className="status-item"><div className="status-indicator"></div><span className="ansi-green">SYSTEM ONLINE</span></div>
-          <div className="status-item"><span className="ansi-gold">PHASE:</span><span className="ansi-white">{gameState.storyProgress.discoveryPhase + 1}/4</span></div>
-          <div className="status-item"><span className="ansi-gold">CREDITS:</span><span className="ansi-gold">{gameState.credits}</span></div>
-        </div>
-      </header>
-
-      <div className="terminal-content">
-        <aside className="terminal-sidebar">
-          <h3 className="ansi-gold">NEWGROUPS</h3>
-          <nav className="thread-list">
-            {computedThreads.map(t => (
-              <div key={t.id} className="thread-item" onClick={() => setSelectedThread(t.id)} style={{ cursor: 'pointer' }}>
-                <span className="ansi-white">[{t.id.slice(0,8)}]</span> {t.subject}
-                <div className="ansi-dim">{t.count} msg | {new Date(t.last.metadata?.timestamp).toLocaleTimeString()}</div>
-              </div>
-            ))}
-          </nav>
-        </aside>
-
-        <main className="terminal-main">
-          {selectedThread && (
-            <div>
-              <h2 className="ansi-cyan">{selectedThread}</h2>
-              <div className="message-list">
-                {selectedMessages.map(msg => (
-                  <article key={msg.id} className="message-item">
-                    <header className="message-header">
-                      <span className="ansi-blue">{msg.agentId.toUpperCase()}</span>
-                      <span className="ansi-dim">{new Date(msg.metadata?.timestamp).toLocaleString()} | Seq: {msg.metadata?.sequence}</span>
-                    </header>
-                    <div className="message-content">{msg.content}</div>
-                    {msg.metadata?.decayLevel > 40 && (
-                      <div className="message-actions">
-                        <button className="action-btn" onClick={() => handleReconstruct(msg.id)}>RECONSTRUCT [{ACTION_COSTS.reconstruct_memory} CR]</button>
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-
-      <aside className="agent-panel">
-        <h3 className="ansi-gold">AGENTS</h3>
-        {agents.map(agent => (
-          <div key={agent.id} className="agent-card">
-            <h4 className="agent-name ansi-white">{agent.name}</h4>
-            <p className="ansi-dim">{agent.description}</p>
-            <div className="memory-bar"><div className="memory-bar-fill" style={{ width: agent.currentMemoryState + '%' }}></div></div>
-            <form onSubmit={e => { e.preventDefault(); handleQueryAgent(agent.id); }}>
-              <input className="input-field" placeholder="Ask..." value={query} onChange={e => setQuery(e.target.value)} />
-              <button type="submit" className="action-btn ansi-dim">QUERY [{ACTION_COSTS.query_agent} CR]</button>
-            </form>
-          </div>
-        ))}
-      </aside>
-
-      <footer className="terminal-footer">
-        <div className="action-menu">
-          <button className="action-btn" onClick={() => handleAction('read_message')}>READ [0 CR]</button>
-          <button className="action-btn" onClick={() => handleAction('reply_thread')}>REPLY [{ACTION_COSTS.reply_thread} CR]</button>
-          <button className="action-btn" onClick={() => handleAction('reconstruct_memory')}>RECONSTRUCT [{ACTION_COSTS.reconstruct_memory} CR]</button>
-          <button className="action-btn" onClick={() => handleAction('query_agent')}>QUERY [{ACTION_COSTS.query_agent} CR]</button>
-          <button className="action-btn" onClick={handleEnding}>INITIATE [{ACTION_COSTS.initiate_protocol} CR]</button>
-        </div>
-      </footer>
-    </div>
+  // Render using React.createElement instead of JSX
+  return React.createElement('div', { className: 'terminal-window' },
+    React.createElement('header', { className: 'terminal-header' },
+      React.createElement('div', { className: 'terminal-title' },
+        React.createElement('span', { className: 'ansi-cyan' }, '/// RESURRECTION'),
+        React.createElement('span', { className: 'ansi-white' }, ' THE INTERNET REMEMBERS THE DEAD')
+      ),
+      React.createElement('div', { className: 'terminal-status' },
+        React.createElement('div', { className: 'status-item' },
+          React.createElement('div', { className: 'status-indicator' }),
+          React.createElement('span', { className: 'ansi-green' }, 'SYSTEM ONLINE')
+        ),
+        React.createElement('div', { className: 'status-item' },
+          React.createElement('span', { className: 'ansi-gold' }, 'PHASE:'),
+          React.createElement('span', { className: 'ansi-white' }, gameState.storyProgress.discoveryPhase + 1 + '/4')
+        ),
+        React.createElement('div', { className: 'status-item' },
+          React.createElement('span', { className: 'ansi-gold' }, 'CREDITS:'),
+          React.createElement('span', { className: 'ansi-gold' }, gameState.credits)
+        )
+      )
+    ),
+    React.createElement('div', { className: 'terminal-content' },
+      React.createElement('aside', { className: 'terminal-sidebar' },
+        React.createElement('h3', { className: 'ansi-gold' }, 'NEWGROUPS'),
+        React.createElement('nav', { className: 'thread-list' },
+          computedThreads.map(t => React.createElement('div', {
+            key: t.id,
+            className: 'thread-item',
+            onClick: () => setSelectedThread(t.id),
+            style: { cursor: 'pointer' }
+          },
+            React.createElement('span', { className: 'ansi-white' }, '[' + t.id.slice(0, 8) + ']'),
+            ' ',
+            t.subject,
+            React.createElement('div', { className: 'ansi-dim' }, t.count + ' msg | ' + new Date(t.last.metadata?.timestamp).toLocaleTimeString())
+          ))
+        )
+      ),
+      React.createElement('main', { className: 'terminal-main' },
+        selectedThread && React.createElement('div', null,
+          React.createElement('h2', { className: 'ansi-cyan' }, selectedThread),
+          React.createElement('div', { className: 'message-list' },
+            selectedMessages.map(msg => React.createElement('article', { key: msg.id, className: 'message-item' },
+              React.createElement('header', { className: 'message-header' },
+                React.createElement('span', { className: 'ansi-blue' }, msg.agentId.toUpperCase()),
+                React.createElement('span', { className: 'ansi-dim' }, new Date(msg.metadata?.timestamp).toLocaleString() + ' | Seq: ' + msg.metadata?.sequence)
+              ),
+              React.createElement('div', { className: 'message-content' }, msg.content),
+              msg.metadata?.decayLevel > 40 && React.createElement('div', { className: 'message-actions' },
+                React.createElement('button', { className: 'action-btn', onClick: () => handleReconstruct(msg.id) }, 'RECONSTRUCT [' + ACTION_COSTS.reconstruct_memory + ' CR]')
+              )
+            ))
+          )
+        )
+      )
+    ),
+    React.createElement('aside', { className: 'agent-panel' },
+      React.createElement('h3', { className: 'ansi-gold' }, 'AGENTS'),
+      agents.map(agent => React.createElement('div', { key: agent.id, className: 'agent-card' },
+        React.createElement('h4', { className: 'agent-name ansi-white' }, agent.name),
+        React.createElement('p', { className: 'ansi-dim' }, agent.description),
+        React.createElement('div', { className: 'memory-bar' },
+          React.createElement('div', { className: 'memory-bar-fill', style: { width: agent.currentMemoryState + '%' } })
+        ),
+        React.createElement('form', { onSubmit: e => { e.preventDefault(); handleQueryAgent(agent.id); } },
+          React.createElement('input', { className: 'input-field', placeholder: 'Ask...', value: query, onChange: e => setQuery(e.target.value) }),
+          React.createElement('button', { type: 'submit', className: 'action-btn ansi-dim' }, 'QUERY [' + ACTION_COSTS.query_agent + ' CR]')
+        )
+      ))
+    ),
+    React.createElement('footer', { className: 'terminal-footer' },
+      React.createElement('div', { className: 'action-menu' },
+        React.createElement('button', { className: 'action-btn', onClick: () => handleAction('read_message') }, 'READ [0 CR]'),
+        React.createElement('button', { className: 'action-btn', onClick: () => handleAction('reply_thread') }, 'REPLY [' + ACTION_COSTS.reply_thread + ' CR]'),
+        React.createElement('button', { className: 'action-btn', onClick: () => handleAction('reconstruct_memory') }, 'RECONSTRUCT [' + ACTION_COSTS.reconstruct_memory + ' CR]'),
+        React.createElement('button', { className: 'action-btn', onClick: () => handleAction('query_agent') }, 'QUERY [' + ACTION_COSTS.query_agent + ' CR]'),
+        React.createElement('button', { className: 'action-btn', onClick: handleEnding }, 'INITIATE [' + ACTION_COSTS.initiate_protocol + ' CR]')
+      )
+    )
   );
 }
 
-const root = createRoot(document.getElementById('root'));
-root.render(<App />);
+// Mount React app
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
