@@ -1,0 +1,238 @@
+name: Deploy Resurrection (Tencent Cloud, private preview)
+
+# Manual only. Nothing deploys on push.
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full 40-character commit SHA to deploy (must be on master)
+        required: true
+        type: string
+      confirm:
+        description: Type DEPLOY to confirm
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-tencent-resurrection
+  cancel-in-progress: false
+
+env:
+  PUBLIC_HOST: resurrection.quinnverse.tech
+  EXPECTED_IP: "124.223.15.11"
+
+jobs:
+  deploy:
+    name: Preflight, deploy, verify, roll back if needed
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Scripts come from the checked-out master (they must exist there); the application is packaged from release_sha.
+      - name: Check out master (deployment scripts)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard inputs (fail closed)
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          [ "$CONFIRM" = "DEPLOY" ] || { echo "Confirmation text must be DEPLOY."; exit 1; }
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "release_sha must be a full 40-character commit SHA."; exit 1; }
+          git cat-file -e "$RELEASE_SHA^{commit}" || { echo "release_sha is not a commit in this repository."; exit 1; }
+          git merge-base --is-ancestor "$RELEASE_SHA" "origin/master" || { echo "Release commit is not an ancestor of master."; exit 1; }
+          echo "Release commit verified: $RELEASE_SHA (contained in master)"
+
+      - name: Check required secrets (fail closed)
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+          S_SSH_KEY: ${{ secrets.TENCENT_SSH_KEY }}
+          S_SSH_HOST_KEY: ${{ secrets.TENCENT_SSH_HOST_KEY }}
+          S_CERT_EMAIL: ${{ secrets.TENCENT_CERT_EMAIL }}
+          S_PREVIEW_USER: ${{ secrets.RESURRECTION_PREVIEW_USER }}
+          S_PREVIEW_PASSWORD: ${{ secrets.RESURRECTION_PREVIEW_PASSWORD }}
+        run: |
+          missing=()
+          [ -n "$S_SSH_HOST" ] || missing+=(TENCENT_SSH_HOST)
+          [ -n "$S_SSH_USER" ] || missing+=(TENCENT_SSH_USER)
+          [ -n "$S_SSH_KEY" ] || missing+=(TENCENT_SSH_KEY)
+          [ -n "$S_SSH_HOST_KEY" ] || missing+=(TENCENT_SSH_HOST_KEY)
+          [ -n "$S_CERT_EMAIL" ] || missing+=(TENCENT_CERT_EMAIL)
+          [ -n "$S_PREVIEW_USER" ] || missing+=(RESURRECTION_PREVIEW_USER)
+          [ -n "$S_PREVIEW_PASSWORD" ] || missing+=(RESURRECTION_PREVIEW_PASSWORD)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "BLOCKED: missing repository secrets: ${missing[*]}"
+            echo "No server change was made."
+            exit 1
+          fi
+          echo "All required secrets are present (values not shown)."
+
+      - name: Check DNS points at the server (fail closed)
+        run: |
+          set -euo pipefail
+          resolved=$(getent ahostsv4 "$PUBLIC_HOST" | awk '{print $1}' | sort -u || true)
+          if ! echo "$resolved" | grep -qx "$EXPECTED_IP"; then
+            echo "BLOCKED: $PUBLIC_HOST does not resolve to $EXPECTED_IP."
+            echo "Required DNS record: A  $PUBLIC_HOST  ->  $EXPECTED_IP"
+            echo "Resolved now: ${resolved:-nothing}"
+            exit 1
+          fi
+          echo "DNS OK: $PUBLIC_HOST -> $EXPECTED_IP"
+
+      - name: Install SSH material (host key pinned, strict checking)
+        env:
+          S_SSH_KEY: ${{ secrets.TENCENT_SSH_KEY }}
+          S_SSH_HOST_KEY: ${{ secrets.TENCENT_SSH_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$S_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$S_SSH_HOST_KEY" > ~/.ssh/known_hosts && chmod 600 ~/.ssh/known_hosts
+          ssh-keygen -lf ~/.ssh/known_hosts >/dev/null || { echo "TENCENT_SSH_HOST_KEY is not a valid known_hosts entry."; exit 1; }
+
+      - name: Connect and check the server identity
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            -o ConnectTimeout=20 "$S_SSH_USER@$S_SSH_HOST" 'echo "connected to $(hostname) as $(id -un)"'
+
+      - name: Package the release commit
+        run: git archive --format=tar.gz -o release.tgz "${{ inputs.release_sha }}"
+
+      - name: Upload release and scripts
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+          SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          SSH="ssh -i $HOME/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts $S_SSH_USER@$S_SSH_HOST"
+          $SSH "cat > /tmp/resurrection-$SHA.tgz" < release.tgz
+          $SSH "cat > /tmp/resurrection-deploy.sh" < deploy/tencent/deploy.sh
+          $SSH "cat > /tmp/resurrection-rollback.sh" < deploy/tencent/rollback.sh
+          echo "release and scripts uploaded to /tmp (removed by the next deploy)"
+
+      - name: Remote preflight (read-only; any conflict stops the run)
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          set -o pipefail
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "$S_SSH_USER@$S_SSH_HOST" 'bash -s' < deploy/tencent/preflight.sh | tee preflight.log
+
+      - name: Record services before deployment
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "$S_SSH_USER@$S_SSH_HOST" "docker ps -a --format '{{.Names}} {{.State}}' | sort" > before-containers.txt
+          cat before-containers.txt
+
+      - name: Deploy Resurrection (stdin carries the preview credentials)
+        id: deploy
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+          S_CERT_EMAIL: ${{ secrets.TENCENT_CERT_EMAIL }}
+          S_PREVIEW_USER: ${{ secrets.RESURRECTION_PREVIEW_USER }}
+          S_PREVIEW_PASSWORD: ${{ secrets.RESURRECTION_PREVIEW_PASSWORD }}
+          SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          printf '%s\n%s\n%s\n' "$S_PREVIEW_USER" "$S_PREVIEW_PASSWORD" "$S_CERT_EMAIL" | \
+            ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+              "$S_SSH_USER@$S_SSH_HOST" "bash /tmp/resurrection-deploy.sh $SHA"
+
+      - name: Acceptance before restart (public HTTPS, authenticated)
+        env:
+          PREVIEW_USER: ${{ secrets.RESURRECTION_PREVIEW_USER }}
+          PREVIEW_PASSWORD: ${{ secrets.RESURRECTION_PREVIEW_PASSWORD }}
+          SESSION_FILE: ${{ runner.temp }}/session.id
+        run: bash deploy/tencent/acceptance.sh pre-restart
+
+      - name: Restart the Resurrection container only
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "$S_SSH_USER@$S_SSH_HOST" 'docker restart resurrection >/dev/null && echo restarted resurrection'
+
+      - name: Acceptance after restart (progress survives, deletion works)
+        env:
+          PREVIEW_USER: ${{ secrets.RESURRECTION_PREVIEW_USER }}
+          PREVIEW_PASSWORD: ${{ secrets.RESURRECTION_PREVIEW_PASSWORD }}
+          SESSION_FILE: ${{ runner.temp }}/session.id
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' -u "$PREVIEW_USER:$PREVIEW_PASSWORD" https://resurrection.quinnverse.tech/api/health || true)
+            [ "$code" = 200 ] && break; sleep 2
+          done
+          bash deploy/tencent/acceptance.sh post-restart
+
+      - name: Browser checks on the live address (Playwright, Chromium)
+        env:
+          E2E_BASE_URL: https://resurrection.quinnverse.tech
+          E2E_USER: ${{ secrets.RESURRECTION_PREVIEW_USER }}
+          E2E_PASSWORD: ${{ secrets.RESURRECTION_PREVIEW_PASSWORD }}
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+
+      - name: Services after deployment (must match before, plus resurrection)
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "$S_SSH_USER@$S_SSH_HOST" "docker ps -a --format '{{.Names}} {{.State}}' | sort" > after-containers.txt
+          cat after-containers.txt
+          # Every container that was running before must still be running.
+          while read -r name state; do
+            [ "$state" = running ] || continue
+            grep -qx "$name running" after-containers.txt || { echo "REGRESSION: $name is no longer running"; exit 1; }
+          done < before-containers.txt
+          echo "existing containers unchanged"
+
+      - name: Roll back Resurrection only (after a successful deploy that failed verification)
+        if: failure() && steps.deploy.conclusion == 'success'
+        env:
+          S_SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          S_SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "$S_SSH_USER@$S_SSH_HOST" 'bash /tmp/resurrection-rollback.sh'
+
+      - name: Upload deployment evidence (no secrets)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resurrection-deploy-evidence
+          path: |
+            preflight.log
+            before-containers.txt
+            after-containers.txt
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove SSH key material
+        if: always()
+        run: rm -f ~/.ssh/deploy_key ~/.ssh/known_hosts
