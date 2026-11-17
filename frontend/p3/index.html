@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Life in Fragments · 碎片中的一生</title>
+  <style>
+    :root {
+      --ink: #e8e3ff;
+      --dim: #9b93c4;
+      --bg: #0b0a18;
+      --panel: #171432;
+      --accent: #ffd166;
+      --accent-2: #9ef0ff;
+      --danger: #e4572e;
+      --font: "Courier New", "Noto Sans Mono CJK SC", "Microsoft YaHei", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); }
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      position: relative;
+    }
+    /* Faint scanlines for the retro terminal feel. Decorative only. */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px);
+    }
+    #app { width: 100%; max-width: 760px; position: relative; z-index: 1; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .brand { color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; font-size: 13px; }
+    h1 { font-size: 30px; margin: 8px 0 12px; color: var(--accent); text-shadow: 0 0 12px rgba(255,209,102,0.35); }
+    h2 { font-size: 20px; margin: 4px 0 10px; color: var(--accent-2); }
+    h3 { font-size: 16px; margin: 4px 0; }
+    p { line-height: 1.6; margin: 8px 0; }
+    .lede { font-size: 18px; }
+    .small { font-size: 13px; color: var(--dim); }
+    .notice { color: var(--danger); }
+    .joke { color: var(--accent); font-style: italic; }
+    .scene { background: var(--panel); border: 1px solid #2f2a5a; border-radius: 6px; padding: 18px; }
+    .panel { background: #120f28; border: 1px solid #3a336e; border-radius: 6px; padding: 14px; margin-top: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+    .servers > .server { flex: 1 1 220px; background: #0e0c22; border: 1px solid #3a336e; border-radius: 6px; padding: 10px; }
+    .status { color: var(--dim); }
+    .log { min-height: 1.6em; color: var(--accent-2); }
+    .btn {
+      font: inherit;
+      color: var(--ink);
+      background: #242052;
+      border: 1px solid #5a52a0;
+      border-radius: 4px;
+      padding: 10px 14px;
+      min-height: 44px;
+      cursor: pointer;
+    }
+    .btn:hover, .btn:focus-visible { border-color: var(--accent); outline: none; }
+    .btn.primary { background: #3a2f72; border-color: var(--accent); color: var(--accent); }
+    .btn.small { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+    .computer {
+      font-size: 56px;
+      background: transparent;
+      border: 2px dashed #3a336e;
+      color: var(--dim);
+      border-radius: 8px;
+      width: 96px;
+      height: 96px;
+      cursor: pointer;
+      margin: 12px 0;
+    }
+    .computer.glow {
+      color: var(--accent-2);
+      border-color: var(--accent-2);
+      box-shadow: 0 0 18px rgba(158,240,255,0.55);
+      animation: none;
+    }
+    .stage {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 20 / 12;
+      display: block;
+      border: 1px solid #3a336e;
+      border-radius: 4px;
+      background: #0d0b1f;
+      touch-action: none;
+      image-rendering: pixelated;
+    }
+    .hud { font-size: 14px; color: var(--accent); margin: 6px 0; }
+    .message { min-height: 3.2em; color: var(--ink); margin: 6px 0; }
+    .pad { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; touch-action: none; }
+    .pad-btn { flex: 1 1 90px; user-select: none; -webkit-user-select: none; }
+    .island { list-style: none; padding: 0; }
+    .island li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid #2f2a5a; }
+    .glyph { color: var(--accent); font-size: 20px; width: 1.4em; text-align: center; }
+    @media (prefers-reduced-motion: reduce) {
+      .computer.glow { animation: none; }
+    }
+    @media (max-width: 480px) {
+      h1 { font-size: 24px; }
+      .computer { width: 80px; height: 80px; font-size: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <noscript>This level needs JavaScript. The four-act game remains at the main page.</noscript>
+  </main>
+  <script src="/p3/i18n.js"></script>
+  <script src="/p3/level.js"></script>
+  <script src="/p3/game.js"></script>
+</body>
+</html>

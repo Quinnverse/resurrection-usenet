@@ -800,6 +800,14 @@ const server = http.createServer(async (req, res) => {
       return serveStaticFile(res, pathname.slice(1));
     }
 
+    // P3 standalone level ("A Life in Fragments") at its own entry point
+    if (pathname === '/p3' || pathname === '/p3/') {
+      return serveStaticFile(res, 'p3/index.html');
+    }
+    if (pathname.startsWith('/p3/')) {
+      return serveStaticFile(res, pathname.slice(1));
+    }
+
     // Session API (persistent, versioned game state)
     if (pathname.startsWith('/api/sessions')) {
       const sessionResult = await sessionApi.handle({ method, pathname, readBody: () => parseBody(req), clientKey: clientKeyFor(req) });

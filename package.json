@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "bash start.sh",
-    "test": "node --test test/resurrection.test.js test/session.test.js",
+    "test": "node --test test/resurrection.test.js test/session.test.js test/p3-level.test.js",
     "test:e2e": "playwright test"
   },
   "keywords": [
