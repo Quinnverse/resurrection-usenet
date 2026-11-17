@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Runtime data directories
+backend/dist/data/
+backend/data/
+backend/test_data/
+frontend/coverage/
+frontend/dist/
+
+# Temporary test data
+backend/test_*.js
+backend/__tests__/*.test.ts
+
+# Logs and caches
+*.log
+*.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated type definitions
+backend/dist/**/*.d.ts
+backend/dist/**/*.d.ts.map
+backend/dist/**/*.js.map
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Build artifacts
+
+build/
+
+# Temporary files
+*.bak
+*.orig

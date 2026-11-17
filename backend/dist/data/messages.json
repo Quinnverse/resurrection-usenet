@@ -1,0 +1,83 @@
+[
+  {
+    "id": "msg-ky2kcx4y4-mwkku0dl",
+    "threadId": "thread-1",
+    "agentId": "archivist",
+    "sender": "Unknown",
+    "subject": "System Status",
+    "content": "System initialized - memory fragments detected",
+    "metadata": {
+      "timestamp": 1794912960873,
+      "sequence": 0,
+      "decayLevel": 0,
+      "corruptedBytes": 0,
+      "reconstructionLevel": 0,
+      "propagationPath": []
+    },
+    "status": "read",
+    "nodeId": "node-archivist"
+  },
+  {
+    "id": "msg-groenmhn9-mwkku0dl",
+    "threadId": "thread-1",
+    "parentMessageId": "msg-ky2kcx4y4-mwkku0dl",
+    "agentId": "archivist",
+    "sender": "Unknown (node-corruptor)",
+    "subject": "[Propagated] System Status",
+    "content": "System initialized - memory fragments detected",
+    "metadata": {
+      "timestamp": 1794912960873,
+      "sequence": 1,
+      "decayLevel": 11,
+      "corruptedBytes": 6,
+      "reconstructionLevel": 0,
+      "propagationPath": [
+        "node-corruptor"
+      ]
+    },
+    "status": "pending",
+    "nodeId": "node-corruptor"
+  },
+  {
+    "id": "msg-q56z8nbp8-mwkku0dm",
+    "threadId": "thread-1",
+    "parentMessageId": "msg-ky2kcx4y4-mwkku0dl",
+    "agentId": "archivist",
+    "sender": "Unknown (node-central)",
+    "subject": "[Propagated] System Status",
+    "content": "System initialized - memory fragments detected",
+    "metadata": {
+      "timestamp": 1794912960874,
+      "sequence": 1,
+      "decayLevel": 7,
+      "corruptedBytes": 2,
+      "reconstructionLevel": 0,
+      "propagationPath": [
+        "node-central"
+      ]
+    },
+    "status": "pending",
+    "nodeId": "node-central"
+  },
+  {
+    "id": "msg-o30jf41rz-mwkku0dm",
+    "threadId": "thread-1",
+    "parentMessageId": "msg-ky2kcx4y4-mwkku0dl",
+    "agentId": "archivist",
+    "sender": "Unknown (node-mixed)",
+    "subject": "[Propagated] System Status",
+    "content": "System initialized - memory fragments detected",
+    "metadata": {
+      "timestamp": 1794912960874,
+      "sequence": 1,
+      "decayLevel": 11,
+      "corruptedBytes": 7,
+      "reconstructionLevel": 0,
+      "propagationPath": [
+        "node-mixed"
+      ]
+    },
+    "status": "pending",
+    "nodeId": "node-mixed"
+  }
+]

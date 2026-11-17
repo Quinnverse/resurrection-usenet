@@ -1,20 +1,39 @@
-// Resurrection Backend Server - Pure Node.js
+// Resurrection Backend Server - Plain Node.js with JSON persistence
 const http = require('http');
 const url = require('url');
+const persistence = require('./data/persistence.js');
 
-// In-memory store
+// Initial default state
+const INITIAL_AGENTS = [
+  { id: 'archivist', name: 'Archivist', description: 'Preserves memory - precise, organized, detailed',
+    personality: { tone: 'precise', fragmentationLevel: 0.1, memoryFocus: 'factual' },
+    currentMemoryState: 100, memoryDecayRate: 2, lastActive: Date.now(), nodeAffinity: ['node-archivist', 'node-central'] },
+  { id: 'echo', name: 'Echo', description: 'Recalls emotional resonance - fragmented, poetic, emotional',
+    personality: { tone: 'poetic', fragmentationLevel: 0.7, memoryFocus: 'emotional' },
+    currentMemoryState: 95, memoryDecayRate: 3, lastActive: Date.now(), nodeAffinity: ['node-echo', 'node-central'] },
+  { id: 'corruptor', name: 'Corruptor', description: 'Challenges narratives - aggressive, cynical, fragmented',
+    personality: { tone: 'aggressive', fragmentationLevel: 0.9, memoryFocus: 'challenging' },
+    currentMemoryState: 85, memoryDecayRate: 5, lastActive: Date.now(), nodeAffinity: ['node-corruptor', 'node-mixed'] }
+];
+
+// Load persisted data or use defaults
+const persisted = persistence.restoreAll();
+
 const store = {
-  messages: new Map(),
-  agents: new Map(),
-  gameState: null,
-  actionLogs: [],
+  messages: persisted.messages || [],
+  agents: persisted.agents || INITIAL_AGENTS,
+  gameState: persisted.state || {
+    playerId: 'player-1', currentScenario: 'dr-vance-mystery',
+    storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false },
+    playerActions: [], activeThreads: [], credits: 1000
+  },
+  actionLogs: persisted.logs || [],
   nextActionId: 1,
 
-  getMessage(id) { return this.messages.get(id); },
-  getMessages() { return Array.from(this.messages.values()); },
+  getMessage(id) { return this.messages.find(m => m.id === id); },
+  getMessages() { return this.messages; },
   getThreadMessages(threadId) {
-    return Array.from(this.messages.values())
-      .filter(m => m.threadId === threadId)
+    return this.messages.filter(m => m.threadId === threadId)
       .sort((a, b) => a.metadata.sequence - b.metadata.sequence);
   },
   createMessage(msg) {
@@ -39,61 +58,54 @@ const store = {
       status: msg.status || 'pending',
       nodeId: msg.nodeId || 'node-central'
     };
-    this.messages.set(id, message);
+    this.messages.push(message);
+    this.save();
     return message;
   },
   updateMessage(id, updates) {
-    const existing = this.messages.get(id);
-    if (existing) this.messages.set(id, { ...existing, ...updates });
+    const idx = this.messages.findIndex(m => m.id === id);
+    if (idx >= 0) {
+      this.messages[idx] = { ...this.messages[idx], ...updates };
+      this.save();
+    }
   },
-  getAgent(id) { return this.agents.get(id); },
-  getAgents() { return Array.from(this.agents.values()); },
+  getAgent(id) { return this.agents.find(a => a.id === id); },
+  getAgents() { return this.agents; },
   updateAgent(id, updates) {
-    const existing = this.agents.get(id);
-    if (existing) this.agents.set(id, { ...existing, ...updates, lastActive: Date.now() });
+    const idx = this.agents.findIndex(a => a.id === id);
+    if (idx >= 0) {
+      this.agents[idx] = { ...this.agents[idx], ...updates, lastActive: Date.now() };
+      this.save();
+    }
   },
-  getGameState() {
-    if (!this.gameState) {
+  getGameState() { return this.gameState; },
+  updateGameState(updates) {
+    this.gameState = { ...this.gameState, ...updates };
+    this.save();
+  },
+  logAction(action) {
+    this.actionLogs.push({ ...action, id: this.nextActionId++ });
+    this.save();
+  },
+  save() {
+    persistence.saveAll(this.gameState, this.agents, this.messages, this.actionLogs);
+  },
+  initializeDefaultData() {
+    // If no persisted data, initialize defaults
+    if (this.messages.length === 0) {
+      this.messages = [];
+    }
+    if (this.agents.length === 0) {
+      this.agents = INITIAL_AGENTS;
+    }
+    if (!this.gameState.playerId) {
       this.gameState = {
-        playerId: 'player-1',
-        currentScenario: 'dr-vance-mystery',
+        playerId: 'player-1', currentScenario: 'dr-vance-mystery',
         storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false },
-        playerActions: [],
-        agentStates: {
-          archivist: this.getAgent('archivist'),
-          echo: this.getAgent('echo'),
-          corruptor: this.getAgent('corruptor')
-        },
-        activeThreads: [],
-        credits: 1000
+        playerActions: [], activeThreads: [], credits: 1000
       };
     }
-    return this.gameState;
-  },
-  updateGameState(updates) {
-    if (this.gameState) this.gameState = { ...this.gameState, ...updates };
-  },
-  logAction(action) { this.actionLogs.push({ ...action, id: this.nextActionId++ }); },
-  initializeDefaultData() {
-    const INITIAL_AGENTS = [
-      { id: 'archivist', name: 'Archivist', description: 'Preserves memory - precise, organized, detailed',
-        personality: { tone: 'precise', fragmentationLevel: 0.1, memoryFocus: 'factual' },
-        currentMemoryState: 100, memoryDecayRate: 2, lastActive: Date.now(), nodeAffinity: ['node-archivist', 'node-central'] },
-      { id: 'echo', name: 'Echo', description: 'Recalls emotional resonance - fragmented, poetic, emotional',
-        personality: { tone: 'poetic', fragmentationLevel: 0.7, memoryFocus: 'emotional' },
-        currentMemoryState: 95, memoryDecayRate: 3, lastActive: Date.now(), nodeAffinity: ['node-echo', 'node-central'] },
-      { id: 'corruptor', name: 'Corruptor', description: 'Challenges narratives - aggressive, cynical, fragmented',
-        personality: { tone: 'aggressive', fragmentationLevel: 0.9, memoryFocus: 'challenging' },
-        currentMemoryState: 85, memoryDecayRate: 5, lastActive: Date.now(), nodeAffinity: ['node-corruptor', 'node-mixed'] }
-    ];
-    INITIAL_AGENTS.forEach(a => this.agents.set(a.id, a));
-    this.gameState = {
-      playerId: 'player-1', currentScenario: 'dr-vance-mystery',
-      storyProgress: { discoveryPhase: 0, patternRecognition: false, truthUncovered: false, choiceMade: false },
-      playerActions: [],
-      agentStates: { archivist: this.getAgent('archivist'), echo: this.getAgent('echo'), corruptor: this.getAgent('corruptor') },
-      activeThreads: [], credits: 1000
-    };
+    this.save();
   }
 };
 
@@ -150,6 +162,14 @@ const NETWORK_TOPOLOGY = {
 
 function getNode(nodeId) { return NETWORK_TOPOLOGY[nodeId] || NETWORK_TOPOLOGY['node-central']; }
 
+// Deterministic random for replay
+let deterministicSeed = 12345;
+function deterministicRandom() {
+  deterministicSeed = (deterministicSeed * 1103515245 + 12345) & 0x7fffffff;
+  return deterministicSeed / 0x7fffffff;
+}
+
+// Network propagation with deterministic randomness
 async function propagateMessage(originalMessage, sourceNodeId) {
   const events = [];
   const visited = new Set();
@@ -164,13 +184,13 @@ async function propagateMessage(originalMessage, sourceNodeId) {
     const sourceNode = getNode(sourceNodeId);
     const targetNode = getNode(nodeId);
     const decay = Math.floor(5 * Math.pow(1.5, depth) * (targetNode.isNoisy ? 1.5 : 1.0));
-    const corruption = targetNode.isNoisy ? Math.floor(Math.random() * 10) : Math.floor(Math.random() * 3);
-    const success = Math.random() < targetNode.reliability;
+    const corruption = targetNode.isNoisy ? Math.floor(deterministicRandom() * 10) : Math.floor(deterministicRandom() * 3);
+    const success = deterministicRandom() < targetNode.reliability;
     
     if (success && nodeId !== sourceNodeId) {
       const propagated = {
         ...originalMessage,
-        id: 'msg-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36),
+        id: 'msg-' + deterministicRandom().toString(36).substr(2, 9) + '-' + Date.now().toString(36),
         nodeId: nodeId,
         metadata: {
           ...originalMessage.metadata,
@@ -281,7 +301,6 @@ const api = {
 
 // HTTP server
 const PORT = process.env.PORT || 3000;
-store.initializeDefaultData();
 
 const server = http.createServer(async (req, res) => {
   const parsed = url.parse(req.url || '', true);
@@ -339,6 +358,9 @@ const server = http.createServer(async (req, res) => {
     sendJSON(500, { error: error.message });
   }
 });
+
+// Initialize persistence
+store.initializeDefaultData();
 
 server.listen(PORT, () => {
   console.log('Resurrection Backend running on port ' + PORT);

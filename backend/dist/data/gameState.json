@@ -1,0 +1,13 @@
+{
+  "playerId": "player-1",
+  "currentScenario": "dr-vance-mystery",
+  "storyProgress": {
+    "discoveryPhase": 0,
+    "patternRecognition": false,
+    "truthUncovered": false,
+    "choiceMade": false
+  },
+  "playerActions": [],
+  "activeThreads": [],
+  "credits": 1000
+}
