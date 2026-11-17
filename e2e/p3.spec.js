@@ -19,6 +19,11 @@ function watch(page, issues) {
 async function shot(page, testInfo, name) {
   await page.screenshot({ path: testInfo.outputPath(name + '.png') });
   await testInfo.attach(name, { path: testInfo.outputPath(name + '.png'), contentType: 'image/png' });
+  // In CI, also print a small JPEG to the job log so the screenshot can be read without the artifact download.
+  if (process.env.CI) {
+    const jpeg = await page.screenshot({ type: 'jpeg', quality: 60 });
+    console.log(`P3_SHOT ${testInfo.project.name} ${name} ${jpeg.toString('base64')}`);
+  }
 }
 
 async function holdUntilVisible(page, key, locator, timeout = 20000) {
@@ -193,7 +198,14 @@ test.describe('P3 Chinese', () => {
 });
 
 test.describe('P3 mobile touch', () => {
-  test.use({ ...devices['Pixel 5'] });
+  // Pixel 5 settings written out, because the device descriptor sets defaultBrowserType, which Playwright rejects inside describe().
+  test.use({
+    viewport: devices['Pixel 5'].viewport,
+    userAgent: devices['Pixel 5'].userAgent,
+    deviceScaleFactor: devices['Pixel 5'].deviceScaleFactor,
+    isMobile: true,
+    hasTouch: true
+  });
 
   test('the whole path works with touch buttons only', async ({ page }, testInfo) => {
     const issues = [];
