@@ -43,14 +43,49 @@ jobs:
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Run browser suite
+      - name: Run browser suite (all but P5)
         run: npm run test:e2e
+        env:
+          E2E_SKIP_P5: '1'
 
       - name: Upload screenshots and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: resurrection-browser-evidence
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  browser-p5:
+    name: Browser end-to-end, P5 slice (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dev dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run P5 browser tests
+        run: npx playwright test e2e/p5.spec.js
+
+      - name: Upload P5 screenshots, videos and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resurrection-p5-evidence
           path: |
             test-results/
             playwright-report/

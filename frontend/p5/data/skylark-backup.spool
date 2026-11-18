@@ -1,0 +1,136 @@
+#! rnews 566
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Last Light - a small game about a lighthouse (artist wanted)
+Date: Sat, 18 Apr 1998 22:14:05 -0700
+Message-ID: <ll-0001.skylark@summer98.example>
+Organization: a bedroom with a 486 in it
+Lines: 7
+
+I'm making a little game about a seaside town. There is a lighthouse
+keeper called Theo. Every night he checks the light. The light does not
+work yet. Neither does most of the game.
+
+I can code. I cannot draw a seagull to save my life. Anyone?
+
+-- sky
+#! rnews 457
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: Last Light - a small game about a lighthouse (artist wanted)
+Date: Sun, 19 Apr 1998 10:02:44 -0700
+Message-ID: <junebug.19980419.1@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+Lines: 6
+
+> I cannot draw a seagull to save my life.
+
+I can draw you a seagull. I can draw you the whole town.
+Also Theo needs a beard.
+
+-- june
+#! rnews 469
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: Last Light - a small game about a lighthouse (artist wanted)
+Date: Mon, 20 Apr 1998 19:47:30 -0700
+Message-ID: <ll-0012.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+	<junebug.19980419.1@inkwell.example>
+Lines: 5
+
+> Also Theo needs a beard.
+
+deal. you do the town, i do the code. the beard is non-negotiable now.
+
+-- sky
+#! rnews 441
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: the bridge keeps falling into the canal
+Date: Wed, 12 Aug 1998 23:58:01 -0700
+Message-ID: <ll-0040.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+Lines: 4
+
+every build the bridge sags in the middle and theo walks straight into
+the water. he does not complain, which somehow makes it worse.
+
+-- sky
+#! rnews 1540
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: the bridge keeps falling into the canal
+Date: Fri, 14 Aug 1998 23:40:11 -0700
+Message-ID: <junebug.19980814.2@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+	<ll-0040.skylark@summer98.example>
+Lines: 27
+
+> he does not complain, which somehow makes it worse.
+
+fixed it. i placed the planks by hand so they are a bit wonky,
+that is on purpose. it holds now. file below.
+
+-- june
+
+begin 644 bridge.ll
+M3$Q!4U-%5"`Q(&)R:61G90IB>2!J=6YE8G5G"FYO=&4@9FEX960@=&AE('-A
+M9RX@<&QA;FMS(&%R92!H86YD('!L86-E9"P@=V]N:WD@;VX@<'5R<&]S92X@
+M:70@:&]L9',@;F]W+B`M:@IS<&%N(#,N,C`*=VED=&@@,BXR,`IR86EL(#`N
+M.34*<&QA;FL@,"XP,C`@,"XQ-S`@,"XP,C@@,"XP,38@,BXQ-C8*<&QA;FL@
+M,"XR,S,@,"XQ.#0@+3`N,#`R(#`N,#0P(#(N,38U"G!L86YK(#`N-#0W(#`N
+M,3<W(#`N,#`Q("TP+C`R,2`R+C(Q-0IP;&%N:R`P+C8V,"`P+C$W."`M,"XP
+M,S@@,"XP,C4@,BXQ-C$*<&QA;FL@,"XX-S,@,"XQ.3D@+3`N,#$Q("TP+C`S
+M-2`R+C$X-@IP;&%N:R`Q+C`X-R`P+C$W-"`M,"XP,S`@,"XP,C(@,BXQ,C$*
+M<&QA;FL@,2XS,#`@,"XQ.#D@,"XP,C<@,"XP,C`@,BXQ.#0*<&QA;FL@,2XU
+M,3,@,"XQ-S4@,"XP-#,@,"XP,C8@,BXR,C4*<&QA;FL@,2XW,C8@,"XQ.#$@
+M,"XP,S`@,"XP,34@,BXR,3<*<&QA;FL@,2XY-#`@,"XQ-S`@+3`N,#$W("TP
+M+C`S,R`R+C(S-`IP;&%N:R`R+C$U,R`P+C$X."`M,"XP,S,@,"XP,S`@,BXQ
+M-#4*<&QA;FL@,BXS-C8@,"XQ.3(@+3`N,#(U("TP+C`T,"`R+C$Y-PIP;&%N
+M:R`R+C4X,"`P+C$Y-B`P+C`T,"`M,"XP,#,@,BXQ.#$*<&QA;FL@,BXW.3,@
+M,"XQ-S(@+3`N,#(Q(#`N,#(U(#(N,C`R"G!L86YK(#,N,#`V(#`N,3<R(#`N
+M,#`R(#`N,#`X(#(N,3(Q"G!O<W0@,"XP-0IP;W-T(#$N-C`*<&]S="`S+C$U
+%"F5N9`H`
+`
+end
+#! rnews 1038
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Last Light 0.9 - summer build (manifest)
+Date: Sat, 15 Aug 1998 21:05:00 -0700
+Message-ID: <ll-0815.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+Lines: 25
+
+summer build! the pier works, the bridge holds (thank you june),
+and the lighthouse is still half a lighthouse. june is writing the
+lamp rule. the build will pick it up when she posts it.
+
+LLMANIFEST 1
+build 1998
+title Last Light 0.9 (summer build)
+credit skylark code
+credit junebug town art story
+asset town inline
+asset plaza inline
+asset bakery_sign_1998 inline
+asset mural_1998 inline
+asset notice_1998 inline
+asset bunting inline
+asset gulls inline
+asset bridge attach <junebug.19980814.2@inkwell.example> bridge.ll 725 118ca1f9
+asset seawall_gap inline
+asset pier_old inline
+asset point_rocks inline
+asset lighthouse_scaffold inline
+asset lighthouse_rule wanted <lighthouse-rule.1998@inkwell.example> trigger=pier_end
+end
+
+-- sky
