@@ -1,0 +1,14 @@
+LLMANIFEST 1
+build present-restoration
+era 2026
+parent <ll-0815.skylark@summer98.example>
+title Last Light: restored edition
+credit skylark programming music
+credit junebug art story
+credit mara restoration seasons
+asset credits_restored created
+asset iris_revived created
+asset seasons created
+asset snow created
+asset winter_theme created
+end

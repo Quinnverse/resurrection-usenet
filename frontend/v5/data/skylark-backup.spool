@@ -1,0 +1,212 @@
+#! rnews 542
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Last Light - a small game about a lighthouse (artist wanted)
+Date: Sat, 18 Apr 1998 22:14:05 -0700
+Message-ID: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 6
+
+I am making a little game about a seaside town with a lighthouse keeper
+called Theo. The light does not work yet. Neither does most of the game.
+
+I can code and I can write music. I cannot draw a seagull. Anyone?
+
+-- sky
+#! rnews 533
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: Last Light - a small game about a lighthouse (artist wanted)
+Date: Sun, 19 Apr 1998 10:02:44 -0700
+Message-ID: <junebug.19980419.1@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 6
+
+> I cannot draw a seagull.
+
+I can draw you a seagull. I can draw you the whole town, and I will
+write the people in it. Theo needs a beard. Also a baker.
+
+-- june
+#! rnews 750
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: the town has a song now
+Date: Thu, 02 Jul 1998 23:31:10 -0700
+Message-ID: <ll-0702.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 13
+
+wrote a melody for the lighthouse. it does not end properly yet.
+
+-- sky
+
+begin 644 tune.ll
+M3$Q!4U-%5"`Q('1U;F4*8GD@<VMY;&%R:PIN;W1E(&ET(&ES(&YO="!F:6YI
+M<VAE9"X@;F5I=&AE<B!A;2!I+B`M<VMY"G1E;7!O(#@X"G!H<F%S92`V-#HQ
+M(#8W.C$@-CDZ,B`W,3HQ(#8Y.C$@-C<Z,@IP:')A<V4@-C0Z,2`V-SHQ(#<R
+M.C(@-S$Z,2`V.3HQ(#8W.C(*<&AR87-E(#8Y.C$@-S$Z,2`W,CHQ(#<T.C$@
+M-S8Z,B`W-#HQ(#<R.C$*<&AR87-E(#<Q.C$@-CDZ,2`V-SHQ(#8T.C$@-C<Z
+&-`IE;F0*
+`
+end
+#! rnews 809
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: lighthouse window (do not fix it)
+Date: Tue, 21 Jul 1998 16:12:51 -0700
+Message-ID: <junebug.19980721.1@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 13
+
+the lighthouse gets one crooked window. sky will hate it. sky will build it.
+
+-- june
+
+begin 644 window.ll
+M3$Q!4U-%5"`Q('=I;F1O=PIB>2!J=6YE8G5G"FYO=&4@:70@;&5A;G,N(&]N
+M('!U<G!O<V4N(&1O(&YO="!S=')A:6=H=&5N(&ET+B`M:@IW:61T:"`Q+C$P
+M"FAE:6=H="`Q+C0P"G!O:6YT("TP+C4R("TP+C<P"G!O:6YT(#`N-34@+3`N
+M-C8*<&]I;G0@,"XT-R`P+C<P"G!O:6YT("TP+C4X(#`N-C(*;75L;&EO;B`M
+M,"XP-B`M,"XV."`P+C`R(#`N-C8*;75L;&EO;B`M,"XU-2`P+C`U(#`N-3$@
+@,"XQ,@IF:6YI<V@@<V5A(&AO;F5Y(&-H86QK"F5N9`H`
+`
+end
+#! rnews 646
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: lighthouse window (do not fix it)
+Date: Thu, 30 Jul 1998 21:40:00 -0700
+Message-ID: <ll-0730.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+	<junebug.19980721.1@inkwell.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 12
+
+> sky will hate it. sky will build it.
+
+built it. it is still crooked. the lamp works now, mostly.
+
+-- sky
+
+begin 644 lamp.ll
+M3$Q!4U-%5"`Q(&QA;7`*8GD@<VMY;&%R:PIC;VQO<B!F9F0R-V$*<W!E960@
+M,"XV"F)E86T@,S`*<W=E97`@=&]W;B!P:65R(&)A:V5R>2!S=&%T:6]N"F5N
+"9`H`
+`
+end
+#! rnews 695
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: Iris (the baker)
+Date: Sun, 09 Aug 1998 11:05:30 -0700
+Message-ID: <junebug.19980809.1@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 10
+
+Iris bakes all summer and then she gets on the boat. that is her ending.
+please do not make her stay. -- june
+
+begin 644 iris.npc
+M3$Q!4U-%5"`Q(&YP8R!I<FES"F)Y(&IU;F5B=6<*;F]T92!I<FES(&1O97,@
+M;F]T('-T87DN('-H92!W87,@;F5V97(@9V]I;F<@=&\N("UJ"G-T871E(&)A
+M:V4@8F%K97)Y"G-T871E('=A;&L@:&%R8F]R"G-A>2!I<FES+FAA<F)O<@IS
+B=&%T92!B;V%R9"!B;V%T"F5N9&EN9R!L96%V97,*96YD"@``
+`
+end
+#! rnews 436
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: the bridge keeps falling into the canal
+Date: Wed, 12 Aug 1998 23:58:01 -0700
+Message-ID: <ll-0040.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 3
+
+every build the bridge sags and theo walks into the water. he does not complain.
+
+-- sky
+#! rnews 1470
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: the bridge keeps falling into the canal
+Date: Fri, 14 Aug 1998 23:40:11 -0700
+Message-ID: <junebug.19980814.2@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+	<ll-0040.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 23
+
+fixed it. hand placed planks, a bit wonky on purpose. it holds now.
+
+-- june
+
+begin 644 bridge.ll
+M3$Q!4U-%5"`Q(&)R:61G90IB>2!J=6YE8G5G"FYO=&4@<&QA;FMS(&%R92!H
+M86YD('!L86-E9"P@=V]N:WD@;VX@<'5R<&]S92X@:70@:&]L9',@;F]W+B`M
+M:@IS<&%N(#,N,C`*=VED=&@@,BXR,`IR86EL(#`N.34*<&QA;FL@,"XP,C`@
+M,"XQ-S`@,"XP,C@@,"XP,38@,BXQ-C8*<&QA;FL@,"XR,S,@,"XQ.#0@+3`N
+M,#`R(#`N,#0P(#(N,38U"G!L86YK(#`N-#0W(#`N,3<W(#`N,#`Q("TP+C`R
+M,2`R+C(Q-0IP;&%N:R`P+C8V,"`P+C$W."`M,"XP,S@@,"XP,C4@,BXQ-C$*
+M<&QA;FL@,"XX-S,@,"XQ.3D@+3`N,#$Q("TP+C`S-2`R+C$X-@IP;&%N:R`Q
+M+C`X-R`P+C$W-"`M,"XP,S`@,"XP,C(@,BXQ,C$*<&QA;FL@,2XS,#`@,"XQ
+M.#D@,"XP,C<@,"XP,C`@,BXQ.#0*<&QA;FL@,2XU,3,@,"XQ-S4@,"XP-#,@
+M,"XP,C8@,BXR,C4*<&QA;FL@,2XW,C8@,"XQ.#$@,"XP,S`@,"XP,34@,BXR
+M,3<*<&QA;FL@,2XY-#`@,"XQ-S`@+3`N,#$W("TP+C`S,R`R+C(S-`IP;&%N
+M:R`R+C$U,R`P+C$X."`M,"XP,S,@,"XP,S`@,BXQ-#4*<&QA;FL@,BXS-C8@
+M,"XQ.3(@+3`N,#(U("TP+C`T,"`R+C$Y-PIP;&%N:R`R+C4X,"`P+C$Y-B`P
+M+C`T,"`M,"XP,#,@,BXQ.#$*<&QA;FL@,BXW.3,@,"XQ-S(@+3`N,#(Q(#`N
+M,#(U(#(N,C`R"G!L86YK(#,N,#`V(#`N,3<R(#`N,#`R(#`N,#`X(#(N,3(Q
+C"G!O<W0@,"XP-0IP;W-T(#$N-C`*<&]S="`S+C$U"F5N9`H`
+`
+end
+#! rnews 1252
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Last Light 0.9 - summer build (manifest)
+Date: Sat, 15 Aug 1998 21:05:00 -0700
+Message-ID: <ll-0815.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 26
+
+summer build. the pier is half done, the lighthouse is half a lighthouse,
+june is going away at the end of the month. -- sky
+
+LLMANIFEST 1
+build summer-0.9
+era 1998
+title Last Light 0.9 (summer build)
+credit skylark programming music
+credit junebug art story
+asset town inline
+asset station inline
+asset bunting inline
+asset gulls inline
+asset bakery_1998 inline
+asset notice_1998 inline
+asset bridge attach <junebug.19980814.2@inkwell.example> bridge.ll 710 a5055c02
+asset window attach <junebug.19980721.1@inkwell.example> window.ll 257 56786f4b
+asset tune attach <ll-0702.skylark@summer98.example> tune.ll 231 b4794003
+asset lamp attach <ll-0730.skylark@summer98.example> lamp.ll 92 6ba39b0f
+asset iris attach <junebug.19980809.1@inkwell.example> iris.npc 169 f09a3fda
+asset seawall_gap inline
+asset pier_old inline
+asset pier_gap inline
+asset point_rocks inline
+asset lighthouse_scaffold inline
+end

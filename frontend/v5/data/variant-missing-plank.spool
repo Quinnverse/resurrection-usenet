@@ -1,0 +1,71 @@
+#! rnews 1420
+Path: summer98.example!not-for-mail
+From: junebug <june@inkwell.example>
+Newsgroups: alt.games.homebrew
+Subject: Re: the bridge keeps falling into the canal
+Date: Fri, 14 Aug 1998 23:40:11 -0700
+Message-ID: <junebug.19980814.2@inkwell.example>
+References: <ll-0001.skylark@summer98.example>
+	<ll-0040.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 22
+
+fixed it. hand placed planks, a bit wonky on purpose. it holds now.
+
+-- june
+
+begin 644 bridge.ll
+M3$Q!4U-%5"`Q(&)R:61G90IB>2!J=6YE8G5G"FYO=&4@<&QA;FMS(&%R92!H
+M86YD('!L86-E9"P@=V]N:WD@;VX@<'5R<&]S92X@:70@:&]L9',@;F]W+B`M
+M:@IS<&%N(#,N,C`*=VED=&@@,BXR,`IR86EL(#`N.34*<&QA;FL@,"XP,C`@
+M,"XQ-S`@,"XP,C@@,"XP,38@,BXQ-C8*<&QA;FL@,"XR,S,@,"XQ.#0@+3`N
+M,#`R(#`N,#0P(#(N,38U"G!L86YK(#`N-#0W(#`N,3<W(#`N,#`Q("TP+C`R
+M,2`R+C(Q-0IP;&%N:R`P+C8V,"`P+C$W."`M,"XP,S@@,"XP,C4@,BXQ-C$*
+M<&QA;FL@,"XX-S,@,"XQ.3D@+3`N,#$Q("TP+C`S-2`R+C$X-@IP;&%N:R`Q
+M+C`X-R`P+C$W-"`M,"XP,S`@,"XP,C(@,BXQ,C$*<&QA;FL@,2XS,#`@,"XQ
+M.#D@,"XP,C<@,"XP,C`@,BXQ.#0*<&QA;FL@,2XW,C8@,"XQ.#$@,"XP,S`@
+M,"XP,34@,BXR,3<*<&QA;FL@,2XY-#`@,"XQ-S`@+3`N,#$W("TP+C`S,R`R
+M+C(S-`IP;&%N:R`R+C$U,R`P+C$X."`M,"XP,S,@,"XP,S`@,BXQ-#4*<&QA
+M;FL@,BXS-C8@,"XQ.3(@+3`N,#(U("TP+C`T,"`R+C$Y-PIP;&%N:R`R+C4X
+M,"`P+C$Y-B`P+C`T,"`M,"XP,#,@,BXQ.#$*<&QA;FL@,BXW.3,@,"XQ-S(@
+M+3`N,#(Q(#`N,#(U(#(N,C`R"G!L86YK(#,N,#`V(#`N,3<R(#`N,#`R(#`N
+L,#`X(#(N,3(Q"G!O<W0@,"XP-0IP;W-T(#$N-C`*<&]S="`S+C$U"F5N9`H`
+`
+end
+#! rnews 1252
+Path: summer98.example!not-for-mail
+From: skylark <skylark@summer98.example>
+Newsgroups: alt.games.homebrew
+Subject: Last Light 0.9 - summer build (manifest)
+Date: Sat, 15 Aug 1998 21:05:00 -0700
+Message-ID: <ll-0815.skylark@summer98.example>
+References: <ll-0001.skylark@summer98.example>
+X-Fixture: fictional sample for Resurrection V5
+Lines: 26
+
+summer build. the pier is half done, the lighthouse is half a lighthouse,
+june is going away at the end of the month. -- sky
+
+LLMANIFEST 1
+build summer-0.9
+era 1998
+title Last Light 0.9 (summer build)
+credit skylark programming music
+credit junebug art story
+asset town inline
+asset station inline
+asset bunting inline
+asset gulls inline
+asset bakery_1998 inline
+asset notice_1998 inline
+asset bridge attach <junebug.19980814.2@inkwell.example> bridge.ll 674 31bd26b0
+asset window attach <junebug.19980721.1@inkwell.example> window.ll 257 56786f4b
+asset tune attach <ll-0702.skylark@summer98.example> tune.ll 231 b4794003
+asset lamp attach <ll-0730.skylark@summer98.example> lamp.ll 92 6ba39b0f
+asset iris attach <junebug.19980809.1@inkwell.example> iris.npc 169 f09a3fda
+asset seawall_gap inline
+asset pier_old inline
+asset pier_gap inline
+asset point_rocks inline
+asset lighthouse_scaffold inline
+end
