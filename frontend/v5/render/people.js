@@ -13,24 +13,37 @@ export function makePerson(spec) {
   const s = Object.assign({ coat: PAL.jacket, coatD: PAL.jacketD, shirt: 0xfff3dc, pants: PAL.pants, shoe: PAL.shoe, skin: PAL.skin, hair: PAL.hair, hairStyle: 'pony', height: 1, scarf: null, prop: 'none' }, spec || {});
   const root = new THREE.Group(); const body = new THREE.Group(); root.add(body); body.scale.setScalar(s.height);
   const legL = limb(0.72, 0.085, 0.07, s.pants, -0.1, 0.8, 0), legR = limb(0.72, 0.085, 0.07, s.pants, 0.1, 0.8, 0);
+  [legL, legR].forEach((l) => { l.mesh.material = mat(s.pants, { flat: false }); });
   [legL, legR].forEach((l) => l.pivot.add(part(new THREE.BoxGeometry(0.15, 0.1, 0.24), s.shoe, 0, -0.74, 0.04)));
   body.add(legL.pivot, legR.pivot);
   const torso = new THREE.Group(); torso.position.y = 0.8; body.add(torso);
-  torso.add(part(new THREE.CylinderGeometry(0.2, 0.24, 0.62, 8), s.coat, 0, 0.31, 0));
+  const chest = part(new THREE.CylinderGeometry(0.2, 0.24, 0.62, 14), s.coat, 0, 0.31, 0, { flat: false }); torso.add(chest); const shoulders = part(new THREE.SphereGeometry(0.205, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), s.coat, 0, 0.6, 0, { flat: false }); shoulders.scale.y = 0.3; torso.add(shoulders);
   torso.add(part(new THREE.BoxGeometry(0.16, 0.5, 0.02), s.shirt, 0, 0.3, 0.215));
   torso.add(part(new THREE.CylinderGeometry(0.245, 0.245, 0.06, 8), s.coatD, 0, 0.03, 0));
   if (s.scarf) { const sc = part(new THREE.TorusGeometry(0.15, 0.06, 5, 10), s.scarf, 0, 0.62, 0); sc.rotation.x = Math.PI / 2; torso.add(sc); }
   else { torso.add(part(new THREE.CylinderGeometry(0.13, 0.16, 0.07, 8), s.shirt, 0, 0.63, 0)); }
   const armL = limb(0.6, 0.065, 0.055, s.coat, -0.27, 0.58, 0), armR = limb(0.6, 0.065, 0.055, s.coat, 0.27, 0.58, 0);
-  const handL = part(new THREE.IcosahedronGeometry(0.06, 0), s.skin, 0, -0.63, 0), handR = part(new THREE.IcosahedronGeometry(0.06, 0), s.skin, 0, -0.63, 0);
+  [armL, armR].forEach((a) => { a.mesh.material = mat(s.coat, { flat: false }); });
+  const handL = part(new THREE.SphereGeometry(0.058, 10, 8), s.skin, 0, -0.63, 0, { flat: false }), handR = part(new THREE.SphereGeometry(0.058, 10, 8), s.skin, 0, -0.63, 0, { flat: false });
   armL.pivot.add(handL); armR.pivot.add(handR); torso.add(armL.pivot, armR.pivot);
   // head and face
-  const head = new THREE.Group(); head.position.y = 0.82; torso.add(head);
+  const head = new THREE.Group(); head.position.y = 0.73; head.scale.setScalar(1.1); torso.add(head);
   head.add(part(new THREE.CylinderGeometry(0.06, 0.07, 0.1, 6), s.skin, 0, 0, 0));
-  head.add(part(new THREE.IcosahedronGeometry(0.19, 1), s.skin, 0, 0.18, 0.01));
+  const skull = part(new THREE.SphereGeometry(0.19, 18, 14), s.skin, 0, 0.18, 0.01, { flat: false, rough: 0.7 }); skull.scale.set(1, 1.08, 0.97); head.add(skull);
+  head.add(part(new THREE.SphereGeometry(0.045, 8, 6), s.skin, -0.185, 0.17, 0.0, { flat: false }), part(new THREE.SphereGeometry(0.045, 8, 6), s.skin, 0.185, 0.17, 0.0, { flat: false }));   // ears
+  const nose = part(new THREE.ConeGeometry(0.022, 0.06, 6), s.skin, 0, 0.15, 0.2, { flat: false }); nose.rotation.x = Math.PI / 2 + 0.25; head.add(nose);
   const face = new THREE.Group(); face.position.set(0, 0.18, 0.17); head.add(face);
   const ink = mat(PAL.ink);
-  const eye = (x) => { const e = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 0.02), ink); e.position.set(x, 0.02, 0.005); face.add(e); return e; };
+  const white = mat(0xfffaf2, { flat: false, rough: 0.4 }), irisM = mat(s.eyes || 0x3a2a24, { flat: false, rough: 0.3 }), shine = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const eye = (x) => {
+    const e = new THREE.Group(); e.position.set(x, 0.02, 0.0); face.add(e);
+    const w = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), white); w.scale.set(1.15, 1.25, 0.5); e.add(w);
+    const ir = new THREE.Mesh(new THREE.SphereGeometry(0.019, 10, 8), irisM); ir.position.z = 0.012; ir.scale.set(1, 1.15, 0.5); e.add(ir);
+    const pu = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 6), ink); pu.position.z = 0.019; pu.scale.z = 0.4; e.add(pu);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(0.0055, 6, 4), shine); hl.position.set(0.007, 0.009, 0.022); e.add(hl);
+    const lid = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(s.skin, { flat: false })); lid.scale.set(1.18, 1.3, 0.62); lid.position.y = 0.002; lid.rotation.x = -0.15; lid.visible = false; e.add(lid);
+    e.scale.setScalar(1.3); e.userData.lid = lid; return e;
+  };
   const eyeL = eye(-0.065), eyeR = eye(0.065);
   const brow = (x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.014, 0.02), mat(s.hair)); b.position.set(x, 0.075, 0.0); face.add(b); return b; };
   const browL = brow(-0.065), browR = brow(0.065);
@@ -49,11 +62,12 @@ export function makePerson(spec) {
   if (s.glasses) { [-0.065, 0.065].forEach((x) => { const g = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.006, 3, 10), mat(0x2a2a30)); g.position.set(x, 0.02, 0.012); face.add(g); }); }
   // hair
   const hairMat = s.hair;
-  const cap = part(new THREE.SphereGeometry(0.205, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat, 0, 0.2, -0.01); cap.rotation.x = -0.25; head.add(cap);
-  const fringe = part(new THREE.BoxGeometry(0.34, 0.08, 0.08), hairMat, 0, 0.32, 0.12); fringe.rotation.x = 0.35; head.add(fringe);
+  const cap = part(new THREE.SphereGeometry(0.212, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), hairMat, 0, 0.2, -0.01, { flat: false, rough: 0.6 }); cap.rotation.x = -0.25; head.add(cap);
+  const fringe = part(new THREE.SphereGeometry(0.16, 14, 6, 0, Math.PI * 2, 0, Math.PI * 0.4), hairMat, 0, 0.27, 0.07, { flat: false, rough: 0.6 }); fringe.scale.set(1.15, 0.7, 0.9); fringe.rotation.x = 0.9; head.add(fringe);
+  [-1, 1].forEach((sd) => { const lock = part(new THREE.CapsuleGeometry(0.035, 0.12, 3, 6), hairMat, sd * 0.17, 0.12, 0.08, { flat: false }); lock.rotation.z = sd * 0.15; head.add(lock); });
   let pony = null;
   if (s.hairStyle === 'pony') { pony = new THREE.Group(); pony.position.set(0, 0.28, -0.17); head.add(pony); const p = part(new THREE.ConeGeometry(0.09, 0.42, 6), hairMat, 0, -0.2, -0.04); p.rotation.x = Math.PI - 0.3; pony.add(p); }
-  if (s.hairStyle === 'bob') { head.add(part(new THREE.CylinderGeometry(0.22, 0.24, 0.22, 10, 1, true), hairMat, 0, 0.12, -0.02, { side: THREE.DoubleSide })); }
+  if (s.hairStyle === 'bob') { head.add(part(new THREE.CylinderGeometry(0.22, 0.25, 0.24, 16, 1, true, 0.85, Math.PI * 2 - 1.7), hairMat, 0, 0.12, -0.02, { side: THREE.DoubleSide, flat: false })); }
   if (s.hairStyle === 'long') { const l = part(new THREE.BoxGeometry(0.34, 0.45, 0.1), hairMat, 0, -0.02, -0.15); head.add(l); }
   if (s.hairStyle === 'bun') { head.add(part(new THREE.IcosahedronGeometry(0.1, 0), hairMat, 0, 0.36, -0.12)); }
   // props
@@ -65,7 +79,7 @@ export function makePerson(spec) {
   props.guitar = new THREE.Group(); const gb = part(new THREE.CylinderGeometry(0.2, 0.2, 0.09, 12), 0xc08040, 0, 0, 0); gb.rotation.x = Math.PI / 2; props.guitar.add(gb, part(new THREE.BoxGeometry(0.05, 0.5, 0.03), 0x6b4128, 0, 0.32, 0)); props.guitar.position.set(0.02, 0.18, 0.28); props.guitar.rotation.z = 1.15; torso.add(props.guitar); props.guitar.visible = false;
   props.box = new THREE.Group(); props.box.add(part(new THREE.BoxGeometry(0.55, 0.4, 0.4), 0xb08a5a, 0, 0, 0), part(new THREE.BoxGeometry(0.56, 0.04, 0.12), 0xd8c8a0, 0, 0.2, 0)); props.box.position.set(0, 0.25, 0.38); torso.add(props.box); props.box.visible = false;
   props.window = new THREE.Group(); props.window.add(part(new THREE.BoxGeometry(0.9, 1.1, 0.06), 0xfff4d6, 0, 0, 0)); props.window.position.set(0, 0.35, 0.42); torso.add(props.window); props.window.visible = false;
-  root.userData = { legL: legL.pivot, legR: legR.pivot, armL: armL.pivot, armR: armR.pivot, torso, head, body, pony, eyeL, eyeR, browL, browR, mouths, blushMat, props, expr: 'neutral', spec: s };
+  root.userData = { blinkAt: Math.random() * 3, lookAt: null, chest, legL: legL.pivot, legR: legR.pivot, armL: armL.pivot, armR: armR.pivot, torso, head, body, pony, eyeL, eyeR, browL, browR, mouths, blushMat, props, expr: 'neutral', spec: s };
   return root;
 }
 
@@ -123,4 +137,14 @@ export function animate(p, t, phase, speed, mode, reduce) {
     default: break;
   }
   if (u.pony) { u.pony.rotation.x = moving ? Math.sin(phase * 2) * 0.14 - 0.12 * k : Math.sin(t * 1.3) * 0.04 * w; }
+  // alive: breathing, a blink every few seconds, and the head turning toward whoever she is looking at
+  if (u.chest && !moving) { u.chest.scale.set(1 + Math.sin(t * 1.7) * 0.012 * w, 1, 1 + Math.sin(t * 1.7) * 0.02 * w); }
+  if (t > u.blinkAt + 0.13) { u.blinkAt = t + 2.2 + ((Math.sin(t * 12.9898) * 43758.5453) % 1 + 1) % 1 * 3.2; }
+  const shut = t > u.blinkAt && t < u.blinkAt + 0.13 && mode !== 'sleep';
+  [u.eyeL, u.eyeR].forEach((e) => { if (e && e.userData && e.userData.lid) { e.userData.lid.visible = shut || mode === 'sleep' || u.expr === 'quiet'; e.userData.lid.rotation.x = mode === 'sleep' || shut ? 0.6 : -0.45; } });
+  if (u.lookAt && !['sleep', 'hideface', 'turnaway', 'camera'].includes(mode)) {
+    p.updateMatrixWorld(); const local = p.worldToLocal(u.lookAt.clone());
+    const yaw = Math.max(-0.75, Math.min(0.75, Math.atan2(local.x, local.z))); const pitch = Math.max(-0.35, Math.min(0.35, -Math.atan2(local.y - 1.55, Math.hypot(local.x, local.z))));
+    u.head.rotation.y += yaw * 0.85; u.head.rotation.x += pitch * 0.6;
+  }
 }

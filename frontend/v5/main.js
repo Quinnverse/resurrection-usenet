@@ -362,6 +362,16 @@ function syncCast(dt) {
     animate(world.iris, rt.t, rt.t * 3, ir.walking ? 1.4 : 0, ir.walking ? 'walk' : (s.era === 2004 && !ir.leaving ? 'hold' : 'idle'), reduce());
     if (ir.boarded) { world.canalBoat.position.x = -5.8 + ir.boatX; }
   }
+  // eyes: whoever is speaking is looked at; otherwise June watches Elena when she is close, and Elena watches June
+  {
+    const head = (p) => (p && p.visible ? new THREE.Vector3(p.position.x, p.position.y + 1.55, p.position.z) : null);
+    const jn = s.june ? person(juneId()) : null, th = s.theo && worldId === 'town' ? person('theo') : null;
+    const speaker = s.dialog && Array.isArray(s.dialog.line) ? s.dialog.line[0] : null;
+    const near = (a, b) => a && b && a.position.distanceTo(b.position) < 6;
+    me.userData.lookAt = speaker === 'june' && near(me, jn) ? head(jn) : speaker === 'theo' && near(me, th) ? head(th) : (near(me, jn) ? head(jn) : (near(me, th) ? head(th) : null));
+    if (jn) { jn.userData.lookAt = near(jn, me) && s.scene !== 'ride' ? head(me) : null; }
+    if (th) { th.userData.lookAt = near(th, me) ? head(me) : null; }
+  }
   if (worldId === 'station' && g.rt.train) { world.setTrain(g.rt.train.x, !g.rt.train.gone && (s.beat !== '5.alone' || g.rt.train.moving)); }
   if (worldId === 'station') { world.setSuitcase(s.beat !== '5.depart' ? 'none' : s.carry === 'suitcase' ? 'carried' : (g.s.flags.suitcase ? (g.rt.boarding ? 'none' : 'door') : 'bench')); }
   if (worldId === 'train') { world.setOutside(g.rt.photoT || 0); }
