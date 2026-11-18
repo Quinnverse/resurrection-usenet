@@ -62,3 +62,4 @@ combined-server/data/
 # Local test output
 test-results/
 playwright-report/
+ci-v5/

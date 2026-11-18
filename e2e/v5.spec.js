@@ -36,7 +36,9 @@ function initHook() {
   window.requestAnimationFrame = (cb) => { if (h.virtual) { h.raf = cb; return 1; } return real.raf(cb); };
   window.setTimeout = (fn, ms) => { if (!h.virtual) { return real.st(fn, ms); } const id = ++h.id; h.timers.push({ id, at: h.now + (ms || 0), fn }); return id; };
   window.clearTimeout = (id) => { const i = h.timers.findIndex((x) => x.id === id); if (i >= 0) { h.timers.splice(i, 1); } else { real.ct(id); } };
-  h.virtualize = () => { h.virtual = true; h.now = performance.now(); };
+  // switch to virtual frames; wait for the game's pending real frame so its loop re-registers on the virtual clock
+  h.virtualize = () => new Promise((resolve) => { h.virtual = true; h.now = performance.now(); real.raf(() => real.raf(() => resolve())); });
+  h.realTimeout = real.st;
   h.advance = () => {
     h.now += 1000 / 30;
     for (;;) { h.timers.sort((a, b) => a.at - b.at); if (!h.timers.length || h.timers[0].at > h.now) { break; } h.timers.shift().fn(); }
@@ -68,7 +70,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('resume')).toBeVisible();
     await page.getByTestId('settings').click();
-    await page.getByTestId('lang').click();
+    await page.getByTestId('panel').getByTestId('lang').click();
     await expect(page.getByTestId('resume')).toHaveText(/继续|返回/);
     await attach(testInfo, 'settings-zh', await page.screenshot({ type: 'jpeg', quality: 70 }));
     await page.getByTestId('resume').click();
@@ -87,7 +89,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
       await page.getByTestId('start').click();
       const out = await page.evaluate(async (choices) => {
         const { playThrough } = await import('/v5-test/bot.mjs');
-        const h = window.__V5_TEST__; h.virtualize();
+        const h = window.__V5_TEST__; await h.virtualize();
         const canvas = document.querySelector('canvas'); const shots = []; let beat = null, wait = 0;
         const step = (input) => {
           h.next = input || {}; h.last = []; h.advance();
@@ -124,7 +126,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
     await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 });
     await page.getByTestId('start').click();
     await page.evaluate(async () => {
-      const { makeBot } = await import('/v5-test/bot.mjs'); const h = window.__V5_TEST__; h.virtualize();
+      const { makeBot } = await import('/v5-test/bot.mjs'); const h = window.__V5_TEST__; await h.virtualize();
       const bot = makeBot(h.game, { step: (i) => { h.next = i || {}; h.last = []; h.advance(); return h.last; } });
       const { LAYOUTS } = await import('/v5/core/layout.js'); const c = LAYOUTS.study.points.find((q) => q.id === 'computer');
       bot.go('computer', c.x, c.z + 0.9);
@@ -134,6 +136,37 @@ test.describe('V5 — The Summer We Never Finished', () => {
     await expect(page.getByTestId('continue')).toBeVisible({ timeout: 30000 });
     await page.getByTestId('continue').click();
     await expect.poll(async () => (await snap(page)).beat, { timeout: 15000 }).toBe('1.town');
+    expect(issues).toEqual([]);
+  });
+
+  // Real-time screenshots of every beat with the interface: a save for each beat is made by playing the core in Node,
+  // loaded through Continue, then the game runs on its own clock for a few seconds with real key presses.
+  test('every beat loads from its save and renders (real screenshots)', async ({ page }, testInfo) => {
+    test.setTimeout(20 * 60 * 1000);
+    const issues = watch(page);
+    const { pathToFileURL } = require('node:url');
+    const imp = (f) => import(pathToFileURL(path.join(__dirname, '..', f)).href);
+    const Gm = await imp('frontend/v5/core/game.js'); const { loadArchive } = await imp('tools/v5-playthrough.mjs'); const { playThrough } = await imp('test/v5-bot.mjs');
+    const g = Gm.createGame(loadArchive()); const saves = {};
+    playThrough(g, { step: (input) => { const ev = Gm.tick(g, 1 / 30, input); if (!saves[g.s.beat]) { saves[g.s.beat] = Gm.serialize(g); } return ev; } });
+    const perf = [];
+    for (const [beat, save] of Object.entries(saves)) {
+      await page.goto('/v5/');
+      await page.evaluate((sv) => { localStorage.setItem('v5.save.v1', JSON.stringify(sv)); localStorage.setItem('v5.prefs.v1', JSON.stringify({ lang: 'en', quality: 'medium' })); }, save);
+      await page.reload();
+      await expect(page.getByTestId('continue')).toBeVisible({ timeout: 30000 });
+      await page.getByTestId('continue').click();
+      await page.waitForTimeout(2500);
+      await attach(testInfo, `beat-${beat}-a`, await page.screenshot({ type: 'jpeg', quality: 72 }));
+      await page.keyboard.press('KeyE'); await page.keyboard.down('KeyW'); await page.waitForTimeout(1200); await page.keyboard.up('KeyW');
+      await page.waitForTimeout(1500);
+      await attach(testInfo, `beat-${beat}-b`, await page.screenshot({ type: 'jpeg', quality: 72 }));
+      const s = await snap(page);
+      const mem = await page.evaluate(() => (performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null));
+      perf.push({ beat, world: s.world, fps: s.fps, heapMB: mem });
+      expect(s.beat === beat || Gm.BEATS.indexOf(s.beat) > Gm.BEATS.indexOf(beat)).toBe(true);
+    }
+    console.log('V5_PERF ' + JSON.stringify(perf));
     expect(issues).toEqual([]);
   });
 
