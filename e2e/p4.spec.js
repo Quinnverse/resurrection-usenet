@@ -10,7 +10,7 @@ const path = require('node:path');
 const zlib = require('node:zlib');
 const { pathToFileURL } = require('node:url');
 
-test.use({ launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'] } });
+test.use({ launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'] }, video: { mode: 'on', size: { width: 1280, height: 720 } } });
 
 const PATH = '/p4/';
 let Lv = null;
@@ -156,7 +156,7 @@ function watch(page, issues) {
 
 // ---- the full English playthrough --------------------------------------------------------------------------
 test.describe('P4 full playthrough', () => {
-  test.use({ viewport: { width: 1280, height: 720 }, video: { mode: 'on', size: { width: 1280, height: 720 } } });
+  test.use({ viewport: { width: 1280, height: 720 } });
   test.setTimeout(600000);
 
   test('English, keyboard and mouse: study, archive, town, restoration, ending, resume', async ({ page }, testInfo) => {
