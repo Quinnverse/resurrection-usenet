@@ -120,18 +120,18 @@ export const ROUTES = {
 export const PATHS = {
   town: {
     nodes: { lane: [0, -6.5], gate: [0, -12.5], plazaW: [-2.9, -1.5], plazaE: [2.9, -1.5], kioskW: [-3.3, 3.0], kioskE: [3.3, 3.0], plazaS: [2.2, 4.6], plazaSW: [-2.2, 4.6],
-      road: [1.2, 9.0], roadEnd: [1.6, 12.6], prom: [11.5, 13.0], theo: [13.0, 15.0], light: [16.0, 16.6], pierFoot: [0, 13.2], pier: [0, 24.4], bakery: [-4.4, -4.6], mural: [4.4, -4.6] },
+      road: [1.2, 9.0], roadEnd: [1.6, 12.6], prom: [11.5, 13.0], theo: [13.0, 15.0], promE: [14.6, 13.4], light: [16.0, 16.6], pierFoot: [0, 13.2], pier: [0, 24.4], bakery: [-4.4, -4.6], mural: [4.4, -4.6] },
     edges: [['gate', 'lane'], ['lane', 'plazaW'], ['lane', 'plazaE'], ['lane', 'bakery'], ['lane', 'mural'], ['plazaW', 'kioskW'], ['plazaE', 'kioskE'], ['plazaW', 'bakery'], ['plazaE', 'mural'],
-      ['kioskW', 'plazaSW'], ['kioskE', 'plazaS'], ['plazaS', 'plazaSW'], ['plazaS', 'road'], ['plazaSW', 'road'], ['road', 'roadEnd'], ['roadEnd', 'prom'], ['roadEnd', 'pierFoot'], ['pierFoot', 'pier'], ['prom', 'theo'], ['prom', 'light'], ['theo', 'light']]
+      ['kioskW', 'plazaSW'], ['kioskE', 'plazaS'], ['plazaS', 'plazaSW'], ['plazaS', 'road'], ['plazaSW', 'road'], ['road', 'roadEnd'], ['roadEnd', 'prom'], ['roadEnd', 'pierFoot'], ['pierFoot', 'pier'], ['prom', 'theo'], ['prom', 'promE'], ['promE', 'light'], ['theo', 'promE']]
   }
 };
 export const GOALS = { town: { theo: 'theo', booth98: 'kioskW', booth04: 'kioskE', lighthouse: 'light', bakery: 'bakery', mural: 'mural', pier: 'pier', plaza: 'lane' } };
 
 // Shortest list of [x, z] waypoints from (x, z) to a node: start at the nearest node with a clear line.
-export function plan(sceneId, x, z, goalNode) {
+export function plan(sceneId, x, z, goalNode, extraBlock) {
   const G = PATHS[sceneId]; if (!G) { return null; }
   const names = Object.keys(G.nodes);
-  const clear = (ax, az, bx, bz) => { const n = Math.ceil(Math.hypot(bx - ax, bz - az) / 0.2); for (let i = 0; i <= n; i++) { const k = i / Math.max(1, n); if (!canStand(sceneId, ax + (bx - ax) * k, az + (bz - az) * k)) { return false; } } return true; };
+  const clear = (ax, az, bx, bz) => { const n = Math.ceil(Math.hypot(bx - ax, bz - az) / 0.2); for (let i = 0; i <= n; i++) { const k = i / Math.max(1, n); if (!canStand(sceneId, ax + (bx - ax) * k, az + (bz - az) * k, extraBlock)) { return false; } } return true; };
   const startable = names.filter((n) => clear(x, z, G.nodes[n][0], G.nodes[n][1])).sort((a, b) => Math.hypot(G.nodes[a][0] - x, G.nodes[a][1] - z) - Math.hypot(G.nodes[b][0] - x, G.nodes[b][1] - z));
   if (!startable.length) { return null; }
   const adj = {}; names.forEach((n) => { adj[n] = []; });

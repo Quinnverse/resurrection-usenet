@@ -12,7 +12,7 @@ const en = {
   'ui.motionFull': 'Motion: full', 'ui.motionReduced': 'Motion: reduced', 'ui.lang': '中文',
   'ui.objective': 'Objective', 'ui.newObjective': 'New objective', 'ui.saved': 'Saved',
   'ui.next': 'Continue', 'ui.nextHint': 'E, Space or click to continue', 'ui.skip': 'Skip',
-  'ui.returnPresent': 'Return to the present', 'ui.viewing': 'Viewing copy · {name}',
+  'ui.returnPresent': 'Return to the present', 'ui.viewing': 'Viewing an old copy · {name}',
   'ui.webgl': 'This chapter needs WebGL, which this browser has turned off. The 2D version is at /p3/.',
   'ui.loading': 'Loading…', 'ui.toBeContinued': 'To be continued', 'ui.nextChapter': 'Chapter 2 · June',
   'ui.backToTitle': 'Back to title',
@@ -46,7 +46,7 @@ const en = {
   'name.shelf': 'Bookshelf', 'name.window': 'Window', 'name.lamp': 'Floor lamp', 'name.computer': 'Mom’s computer',
   'name.pete': 'Post by pixelpete', 'name.owl': 'Post by nightowl', 'name.sky': 'Post by skylark', 'name.june': 'Post by junebug',
   'name.mirrorbot': 'Post by mirrorbot', 'name.notice': 'Server notice', 'name.gate': 'skylark’s link',
-  'name.theo': 'Theo', 'name.booth98': 'Copy · summer98.net · 15 Aug 1998', 'name.booth04': 'Copy · mirror.oldnet.org · 3 Mar 2004',
+  'name.theo': 'Theo', 'name.booth98': 'summer98.net · 15 Aug 1998', 'name.booth04': 'mirror.oldnet.org · 3 Mar 2004',
   'name.lighthouse': 'Lighthouse', 'name.bakery': 'Bakery', 'name.mural': 'Mural', 'name.pier': 'Pier post',
 
   'say.keepbox': 'A box marked KEEP — SUMMER STUFF, in Mom’s handwriting. Inside, a mixtape: “Summer Town — music by J.”',
@@ -154,7 +154,7 @@ const zh = {
   'name.shelf': '书架', 'name.window': '窗户', 'name.lamp': '落地灯', 'name.computer': '妈妈的电脑',
   'name.pete': 'pixelpete 的帖子', 'name.owl': 'nightowl 的帖子', 'name.sky': 'skylark 的帖子', 'name.june': 'junebug 的帖子',
   'name.mirrorbot': 'mirrorbot 的帖子', 'name.notice': '服务器公告', 'name.gate': 'skylark 的链接',
-  'name.theo': '西奥', 'name.booth98': '副本 · summer98.net · 1998 年 8 月 15 日', 'name.booth04': '副本 · mirror.oldnet.org · 2004 年 3 月 3 日',
+  'name.theo': '西奥', 'name.booth98': 'summer98.net · 1998 年 8 月 15 日', 'name.booth04': 'mirror.oldnet.org · 2004 年 3 月 3 日',
   'name.lighthouse': '灯塔', 'name.bakery': '面包店', 'name.mural': '壁画', 'name.pier': '码头木桩',
 
   'say.keepbox': '箱子上是妈妈的字：“保留——夏天的东西”。里面有一盘混音磁带：“夏日小镇——音乐：J.”',

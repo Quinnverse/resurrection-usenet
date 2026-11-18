@@ -202,11 +202,11 @@ export function buildTown(opts) {
   });
   function palm(x, z, s) {
     const p = new THREE.Group(); p.position.set(x, 0, z); p.scale.setScalar(s || 1); scene.add(p);
-    for (let i = 0; i < 6; i++) { p.add(cyl(0.14 - i * 0.012, 0.16 - i * 0.012, 0.7, 6, i % 2 ? PAL.woodL : PAL.wood, i * 0.06, i * 0.66, 0, { rz: -0.06 })); }
+    for (let i = 0; i < 6; i++) { const seg = cyl(0.14 - i * 0.012, 0.16 - i * 0.012, 0.7, 6, i % 2 ? PAL.woodL : PAL.wood, i * 0.06, i * 0.66, 0, { rz: -0.06 }); p.add(seg); blockers.push(seg); }
     for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; const leaf = box(0.35, 0.05, 1.8, i % 2 ? PAL.grass : PAL.grassD, 0.4 + Math.cos(a) * 0.8, 4.0, Math.sin(a) * 0.8); leaf.lookAt(0.4 + Math.cos(a) * 3, 3.2, Math.sin(a) * 3); p.add(leaf); }
     p.add(ball(0.14, 0, 0x6a4a2a, 0.4, 3.9, 0.1), ball(0.13, 0, 0x6a4a2a, 0.3, 3.85, -0.12));
   }
-  palm(-8, 15.6, 1); palm(-14, 16.5, 1.1); palm(7.5, 15.8, 0.95); palm(11.5, 10.6, 1.0); palm(-12, 9.8, 1.05);
+  palm(-8, 15.6, 1); palm(-14, 16.5, 1.1); palm(7.5, 15.8, 0.95); palm(-3.8, 10.4, 1.0); palm(-12, 9.8, 1.05);
   // pier
   const pier = new THREE.Group(); scene.add(pier);
   pier.add(box(2.6, 0.12, 11.2, PAL.woodL, 0, -0.06, 19.6));

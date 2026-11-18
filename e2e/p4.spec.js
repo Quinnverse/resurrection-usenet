@@ -115,7 +115,8 @@ async function follow(page, ctl, scene, id) {
   const L = await levels();
   if (L.PATHS[scene]) {
     const s = await snap(page);
-    const path = L.plan(scene, s.x, s.z, L.GOALS[scene][id]);
+    const extra = s.theo && s.theo.visible ? [{ k: 'circ', x: s.theo.x, z: s.theo.z, r: 0.42 }] : null;
+    const path = L.plan(scene, s.x, s.z, L.GOALS[scene][id], extra);
     if (!path) { throw new Error(`no path to ${id} from ${s.x},${s.z}`); }
     for (const [x, z] of path) { await walkTo(page, ctl, x, z, 0.3); }
   } else {
