@@ -1,0 +1,6 @@
+{
+  "name": "resurrection-p4",
+  "private": true,
+  "type": "module",
+  "description": "Marks frontend/p4 as ES modules so Node tests can import the same files the browser loads."
+}

@@ -808,6 +808,14 @@ const server = http.createServer(async (req, res) => {
       return serveStaticFile(res, pathname.slice(1));
     }
 
+    // P4 3D narrative vertical slice, separate from P3 and the four-act game
+    if (pathname === '/p4' || pathname === '/p4/') {
+      return serveStaticFile(res, 'p4/index.html');
+    }
+    if (pathname.startsWith('/p4/')) {
+      return serveStaticFile(res, pathname.slice(1));
+    }
+
     // Session API (persistent, versioned game state)
     if (pathname.startsWith('/api/sessions')) {
       const sessionResult = await sessionApi.handle({ method, pathname, readBody: () => parseBody(req), clientKey: clientKeyFor(req) });
