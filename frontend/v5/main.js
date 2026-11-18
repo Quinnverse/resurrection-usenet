@@ -258,7 +258,17 @@ function onBeat(ev) {
 // ---- camera director ------------------------------------------------------------------------------------------
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(); const ray = new THREE.Raycaster();
 function headOf(p) { return p ? new THREE.Vector3(p.position.x, (p.position.y || 0) + 1.55, p.position.z) : null; }
-function closeUp(p, facing, side, dist) { const h = headOf(p); const f = new THREE.Vector3(Math.sin(facing), 0, Math.cos(facing)); const r = new THREE.Vector3(Math.cos(facing), 0, -Math.sin(facing)); return { pos: h.clone().addScaledVector(f, dist || 1.5).addScaledVector(r, side || 0.35).add(new THREE.Vector3(0, -0.05, 0)), look: h.clone() }; }
+// A close-up in front of p. If someone else's head would be in the way (or the camera inside them), swing around p.
+function closeUp(p, facing, side, dist) {
+  const h = headOf(p); const others = Object.values(cast).filter((q) => q !== p && q.visible && q.parent).map(headOf);
+  for (const swing of [0, 0.5, -0.5, 0.9, -0.9, 1.3, -1.3]) {
+    const a = facing + swing; const f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)); const r = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
+    const pos = h.clone().addScaledVector(f, dist || 1.5).addScaledVector(r, side || 0.35).add(new THREE.Vector3(0, -0.05, 0));
+    const seg = new THREE.Line3(pos, h); const blocked = others.some((o) => { const c = new THREE.Vector3(); seg.closestPointToPoint(o, true, c); return c.distanceTo(o) < 0.42; });
+    if (!blocked) { return { pos, look: h.clone() }; }
+  }
+  const f = new THREE.Vector3(Math.sin(facing), 0, Math.cos(facing)); return { pos: h.clone().addScaledVector(f, dist || 1.5).add(new THREE.Vector3(0, 0.3, 0)), look: h.clone() };
+}
 function shotFor(name, s) {
   const me = person(avatarId()), jn = s.june ? person(juneId()) : null, th = s.theo ? person('theo') : null;
   const facingTo = (a, b) => Math.atan2(b.position.x - a.position.x, b.position.z - a.position.z);

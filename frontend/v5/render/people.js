@@ -32,7 +32,7 @@ export function makePerson(spec) {
   const skull = part(new THREE.SphereGeometry(0.19, 18, 14), s.skin, 0, 0.18, 0.01, { flat: false, rough: 0.7 }); skull.scale.set(1, 1.08, 0.97); head.add(skull);
   head.add(part(new THREE.SphereGeometry(0.045, 8, 6), s.skin, -0.185, 0.17, 0.0, { flat: false }), part(new THREE.SphereGeometry(0.045, 8, 6), s.skin, 0.185, 0.17, 0.0, { flat: false }));   // ears
   const nose = part(new THREE.ConeGeometry(0.022, 0.06, 6), s.skin, 0, 0.15, 0.2, { flat: false }); nose.rotation.x = Math.PI / 2 + 0.25; head.add(nose);
-  const face = new THREE.Group(); face.position.set(0, 0.18, 0.17); head.add(face);
+  const face = new THREE.Group(); face.position.set(0, 0.18, 0.192); head.add(face);
   const ink = mat(PAL.ink);
   const white = mat(0xfffaf2, { flat: false, rough: 0.4 }), irisM = mat(s.eyes || 0x3a2a24, { flat: false, rough: 0.3 }), shine = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const eye = (x) => {
