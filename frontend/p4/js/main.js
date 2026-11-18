@@ -299,6 +299,7 @@ async function runEvents(events) {
       rt.world.setRestored(true, true);
       rt.focus = { shot: LIGHTHOUSE_SHOT, until: rt.t + 99 };
       await waitFor(() => !rt.world.restoring, 8);
+      await wait(reduce() ? 0.4 : 1.6);                   // hold on the restored lamp for a moment
       rt.focus = null; rt.busy = false;
     } else if (ev.type === 'theoLight') {
       rt.busy = true; rt.world.startLighting();
@@ -516,8 +517,8 @@ const LIGHTHOUSE_SHOT = { pos: new THREE.Vector3(10.4, 2.6, 12.0), look: new THR
 function updateCamera(snap) {
   const sh = rt.focus && rt.t < rt.focus.until && rt.focus.shot;
   if (sh) {
-    const c = rt.cam; const k = snap || reduce() ? 1 : 0.07;
-    c.pos.lerp(sh.pos, k); c.look.lerp(sh.look, k);
+    // a cut, like in film: jump straight to the view, then hold it
+    const c = rt.cam; c.pos.copy(sh.pos); c.look.copy(sh.look);
     camera.position.copy(c.pos); camera.lookAt(c.look); return;
   }
   const p = rt.player, c = rt.cam;

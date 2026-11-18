@@ -274,7 +274,7 @@ test.describe('P4 full playthrough', () => {
     await expect(page.getByTestId('prompt')).toContainText(await tr(page, 'en', 'verb.restore'));
     await shot(page, testInfo, '21-town-restore-prompt'); await rec('at the lighthouse in the 1998 copy: [E] Restore the lamp');
     await useNear(page, ctl, 'lighthouse');
-    await page.waitForTimeout(2600);
+    await page.waitForTimeout(2200);
     await shot(page, testInfo, '22-town-restoring'); await rec('the lamp assembles from the old copy');
     await settle(page, ctl);
     await objectiveIs(page, 'en', 'obj.C4');
@@ -285,7 +285,7 @@ test.describe('P4 full playthrough', () => {
     await shot(page, testInfo, '23-town-restored-dark'); await rec('back in the present: the lamp is there, still dark');
     await useNear(page, ctl, 'theo');
     let litShot = false;
-    await settle(page, ctl, null, async (s) => { if (!litShot && s.lighting) { litShot = true; await page.waitForTimeout(5200); await shot(page, testInfo, '23b-town-lighting'); await rec('Theo climbs the lighthouse and lights the lamp'); } });
+    await settle(page, ctl, null, async (s) => { if (!litShot && s.lighting && s.heard.includes('ignite')) { litShot = true; await page.waitForTimeout(900); await shot(page, testInfo, '23b-town-lighting'); await rec('Theo climbs the lighthouse and lights the lamp'); } });
     expect(litShot, 'the lighting cutscene played').toBe(true);
     await until(page, () => window.P4Debug.snapshot().flags.lit, null, 30000);
     await objectiveIs(page, 'en', 'obj.C5'); mark('lit');

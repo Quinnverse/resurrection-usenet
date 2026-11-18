@@ -343,7 +343,7 @@ export function buildTown(opts) {
       if (staticG.visible) { staticBits.forEach((sb, i) => { sb.visible = reduce ? i % 2 === 0 : Math.sin(t * 17 + i * 3.1) > -0.2; }); if (!reduce) { staticG.rotation.y = t * 2; } }
       // restore: lamp pieces fly home
       if (restoreT >= 0) {
-        restoreT += dt; const k = Math.min(1, restoreT / (reduce ? 0.6 : 2.6)); const e2 = 1 - Math.pow(1 - k, 3);
+        restoreT += dt; const k = Math.min(1, restoreT / (reduce ? 0.6 : 3.4)); const e2 = 1 - Math.pow(1 - k, 3);
         lampParts.forEach((p, i) => { const d = Math.min(1, Math.max(0, e2 * 1.3 - (i / lampParts.length) * 0.3)); p.position.lerp(p.userData.home, d * 0.25 + (k >= 1 ? 1 : 0)); p.rotation.x *= 1 - d * 0.3; p.rotation.y *= 1 - d * 0.3; if (k >= 1) { p.position.copy(p.userData.home); p.rotation.copy(p.userData.homeRot); } });
         lampGlow.material.opacity = Math.sin(k * Math.PI) * 0.8;
         if (k >= 1) { restoreT = -1; applyLook(PRESENT, 'present'); if (onEvent) { onEvent('restoreDone'); } }
