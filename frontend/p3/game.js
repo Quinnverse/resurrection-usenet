@@ -132,7 +132,11 @@
     var total = D.WORLD_STARS.length;
     $.stars.textContent = tr('ui.stars', { n: st.stars.length, total: total });
     $.falls.textContent = tr('ui.falls', { n: st.falls });
-    if (rt.scene === 'island') { $.stars.textContent = tr('isl.visited', { n: st.island.seen.length, total: St.islandObjects(st).filter(function (o) { return o.type !== 'x'; }).length }); $.falls.textContent = tr('ui.stars', { n: st.stars.length, total: total }); }
+    if (rt.scene === 'island') {
+      if (rt.isl && rt.isl.done) { $.replay.hidden = false; }
+      $.stars.textContent = tr('isl.visited', { n: st.island.seen.length, total: St.islandObjects(st).filter(function (o) { return o.type !== 'x'; }).length });
+      $.falls.textContent = tr('ui.stars', { n: st.stars.length, total: total });
+    }
     $.hud.hidden = rt.mode !== 'play';
   }
 
