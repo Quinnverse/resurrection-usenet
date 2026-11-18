@@ -68,10 +68,9 @@ Optional items: the photo on the cork board ("J. — don't let them forget you."
 ## Running it
 
 ```
-npm install          # once, from the repo root
-node combined-server/server.js
+npm start            # or: node combined-server/server.js (Node 20+, no runtime dependencies)
 # open http://127.0.0.1:3000/p4/
 # the older versions stay at http://127.0.0.1:3000/ and http://127.0.0.1:3000/p3/
 ```
 
-Tests: `npm test` runs the Node suite, including `test/p4-core.test.mjs`. `npx playwright test e2e/p4.spec.js` runs the browser playthroughs (Chromium; uses SwiftShader WebGL in CI).
+Tests: `npm test` runs the Node suite, including `test/p4-core.test.mjs`. `npx playwright test e2e/p4.spec.js` runs the browser playthroughs (Chromium; uses SwiftShader WebGL in CI). See `docs/P4-TEST-REPORT.md`.

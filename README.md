@@ -12,6 +12,11 @@ npm start
 
 Then open http://localhost:3000. Requirements: Node.js 20 or newer. There are no runtime dependencies.
 
+Other versions on the same server, each with its own browser save:
+
+- http://localhost:3000/p3/ — P3.2 "The Summer She Was Seventeen", a 2D pixel level.
+- http://localhost:3000/p4/ — P4 "The Lighthouse", a stylized 3D third-person narrative slice (Three.js, English and Simplified Chinese). See [docs/P4-DESIGN.md](docs/P4-DESIGN.md) and [docs/P4-TEST-REPORT.md](docs/P4-TEST-REPORT.md).
+
 Saves are written to `combined-server/data/` (ignored by Git). Use `RESURRECTION_DATA_DIR` and `PORT` to change the location or port.
 
 ## Run the tests
