@@ -11,11 +11,11 @@
 
   var DT = 1 / 60;
   var PW = 0.6;
-  var PH = 1.0;
+  var PH = 1.25;
   var SPEED = 7;              // tiles per second
   var GRAVITY = 40;
   var MAX_FALL = 24;
-  var JUMP_SPEED = 16.73;     // apex 3.5 tiles
+  var JUMP_SPEED = 17.7;      // apex about 3.9 tiles
   var COYOTE = 7;             // frames a jump is still allowed after leaving an edge
   var BUFFER = 7;             // frames a jump press is remembered before landing
   var SUB = 0.05;

@@ -176,7 +176,7 @@ if (require.main === module) {
     walkTo(21.0);
     // hidden route: four hops up the wooden ledges to the secret garden
     walkTo(20.6, { noJump: true, tol: 0.2 });
-    const hops = [[21.2, 8], [25.1, 6], [29.1, 4], [33.1, 2]];
+    const hops = [[21.2, 7], [25.3, 5], [30.3, 3], [35.3, 1]];
     for (const [jx, ly] of hops) { const ok = hop(jx, ly); log('hop to row', ly, ok ? 'ok' : 'FAILED', 'x', snap().x.toFixed(1)); if (!ok) throw new Error('hop failed'); }
     walkTo(40.5, { noJump: true, tol: 0.4 }); frames(5); interactWith('garden'); shot('07-garden');
     log('stars so far', snap().stars);

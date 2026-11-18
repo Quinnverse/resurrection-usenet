@@ -49,12 +49,12 @@ describe('P3.2 engine', () => {
     assert.deepEqual(a, b);
   });
 
-  it('a jump rises about 3.5 tiles', () => {
+  it('a jump rises about 3.9 tiles', () => {
     let s = settle(w, 3.5, 10);
     s = E.step(s, { left: false, right: false, jump: true }, w).state;
     let top = s.y;
     for (let i = 0; i < 80; i++) { s = E.step(s, NONE, w).state; top = Math.min(top, s.y); }
-    assert.ok(top > 6.3 && top < 6.7, `apex y=${top}`);
+    assert.ok(top > 5.9 && top < 6.3, `apex y=${top}`);
   });
 
   it('forgives a jump pressed just after leaving an edge, and just before landing', () => {
@@ -192,8 +192,18 @@ describe('P3.2 level data', () => {
     r = walk(world, r.s, 58.4, { respawn: { x: 49.6, y: 10 } }); assert.equal(r.falls, 0);
   });
 
+  it('a player who only holds right is never snagged under a ledge or a shelf', () => {
+    // Regression: a ledge hung exactly one body-height above the path, so holding right stopped dead beneath it.
+    let s = settle(world, 20.5, 10);
+    for (let i = 0; i < 190; i++) { s = E.step(s, RIGHT, world, { respawn: { x: 20.5, y: 10 } }).state; }   // stops before the second water gap
+    assert.ok(s.x > 40 && s.x < 46, `walked under the whole high route, x=${s.x}`);
+    const sv = D.buildServer(); let t = settle(sv, 3.5, 9);
+    for (let i = 0; i < 900; i++) { t = E.step(t, RIGHT, sv).state; }
+    assert.ok(t.x > 38, `walked the whole server room, x=${t.x}`);
+  });
+
   it('the high route has wide jump windows at every hop', () => {
-    const hops = [['g->l1', 20.3, 10, 20.0, 22.4, 8], ['l1->l2', 24, 8, 24.2, 25.7, 6], ['l2->l3', 28, 6, 28.2, 29.7, 4], ['l3->garden', 32, 4, 32.2, 33.7, 2]];
+    const hops = [['g->l1', 20.3, 10, 20.0, 22.2, 7], ['l1->l2', 24, 7, 24.2, 26.4, 5], ['l2->l3', 29, 5, 29.2, 31.4, 3], ['l3->garden', 34, 3, 34.2, 36.4, 1]];
     hops.forEach(([name, x, y, from, to, landY]) => {
       let good = 0;
       for (let jx = from; jx <= to + 1e-9; jx += 0.1) {
@@ -201,7 +211,7 @@ describe('P3.2 level data', () => {
         for (let i = 0; i < 160; i++) { const jump = !jumped && s.onGround && s.x >= jx; if (jump) { jumped = true; } s = E.step(s, { left: false, right: true, jump }, world).state; if (jumped && i > 5 && s.onGround && Math.abs(s.y - landY) < 0.1) { ok = true; break; } }
         if (ok) { good++; }
       }
-      assert.ok(good * 0.1 >= 1.2, `${name}: window ${(good * 0.1).toFixed(1)} tiles`);
+      assert.ok(good * 0.1 >= 1.8, `${name}: window ${(good * 0.1).toFixed(1)} tiles`);
     });
   });
 

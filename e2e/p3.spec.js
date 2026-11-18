@@ -110,6 +110,15 @@ async function playAll(page, testInfo, o) {
   // A. the study: first interaction well inside 30 s
   await expect(page.getByTestId('hud-zone')).toHaveText(await T('zone.study'));
   await expect(page.getByTestId('caption')).toContainText(await T('say.intro'));
+  if (o.layout) {
+    const vp = page.viewportSize(), cv = await page.getByTestId('view').boundingBox();
+    expect(cv.width, 'picture fits the screen').toBeLessThanOrEqual(vp.width);
+    const cap = await page.getByTestId('caption').boundingBox(), pad = await page.getByTestId('pad').boundingBox();
+    expect(cap.y, 'caption sits under the picture, not over it').toBeGreaterThanOrEqual(cv.y + cv.height - 1);
+    expect(pad.y, 'touch pad sits under the caption').toBeGreaterThanOrEqual(cap.y + cap.height - 1);
+    for (const id of ['pad-left', 'pad-right', 'pad-jump', 'pad-use']) { const b = await page.getByTestId(id).boundingBox(); expect(b.width, id + ' width').toBeGreaterThanOrEqual(44); expect(b.height, id + ' height').toBeGreaterThanOrEqual(44); }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 'no sideways scrolling').toBeLessThanOrEqual(1);
+  }
   await shot(page, testInfo, o.name + '-02-study');
   await walkTo(page, c, 3.4); await interact(page, c, 'shelf');
   await expect(page.getByTestId('caption')).toContainText(await T('say.shelf'));
@@ -134,7 +143,7 @@ async function playAll(page, testInfo, o) {
   await jumpAt(page, c, 16.0, null, 21);                       // over the stream
   if (o.hidden) {
     await walkTo(page, c, 20.6);
-    for (const [jx, ly] of [[21.2, 8], [25.1, 6], [29.1, 4], [33.1, 2]]) { await jumpAt(page, c, jx, ly); }
+    for (const [jx, ly] of [[21.2, 7], [25.3, 5], [30.3, 3], [35.3, 1]]) { await jumpAt(page, c, jx, ly); }
     await walkTo(page, c, 40.5); await interact(page, c, 'garden');
     expect((await snap(page)).flags.garden).toBe(true);
     await shot(page, testInfo, o.name + '-05-secret-garden');
@@ -151,7 +160,7 @@ async function playAll(page, testInfo, o) {
   await captionIs(page, 'say.bridgeNone');                     // nothing to place yet: the game points to the servers
   await shot(page, testInfo, o.name + '-06-broken-bridge');
   const gotLedge = async () => { await c.hold(1); await until(page, () => { const s = window.P3Debug.snapshot(); return s.onGround && s.y > 11.9; }); await c.release(1); await page.waitForTimeout(100); };
-  await gotLedge();
+  await gotLedge(); await walkTo(page, c, 62.8);
   await shot(page, testInfo, o.name + '-07-server-ledge');
   await interact(page, c, 'door');
   await sceneIs(page, 'server');
@@ -241,6 +250,7 @@ async function playAll(page, testInfo, o) {
     expect(Math.abs(resumed.x - 60.7)).toBeLessThan(1.0);
     // the middle piece is missing, so go back, put the two wrong pieces down and take the clean one
     await c.hold(1); await until(page, () => { const s = window.P3Debug.snapshot(); return s.onGround && s.y > 11.9; }); await c.release(1);
+    await walkTo(page, c, 62.8);
     await interact(page, c, 'door'); await sceneIs(page, 'server');
     await walkTo(page, c, 8.5); await interact(page, c, 'archive'); await take('a-mid');
     await expect(page.getByTestId('take-a-mid')).toHaveText(await T('copy.take')); await closeCopy();
@@ -353,22 +363,7 @@ test.describe('P3.2 full playthrough', () => {
 
     test('English, phone, touch buttons only: complete level, large targets, nothing overlaps the picture', async ({ page }, testInfo) => {
       const issues = []; watch(page, issues);
-      await newGameTo(page, 'en');
-      await page.getByTestId('start').tap();
-      await sceneIs(page, 'study');
-      const vp = page.viewportSize();
-      const cv = await page.getByTestId('view').boundingBox();
-      expect(cv.width, 'picture fits the screen').toBeLessThanOrEqual(vp.width);
-      const cap = await page.getByTestId('caption').boundingBox();
-      const pad = await page.getByTestId('pad').boundingBox();
-      expect(cap.y, 'caption sits under the picture, not over it').toBeGreaterThanOrEqual(cv.y + cv.height - 1);
-      expect(pad.y, 'touch pad sits under the caption').toBeGreaterThanOrEqual(cap.y + cap.height - 1);
-      for (const id of ['pad-left', 'pad-right', 'pad-jump', 'pad-use']) { const b = await page.getByTestId(id).boundingBox(); expect(b.width, id + ' width').toBeGreaterThanOrEqual(44); expect(b.height, id + ' height').toBeGreaterThanOrEqual(44); }
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-      expect(overflow, 'no sideways scrolling').toBeLessThanOrEqual(1);
-      await shot(page, testInfo, 'phone-00-study');
-      await page.evaluate(() => localStorage.removeItem('p3.save.v2'));
-      await playAll(page, testInfo, { name: 'phone', lang: 'en', mode: 'touch', hidden: false, detour: false });
+      await playAll(page, testInfo, { name: 'phone', lang: 'en', mode: 'touch', hidden: false, detour: false, layout: true });
       expect(issues, issues.join('\n')).toEqual([]);
     });
   });

@@ -369,8 +369,8 @@
         ctx.drawImage(P.flower[i % 4], px(p[0]) + sw, py(p[1]) - 10);
       });
       // garden on the secret platform
-      for (var gcol = 36; gcol <= 42; gcol += 3) { ctx.drawImage(P.flower[(gcol / 3) % 4], px(gcol) + 4, py(2) - 10); }
-      ctx.drawImage(sp.noteStand, px(40.5) - 9, py(2) - 26);
+      for (var gcol = 39; gcol <= 42; gcol += 3) { ctx.drawImage(P.flower[(gcol / 3) % 4], px(gcol) + 4, py(1) - 10); }
+      ctx.drawImage(sp.noteStand, px(40.5) - 9, py(1) - 26);
       // posts, signs, door, cat, crab, flags
       data.WORLD_OBJECTS.forEach(function (o) {
         var x = px(o.x), y = py(o.y);

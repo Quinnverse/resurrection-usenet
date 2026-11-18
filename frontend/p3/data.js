@@ -69,10 +69,10 @@
     g.fill(20, 45, 10, 10, 'G');  g.fill(20, 45, 11, 13, 'E');
     g.fill(49, 58, 10, 10, 'G');  g.fill(49, 58, 11, 13, 'E');
     // the high route: four wooden ledges climbing to the secret garden
-    g.fill(23, 25, 8, 8, 'L');
-    g.fill(27, 29, 6, 6, 'L');
-    g.fill(31, 33, 4, 4, 'L');
-    g.fill(35, 43, 2, 2, 'L');
+    g.fill(23, 26, 7, 7, 'L');
+    g.fill(28, 31, 5, 5, 'L');
+    g.fill(33, 36, 3, 3, 'L');
+    g.fill(38, 43, 1, 1, 'L');
     // C. canyon: left cliff, the server ledge under its lip, and the right cliff one tile higher
     g.fill(59, 61, 10, 10, 'R');  g.fill(59, 61, 11, 13, 'r');
     g.fill(62, 64, 12, 12, 'R');  g.fill(62, 64, 13, 13, 'r');
@@ -104,8 +104,8 @@
 
   // Stars are [id, col, row]. The star at (63, 11) lures the player onto the server ledge.
   var WORLD_STARS = [
-    ['s01', 6, 9], ['s02', 11, 8], ['s03', 18, 8], ['s04', 24, 7], ['s05', 28, 5], ['s06', 32, 3],
-    ['g1', 36, 1], ['g2', 38, 1], ['g3', 42, 1],
+    ['s01', 6, 9], ['s02', 11, 8], ['s03', 18, 8], ['s04', 24, 6], ['s05', 29, 4], ['s06', 34, 2],
+    ['g1', 39, 0], ['g2', 41, 0], ['g3', 43, 0],
     ['s07', 47, 8], ['s08', 53, 9], ['sx', 63, 11],
     ['s09', 78, 8], ['s10', 84, 8], ['s11', 98, 9], ['s12', 104, 9]
   ];
@@ -115,7 +115,7 @@
     { id: 'cat',      x: 10.4,  y: 10, type: 'pet' },
     { id: 'sign1',    x: 15.2,  y: 10, type: 'read' },
     { id: 'sign2',    x: 42.8,  y: 10, type: 'read' },
-    { id: 'garden',   x: 40.5,  y: 2,  type: 'read' },
+    { id: 'garden',   x: 40.5,  y: 1,  type: 'read' },
     { id: 'sign3',    x: 55.6,  y: 10, type: 'read' },
     { id: 'blueprint',x: 58.7,  y: 10, type: 'look' },
     { id: 'bridge',   x: 60.7,  y: 10, type: 'use' },
@@ -144,9 +144,9 @@
     g.fill(0, 0, 0, 8, 'x');
     g.fill(39, 39, 0, 8, 'x');
     g.fill(11, 14, 6, 6, 'T');
+    g.fill(16, 18, 6, 6, 'T');
     g.fill(21, 25, 4, 4, 'T');
-    g.fill(31, 33, 7, 7, 'T');
-    g.fill(16, 18, 7, 7, 'T');
+    g.fill(31, 33, 6, 6, 'T');
     return g.world();
   }
 
@@ -156,7 +156,7 @@
     { id: 'lab',     x: 20.5, y: 9, type: 'use', copy: 'lab' },
     { id: 'mirror',  x: 33.5, y: 9, type: 'use', copy: 'mirror' }
   ];
-  var SERVER_FLOPPIES = [['f1', 12, 5], ['f2', 23, 3], ['f3', 32, 6]];
+  var SERVER_FLOPPIES = [['f1', 12, 5], ['f2', 23, 3], ['f3', 32, 5]];
 
   // ---- the memory island -----------------------------------------------------------------
 
