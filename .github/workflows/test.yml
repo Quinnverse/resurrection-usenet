@@ -47,6 +47,7 @@ jobs:
         run: npm run test:e2e
         env:
           E2E_SKIP_P5: '1'
+          E2E_SKIP_V5: '1'
 
       - name: Upload screenshots and report
         if: always()
@@ -86,6 +87,42 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: resurrection-p5-evidence
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  browser-v5:
+    name: Browser end-to-end, V5 full game (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dev dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: V5 shell harness (Node, no browser)
+        run: npm run test:v5-shell
+
+      - name: Run V5 browser tests
+        run: npx playwright test e2e/v5.spec.js
+
+      - name: Upload V5 screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resurrection-v5-evidence
           path: |
             test-results/
             playwright-report/

@@ -12,7 +12,8 @@ const LIVE = process.env.E2E_BASE_URL;
 module.exports = {
   testDir: './e2e',
   // CI runs the P5 browser tests in their own job (E2E_SKIP_P5=1 here, `npx playwright test e2e/p5.spec.js` there).
-  testIgnore: process.env.E2E_SKIP_P5 ? ['**/p5.spec.js'] : [],
+  // V5 likewise has its own job (E2E_SKIP_V5=1 in the main job, `npx playwright test e2e/v5.spec.js` there).
+  testIgnore: [process.env.E2E_SKIP_P5 ? '**/p5.spec.js' : null, process.env.E2E_SKIP_V5 ? '**/v5.spec.js' : null].filter(Boolean),
   timeout: 120000,
   fullyParallel: false,
   workers: 1,

@@ -301,7 +301,7 @@ function updateCamera(snap) {
 // ---- drawing the characters from the game state ---------------------------------------------------------------
 function syncCast(dt) {
   const s = Gm.snapshot(g); const me = person(avatarId()); const b = g.rt.body;
-  if (s.scene === 'train') { const seat = LAYOUTS.train.seat; me.position.set(seat.x, 0.05, seat.z); me.rotation.y = Math.PI; animate(me, rt.t, 0, 0, s.aim ? 'camera' : 'sit', reduce()); showProp(me, 'camera', s.aim); }
+  if (s.scene === 'train') { const seat = LAYOUTS.train.seat; me.position.set(seat.x, 0.05, seat.z); me.rotation.y = Math.PI; animate(me, rt.t, 0, 0, s.aim ? 'camera' : 'sit', reduce()); showProp(me, 'camera', s.aim); me.visible = !s.aim; } // aiming is first person: the camera sits in her head
   else if (s.scene === 'ride' && g.rt.ride) {
     const r = g.rt.ride; const p = Toys.ridePose(r, r.s, r.d), j = Toys.ridePose(r, r.june.s, r.june.d);
     world.setBikes({ x: p.x, z: p.z, heading: p.heading, lean: -r.lean }, { x: j.x, z: j.z, heading: j.heading });
@@ -309,6 +309,11 @@ function syncCast(dt) {
     const jn = person(juneId()); jn.visible = true; if (jn.parent !== world.scene) { world.scene.add(jn); } jn.position.set(j.x, 0.25, j.z); jn.rotation.y = j.heading; animate(jn, rt.t, rt.t * r.june.v * 1.2, 0, 'sit', reduce()); setExpression(jn, r.june.mode === 'overtake' ? 'grin' : 'smile');
   } else {
     me.position.set(b.x, b.y, b.z); me.rotation.set(0, b.facing, 0);
+    // in conversation she turns to whoever she is talking to, so close-ups see faces, not the back of a head
+    if (s.dialog && !s.seated) {
+      const other = s.june && g.rt.june && Math.hypot(g.rt.june.x - b.x, g.rt.june.z - b.z) < 5 ? g.rt.june : (s.theo && worldId === 'town' && Math.hypot(s.theo.x - b.x, s.theo.z - b.z) < 5 ? s.theo : null);
+      if (other) { me.rotation.y = Math.atan2(other.x - b.x, other.z - b.z); }
+    }
     const mode = s.seated ? (s.beat === '4.duet' ? 'guitar' : 'sit') : (b.gliding ? 'pose' : (!b.grounded ? 'run' : (s.carry ? 'hold' : 'walk')));
     animate(me, rt.t, (me.userData.phase = (me.userData.phase || 0) + Math.hypot(b.vx, b.vz) * dt * 4.2), s.seated ? 0 : Math.hypot(b.vx, b.vz), s.duet ? 'guitar' : mode, reduce());
     showProp(me, 'window', s.carry === 'window'); showProp(me, 'guitar', s.beat === '4.duet' && (s.seated || !!s.duet)); showProp(me, 'camera', false);
@@ -316,7 +321,7 @@ function syncCast(dt) {
   }
   if (s.june && s.scene !== 'ride') {
     const jn = person(juneId()); const j = g.rt.june;
-    if (s.scene === 'train') { const js = LAYOUTS.train.june; jn.position.set(js.x, 0.05, js.z); jn.rotation.y = s.june.anim === 'camera' || s.june.anim === 'pose' || s.june.anim === 'hideface' ? 0 : (Toys.juneMoodAt(g.rt.photoT || 0) === 'window' ? Math.PI / 2 : 0); }
+    if (s.scene === 'train') { const js = LAYOUTS.train.june; jn.position.set(js.x, 0.05, js.z); jn.rotation.y = s.dialog || s.june.anim === 'camera' || s.june.anim === 'pose' || s.june.anim === 'hideface' ? 0 : (Toys.juneMoodAt(g.rt.photoT || 0) === 'window' ? Math.PI / 2 : 0); }
     else { jn.position.set(j.x, j.y || 0, j.z); jn.rotation.y = j.facing; }
     const m = s.scene === 'train' ? (['camera', 'pose', 'hideface'].includes(s.june.anim) ? s.june.anim : (Toys.juneMoodAt(g.rt.photoT || 0) === 'tease' ? 'camera' : 'sit')) : s.june.anim;
     animate(jn, rt.t, j.phase || 0, j.speed || 0, m, reduce()); setExpression(jn, s.june.expr);
@@ -392,7 +397,7 @@ function capturePhoto(photo) {
 }
 function captureJunePhoto() {
   const seat = LAYOUTS.train.seat, js = LAYOUTS.train.june; const c2 = camera.clone(); c2.fov = 42; c2.position.set(js.x, 1.15, js.z + 0.1); c2.lookAt(seat.x, 1.1, seat.z); c2.updateProjectionMatrix();
-  const me = person(avatarId()); setExpression(me, 'surprise'); renderer.render(world.scene, c2); const thumb = thumbFromCanvas(); setExpression(me, 'neutral');
+  const me = person(avatarId()); const vis = me.visible; me.visible = true; setExpression(me, 'surprise'); renderer.render(world.scene, c2); me.visible = vis; const thumb = thumbFromCanvas(); setExpression(me, 'neutral');
   const p = g.s.photos.find((q) => q.id === 'june-elena'); if (p && thumb) { p.thumb = thumb; } fadeBlinkWhite(); save(true);
 }
 function fadeBlinkWhite() { ui.fade.classList.add('white', 'on'); setTimeout(() => ui.fade.classList.remove('on', 'white'), reduce() ? 60 : 160); }

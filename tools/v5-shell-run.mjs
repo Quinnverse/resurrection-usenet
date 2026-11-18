@@ -6,6 +6,8 @@
 //
 //   node tools/v5-shell-run.mjs [--lang en|zh] [--alt] [--quiet]        full playthrough
 //   node tools/v5-shell-run.mjs --continue <save.json> [--lang zh]      title -> Continue -> 4 s of play
+//   node tools/v5-shell-run.mjs --shots <dir>                           also write software-rasterised previews of what
+//                                                                       the shell's camera sees (tools/p4-preview.mjs)
 //   node tools/v5-shell-run.mjs --tech                                  the tech demo page and its 3-minute walkthrough
 import { register } from 'node:module';
 import fs from 'node:fs';
@@ -14,7 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.resolve(here, '..');
 const args = process.argv.slice(2); const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? (args[i + 1] || true) : null; };
-const TECH = args.includes('--tech');
+const TECH = args.includes('--tech'); const SHOTS = opt('--shots');
 const LANG = opt('--lang') || 'en', ALT = args.includes('--alt'), QUIET = args.includes('--quiet'), CONT = opt('--continue');
 const SHIM = pathToFileURL(path.join(here, 'v5-three-shim.mjs')).href;
 
@@ -104,7 +106,16 @@ const { t: tr } = await import('../frontend/v5/core/i18n.js');
 await import('../frontend/v5/main.js');
 
 const stats = { frames: 0, beats: {}, promptFrames: 0, promptOff: 0, offscreen: 0, missingText: new Set(), saves: {} };
-let curBeat = null;
+let curBeat = null; let preview = null; const shotLog = []; const shotRgb = []; const seenShot = new Set();
+if (SHOTS) { preview = await import('./p4-preview.mjs'); fs.mkdirSync(SHOTS, { recursive: true }); }
+function capture(label) {
+  const L = RENDER_LOG.last; if (!L || shotLog.length >= 70) { return; }
+  const W = 480, H = 270; const cam = L.camera.clone(); cam.aspect = W / H; cam.updateProjectionMatrix();
+  const name = `${String(shotLog.length + 1).padStart(2, '0')}-${curBeat}-${label}`.replace(/[^a-zA-Z0-9.-]+/g, '_');
+  const rgb = preview.render(L.scene, cam, W, H, { exposure: 1.08 });
+  fs.writeFileSync(path.join(SHOTS, name + '.png'), preview.png(W * 2, H * 2, preview.upscale(rgb, W, H, 2)));
+  shotLog.push(name); shotRgb.push(rgb);
+}
 function frameOnce(input) {
   hook.next = input || {}; hook.last = [];
   now += 1000 / 30; runTimers(); const cb = rafCb; rafCb = null; if (cb) { cb(now); }
@@ -114,6 +125,13 @@ function check() {
   const dbg = window.V5Debug.snapshot(); if (!dbg.beat) { return; }
   if (dbg.beat !== curBeat) { curBeat = dbg.beat; stats.beats[curBeat] = stats.beats[curBeat] || { world: dbg.world, frames: 0, off: 0 }; const raw = store.get('v5.save.v1'); if (raw) { stats.saves[curBeat] = raw; } }
   const b = stats.beats[curBeat]; b.frames += 1;
+  if (SHOTS) {
+    const key = curBeat + '|' + (dbg.shot || (dbg.aim ? 'aim' : dbg.mode === 'play' ? 'follow' : dbg.mode));
+    if (b.frames === 20) { capture('start'); }
+    else if (!seenShot.has(key) && b.frames > 20) { seenShot.add(key); b.wantShot = { key, at: b.frames + 12 }; }
+    if (b.wantShot && b.frames === b.wantShot.at) { capture(b.wantShot.key.split('|')[1]); b.wantShot = null; }
+    if (b.frames % 450 === 0) { capture('t' + Math.round(b.frames / 30)); }
+  }
   // every visible text must be a translation, never a raw key
   const subs = byTestId('subs'); if (subs && subs.children[1] && subs.attrs['data-key'] && subs.children[1].textContent === subs.attrs['data-key']) { stats.missingText.add(subs.attrs['data-key']); }
   const pr = byTestId('prompt');
@@ -154,8 +172,16 @@ try {
       creditsHave: want.map((w) => [w, credits.includes(w)]), albumPhotos: album ? album.children.length : 0, photosWithThumb: hook.game.s.photos.filter((p) => p.thumb).length, photos: hook.game.s.photos.length,
       savedBeat: saved && saved.beat, promptFrames: stats.promptFrames, promptNotShown: stats.promptOff, playerOffscreenFrames: stats.offscreen,
       perBeat: Object.fromEntries(Object.entries(stats.beats).map(([k, v]) => [k, { world: v.world, frames: v.frames, off: v.off, promptOff: v.promptOff || 0, samples: v.samples, camDist: v.maxDist ? [+v.minDist.toFixed(2), +v.maxDist.toFixed(2)] : null }])),
-      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck
+      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog
     });
+    if (SHOTS) { // contact sheets, 3 x 4 previews each
+      const W = 480, H = 270, C = 3, R = 4;
+      for (let k = 0; k * C * R < shotRgb.length; k++) {
+        const out = new Uint8Array(W * C * H * R * 3);
+        shotRgb.slice(k * C * R, (k + 1) * C * R).forEach((rgb, i) => { const ox = (i % C) * W, oy = Math.floor(i / C) * H; for (let y = 0; y < H; y++) { out.set(rgb.subarray(y * W * 3, (y + 1) * W * 3), ((oy + y) * W * C + ox) * 3); } });
+        fs.writeFileSync(path.join(SHOTS, `sheet-${k + 1}.png`), preview.png(W * C, H * R, out));
+      }
+    }
     const outDir = path.join(root, 'test-results', 'v5-shell'); fs.mkdirSync(outDir, { recursive: true });
     Object.entries(stats.saves).forEach(([beat, raw]) => fs.writeFileSync(path.join(outDir, `save-${LANG}${ALT ? '-alt' : ''}-${beat}.json`), raw));
     report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && stats.missingText.size === 0 && want.every((w) => credits.includes(w)) && saved && saved.beat === 'end';
