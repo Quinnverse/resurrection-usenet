@@ -477,6 +477,7 @@ test.describe('P3.2 focused checks', () => {
   test('canceling Play Again preserves the completed island save', async ({ page }) => {
     await seed(page, 'en', { scene: 'island', ended: true, bridge: true, placed: SOLUTION, 'island.stage': 5, 'flags.tape': true, 'flags.catPetted': true, 'flags.garden': true });
     await sceneIs(page, 'island');
+    console.log('P3_REPLAY_DEBUG', await page.evaluate(() => ({ count: document.querySelectorAll('[data-testid="replay"]').length, hidden: document.querySelector('[data-testid="replay"]') && document.querySelector('[data-testid="replay"]').hidden, snapshot: window.P3Debug.snapshot() })));
     await expect(page.getByTestId('replay')).toBeVisible();
     const before = await page.evaluate(() => localStorage.getItem('p3.save.v2'));
     let message = '';
