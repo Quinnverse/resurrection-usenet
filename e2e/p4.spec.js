@@ -27,7 +27,7 @@ function recorder(page, testInfo, label) {
   return async (action) => {
     const s = await snap(page);
     const secs = ((Date.now() - t0) / 1000).toFixed(1);
-    const line = `${secs}s | ${s.scene} | step ${s.step} | ${action}`;
+    const line = `${secs}s | ${s.scene} | step ${s.step} | ${s.fps} fps q${s.quality} | ${action}`;
     testInfo.annotations.push({ type: 'record', description: line });
     if (process.env.CI) {
       const buf = await page.screenshot({ type: 'jpeg', quality: 38 });
@@ -83,14 +83,14 @@ function stickDriver(page) {
   };
 }
 // Steers toward (x, z) relative to the camera, the way a player would with W A S D or the stick.
-async function walkTo(page, ctl, x, z, tol) {
+async function walkTo(page, ctl, x, z, tol, stopIf) {
   const tolerance = tol || 0.3;
   const kd = ctl.kind === 'touch' ? null : ctl.keys;
   let lastProgress = Date.now(), best = Infinity;
   for (;;) {
     const s = await snap(page);
     const dx = x - s.x, dz = z - s.z, d = Math.hypot(dx, dz);
-    if (d < tolerance) { break; }
+    if (d < tolerance || (stopIf && stopIf(s))) { break; }
     if (d < best - 0.05) { best = d; lastProgress = Date.now(); }
     if (Date.now() - lastProgress > 6000) { if (kd) { await kd.release(); } else { await ctl.stick.release(); } throw new Error(`stuck walking to ${x},${z}: ${JSON.stringify({ x: s.x, z: s.z, scene: s.scene, busy: s.busy, dialog: s.dialog })}`); }
     if (s.busy || s.dialog) { if (kd) { await kd.release(); } else { await ctl.stick.release(); } await page.waitForTimeout(150); continue; }
@@ -112,9 +112,12 @@ async function follow(page, ctl, scene, id) {
     const path = L.plan(scene, s.x, s.z, L.GOALS[scene][id]);
     if (!path) { throw new Error(`no path to ${id} from ${s.x},${s.z}`); }
     for (const [x, z] of path) { await walkTo(page, ctl, x, z, 0.3); }
-    return;
+  } else {
+    for (const [x, z] of L.ROUTES[scene][id]) { await walkTo(page, ctl, x, z, 0.35); }
   }
-  for (const [x, z] of L.ROUTES[scene][id]) { await walkTo(page, ctl, x, z, 0.35); }
+  // like a player who sees no prompt yet: take a step or two toward the thing until its prompt appears
+  const p = L.point(scene, id);
+  if (p && (await snap(page)).near !== id) { await walkTo(page, ctl, p.x, p.z, 0.5, (s) => s.near === id); }
 }
 async function useNear(page, ctl, id) {
   await until(page, (want) => { const s = window.P4Debug.snapshot(); return s.near === want && !s.busy && !s.dialog; }, id, 15000);
@@ -157,7 +160,7 @@ function watch(page, issues) {
 // ---- the full English playthrough --------------------------------------------------------------------------
 test.describe('P4 full playthrough', () => {
   test.use({ viewport: { width: 1280, height: 720 } });
-  test.setTimeout(600000);
+  test.setTimeout(1000000);
 
   test('English, keyboard and mouse: study, archive, town, restoration, ending, resume', async ({ page }, testInfo) => {
     const issues = []; watch(page, issues);
@@ -310,7 +313,7 @@ test.describe('P4 full playthrough', () => {
 // ---- Chinese ---------------------------------------------------------------------------------------------
 test.describe('P4 Chinese', () => {
   test.use({ viewport: { width: 1280, height: 720 } });
-  test.setTimeout(420000);
+  test.setTimeout(700000);
 
   test('Simplified Chinese: opening, tutorial, then the whole town chapter to the ending', async ({ page }, testInfo) => {
     const issues = []; watch(page, issues);

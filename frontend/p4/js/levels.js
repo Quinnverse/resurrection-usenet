@@ -106,7 +106,7 @@ export const THEO_DOOR = { x: 15.85, z: 18.35 };
 // Waypoint routes used by tests and the scripted playthrough. They are ordinary walking paths.
 export const ROUTES = {
   study: { keepbox: [[-0.6, 0.9]], photo: [[2.2, 0.4], [3.4, 0.6]], computer: [[2.4, -0.9], [3.0, -1.75]], postcard: [[-0.4, 2.45], [-2.3, 2.55]], window: [[-0.6, -2.2]], shelf: [[-2.6, -1.2], [-3.2, -1.2]], lamp: [[-2.6, -1.8], [-3.15, -2.3]] },
-  archive: { plaza: [[0, -6], [0, -12.5]], sky: [[-3.5, -19.5], [-6.0, -22.2]], gate: [[-3, -20], [0, -31], [0, -40.5], [0, -42.6]] },
+  archive: { plaza: [[0, -6], [0, -12.5]], sky: [[-3.5, -19.5], [-6.2, -22.6]], gate: [[-3, -20], [0, -31], [0, -40.5], [0, -42.6]] },
   town: {
     plaza: [[0, -6.5], [0, -4.5]],
     theo: [[3.2, 4.2], [1.6, 9.0], [1.6, 12.6], [11.5, 13.0], [13.0, 15.0]],

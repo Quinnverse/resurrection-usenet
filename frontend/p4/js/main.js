@@ -79,6 +79,10 @@ if (!renderer || !renderer.getContext()) {
   ui.overlay.hidden = false; ui.overlay.textContent = ''; ui.overlay.append(el('p', { class: 'err', text: T('ui.webgl'), 'data-testid': 'webgl-error' }));
   throw new Error('WebGL unavailable');
 }
+// Adaptive quality: when the frame rate stays low, render fewer pixels and refresh shadows less often.
+const QUALITY = [{ ratio: 1.5, shadowEvery: 1 }, { ratio: 1, shadowEvery: 1 }, { ratio: 0.75, shadowEvery: 3 }, { ratio: 0.6, shadowEvery: 6 }];
+const quality = { level: 0, slow: 0 };
+function applyQuality() { const q = QUALITY[quality.level]; renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.ratio)); renderer.shadowMap.autoUpdate = q.shadowEvery === 1; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
@@ -323,14 +327,14 @@ function townEvent(name) {
 
 // ---- ending ---------------------------------------------------------------------------------------------
 async function ending() {
-  rt.mode = 'ending'; A.setScene('ending');
+  rt.mode = 'ending'; A.setScene('ending'); ui.touch.hidden = true;
   await wait(reduce() ? 0.2 : 1.4);
   A.play('message');
   const today = new Date();
   const date = lang === 'zh' ? `${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日` : today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   ui.overlay.className = 'overlay ending'; ui.overlay.hidden = false; ui.overlay.textContent = '';
   const tbc = el('div', { class: 'tbc' }, [el('div', { class: 'a', text: T('ui.toBeContinued') }), el('div', { class: 'b', text: T('ui.nextChapter') }),
-    el('div', { class: 'row' }, [el('button', { class: 'btn big primary', type: 'button', text: T('ui.next'), 'data-testid': 'keep-exploring', onclick: () => { ui.overlay.hidden = true; rt.mode = 'play'; A.setScene(null); A.setScene('town'); renderObjective(false); persist(true); } }),
+    el('div', { class: 'row' }, [el('button', { class: 'btn big primary', type: 'button', text: T('ui.next'), 'data-testid': 'keep-exploring', onclick: () => { ui.overlay.hidden = true; rt.mode = 'play'; showTouch(); A.setScene(null); A.setScene('town'); renderObjective(false); persist(true); } }),
       el('button', { class: 'btn big', type: 'button', text: T('ui.backToTitle'), 'data-testid': 'back-to-title', onclick: () => { ui.overlay.hidden = true; rt.mode = 'title'; showTitle(); } })])]);
   const box = el('div', { 'data-testid': 'ending' }, [
     el('div', { class: 'mail' }, [el('div', { class: 'h', text: T('end.head') }), el('div', { class: 'l', text: T('end.from') }), el('div', { class: 'l', text: T('end.date', { date }) }), el('div', { class: 'l', text: T('end.subject') }), el('div', { class: 'b', text: T('end.body') })]),
@@ -343,7 +347,7 @@ async function ending() {
 // ---- title and intro ------------------------------------------------------------------------------------
 function showTitle() {
   rt.mode = 'title';
-  ui.obj.hidden = true; ui.prompt.hidden = true; ui.tut.textContent = '';
+  ui.touch.hidden = true; ui.obj.hidden = true; ui.prompt.hidden = true; ui.tut.textContent = '';
   if (!rt.world || rt.sceneId !== 'study') { enterScene('study', SPAWNS.study); }
   const saved = readSave();
   ui.overlay.className = 'overlay title'; ui.overlay.hidden = false; ui.overlay.textContent = '';
@@ -370,6 +374,7 @@ async function begin(saved, fresh) {
     enterScene(st.scene, null);
   }
   rt.mode = 'play';
+  showTouch();
   renderChrome();
   persist(false);
   if (fresh) { showCaption('mara', 'intro.2', 3.6); }
@@ -429,9 +434,8 @@ function look(dx, dy) {
   if (rt.tut.stage === 1 && rt.tut.looked > 0.6) { advanceTutorial(2); }
 }
 // touch: left stick, drag anywhere else to look, hand button to use
-let touchLook = null;
-function showTouch() { if (rt.mode === 'play') { ui.touch.hidden = false; } }
-if (coarse) { showTouch(); }
+let touchLook = null, touchSeen = false;
+function showTouch() { if (rt.mode === 'play' && (coarse || touchSeen)) { ui.touch.hidden = false; } }
 ui.stick.addEventListener('pointerdown', (e) => { e.preventDefault(); rt.stick.id = e.pointerId; try { ui.stick.setPointerCapture(e.pointerId); } catch (err) { /* synthetic */ } stickMove(e); });
 ui.stick.addEventListener('pointermove', (e) => { if (rt.stick.id === e.pointerId) { stickMove(e); } });
 const stickEnd = (e) => { if (rt.stick.id === e.pointerId || e.type === 'pointerleave') { rt.stick = { x: 0, y: 0, id: null }; ui.stick.firstChild.style.transform = ''; } };
@@ -441,7 +445,7 @@ function stickMove(e) {
   const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
   rt.stick.x = x; rt.stick.y = y; ui.stick.firstChild.style.transform = `translate(${x * 36}px, ${y * 36}px)`;
 }
-cv.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') { showTouch(); touchLook = { id: e.pointerId, x: e.clientX, y: e.clientY }; } });
+cv.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') { touchSeen = true; showTouch(); touchLook = { id: e.pointerId, x: e.clientX, y: e.clientY }; } });
 cv.addEventListener('pointermove', (e) => { if (touchLook && touchLook.id === e.pointerId) { look((e.clientX - touchLook.x) * 1.2, (e.clientY - touchLook.y) * 1.2); touchLook.x = e.clientX; touchLook.y = e.clientY; } });
 cv.addEventListener('pointerup', (e) => { if (touchLook && touchLook.id === e.pointerId) { touchLook = null; } });
 ui.use.addEventListener('pointerdown', (e) => { e.preventDefault(); A.unlock(); if (rt.dialog) { advanceDialog(); } else if (rt.near) { interact(rt.near.id); } });
@@ -575,7 +579,12 @@ let last = 0, fpsAcc = 0, fpsN = 0;
 function frame(now) {
   const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
   rt.t += dt; rt.frames += 1;
-  fpsAcc += dt; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; }
+  fpsAcc += dt; fpsN += 1;
+  if (fpsAcc > 1) {
+    rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0;
+    if (rt.frames > 60 && rt.fps < 26 && quality.level < QUALITY.length - 1) { quality.slow += 1; if (quality.slow >= 2) { quality.level += 1; quality.slow = 0; applyQuality(); resize(); } } else { quality.slow = 0; }
+  }
+  if (!renderer.shadowMap.autoUpdate && rt.frames % QUALITY[quality.level].shadowEvery === 0) { renderer.shadowMap.needsUpdate = true; }
   if (rt.world) {
     if (rt.mode === 'title') { rt.cam.yaw = SPAWNS.study.yaw + Math.sin(rt.t * 0.12) * 0.35; }
     step(dt);
@@ -606,7 +615,7 @@ window.P4Debug = {
       mode: rt.mode, busy: rt.busy, scene: rt.sceneId, step: st.step, view: st.view, flags: Object.assign({}, st.flags), seen: st.seen.slice(),
       x: rt.player.x, z: rt.player.z, facing: rt.player.facing, yaw: rt.cam.yaw, pitch: rt.cam.pitch,
       near: rt.near ? rt.near.id : null, target: St.target(st), dialog: rt.dialog ? { who: rt.dialog.lines[rt.dialog.i][0], key: rt.dialog.lines[rt.dialog.i][1], i: rt.dialog.i, n: rt.dialog.lines.length } : null,
-      caption: rt.caption && rt.t < rt.caption.until ? rt.caption.key : null, tutorial: rt.tut.stage, fps: rt.fps, frames: rt.frames, t: rt.t,
+      caption: rt.caption && rt.t < rt.caption.until ? rt.caption.key : null, tutorial: rt.tut.stage, fps: rt.fps, quality: quality.level, frames: rt.frames, t: rt.t,
       theo: rt.sceneId === 'town' && rt.world ? { x: rt.world.theo.position.x, z: rt.world.theo.position.z, visible: rt.world.theo.visible } : null,
       lighting: rt.sceneId === 'town' && rt.world ? rt.world.lighting : false, heard: A.heardList(), log: rt.log.slice(-40)
     };

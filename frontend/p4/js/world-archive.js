@@ -93,7 +93,7 @@ export function buildArchive(opts) {
   beacon.add(cyl(1.0, 1.2, 0.6, 8, 0x22285a, 0, 0, 0));
   const column = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 16, 12, 1, true), glow(0x8a9cff, { additive: true, opacity: 0.25, side: THREE.DoubleSide })); column.position.y = 8; beacon.add(column);
   const ringTex = canvasTex(1024, 64, (ctx, w, h) => { ctx.fillStyle = '#c4ccff'; ctx.font = `bold 34px ${FONT}`; ctx.fillText('  alt.games.homebrew   rec.music.makers   comp.archives   alt.memories   ', 0, 44); });
-  const ring = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.4, 32, 1, true), glow(ringTex ? 0xffffff : 0x8a9cff, { map: ringTex, additive: true, opacity: 0.9, side: THREE.DoubleSide })); ring.position.y = 2.6; beacon.add(ring);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.4, 32, 1, true), glow(ringTex ? 0xffffff : 0x8a9cff, { map: ringTex, additive: true, opacity: 0.9, side: THREE.FrontSide })); ring.position.y = 2.6; beacon.add(ring);
   // ---- newsgroup towers ---------------------------------------------------------------------------------
   const towers = {};
   TOWERS.forEach((tw) => {
