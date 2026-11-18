@@ -61,7 +61,7 @@ const EN = {
   'c3.june.jump': 'Shortcut to the cottage? Jump off the ledge and hold Space. The wind will catch you.', 'c3.elena.flew': '…I can’t believe that worked.',
   // ---- chapter 4
   'c4.june.thatOne': 'Play that one. The lighthouse song.', 'c4.elena.notDone': 'It isn’t finished.', 'c4.june.thenPlay': 'Then play the part that is.', 'c4.june.again': 'Play it again.',
-  'c4.june.poemIntro': 'There’s a line I keep thinking about. Bai Juyi.', 'c4.june.poem': '“感我此言良久立” — moved by what I said, she stood there a long while.', 'c4.poem.credit': 'Bai Juyi, “Song of the Pipa” (琵琶行), 816. Public domain.',
+  'c4.june.poemIntro': 'There’s a line I keep thinking about. Bai Juyi.', 'c4.june.poem': '“感我此言良久立” — moved by what I said, she stood there a long while. (Bai Juyi, “Song of the Pipa”)', 'c4.poem.credit': 'Bai Juyi, “Song of the Pipa” (琵琶行), 816. Public domain.',
   'c4.elena.almost': 'June, I—', 'c4.june.know': 'I know.', 'c4.elena.dots': '…It still doesn’t have an ending.',
   // ---- chapter 5
   'c5.june.letter': 'The studio in the city wrote back.', 'c5.june.studio': 'They want me. Art, story, all of it. I start in September.', 'c5.elena.thatsGood': 'That’s… that’s what you wanted.',
@@ -69,8 +69,8 @@ const EN = {
   'c5.elena.miss': 'I’ll miss you.', 'c5.june.smileMiss': 'Good. You’d better.', 'c5.june.missMe': 'You can miss me.', 'c5.june.dontStay': 'But don’t leave yourself here.',
   'c5.title.years': 'Six years later.', 'c5.elena.years': 'Same bench. Same train. Nobody waiting.',
   // ---- chapter 6
-  'c6.elena.remember': 'Do you remember that day?', 'c6.june.remember': 'I remember.', 'c6.june.name': 'I also remember you deleting my name.',
-  'c6.elena.studio': 'The studio wanted one name. I thought — I didn’t think.', 'c6.june.loss': 'I’m asking what happens to my loss. The job that was waiting on those credits. Three years of my work, under your name.',
+  'c6.elena.remember': 'Do you remember that day?', 'c6.june.remember': 'I remember. I also remember you deleting my name.',
+  'c6.elena.studio': 'The studio wanted one name. I thought — I didn’t think.', 'c6.june.loss': 'I’m asking what happens to my loss.', 'c6.june.work': 'The job that was waiting on those credits. Three years of my work, under your name.',
   'c6.june.iris': 'And Iris. You made her stay. She was supposed to leave.', 'c6.elena.miss': 'I really missed you.', 'c6.june.iKnow': 'I know. But what about my loss?',
   'c6.elena.sorry': 'I’m sorry.', 'c6.june.notToday': 'Not today, Elena.', 'c6.june.careful': 'Take care on the road.',
   // ---- chapter 7
@@ -163,14 +163,14 @@ const ZH = {
   'c3.june.ready': '准备好了吗？', 'c3.june.now': '就是现在——别停！', 'c3.june.lit': '你看。它亮了。', 'c3.elena.itWorks': '它亮了。差不多吧。',
   'c3.june.jump': '抄近路去小屋？从崖边跳下去，按住空格。风会接住你。', 'c3.elena.flew': '……居然真的可以。',
   'c4.june.thatOne': '弹那首。灯塔那首。', 'c4.elena.notDone': '它还没写完。', 'c4.june.thenPlay': '那就弹写完的那部分。', 'c4.june.again': '再弹一次。',
-  'c4.june.poemIntro': '有一句诗我一直在想。白居易的。', 'c4.june.poem': '“感我此言良久立。”', 'c4.poem.credit': '白居易《琵琶行》，816 年。公有领域。',
+  'c4.june.poemIntro': '有一句诗我一直在想。白居易的。', 'c4.june.poem': '“感我此言良久立。”（白居易《琵琶行》）', 'c4.poem.credit': '白居易《琵琶行》，816 年。公有领域。',
   'c4.elena.almost': '琳，我——', 'c4.june.know': '我知道。', 'c4.elena.dots': '……它还是没有结尾。',
   'c5.june.letter': '城里那家工作室回信了。', 'c5.june.studio': '他们要我。美术、故事，全部。九月开始。', 'c5.elena.thatsGood': '那……那是你想要的。',
   'c5.choice.stay': '说：我想你留下', 'c5.choice.miss': '说：我会想你', 'c5.elena.stay': '我想你留下。', 'c5.june.cantStay': '我知道。可我不能。',
   'c5.elena.miss': '我会想你。', 'c5.june.smileMiss': '那就好。你最好会。', 'c5.june.missMe': '你可以想我。', 'c5.june.dontStay': '但不要把自己留在这里。',
   'c5.title.years': '六年后。', 'c5.elena.years': '同一张长椅。同一班车。没有人在等。',
-  'c6.elena.remember': '你还记得那天吗？', 'c6.june.remember': '我记得。', 'c6.june.name': '我也记得你把我的名字删掉了。',
-  'c6.elena.studio': '工作室只要一个名字。我以为——我根本没想。', 'c6.june.loss': '我问的是，我的损失怎么办？那份等着这个署名的工作。我三年的作品，挂在你的名字下面。',
+  'c6.elena.remember': '你还记得那天吗？', 'c6.june.remember': '我记得。我也记得你把我的名字删掉了。',
+  'c6.elena.studio': '工作室只要一个名字。我以为——我根本没想。', 'c6.june.loss': '我问的是，我的损失怎么办？', 'c6.june.work': '那份等着这个署名的工作。我三年的作品，挂在你的名字下面。',
   'c6.june.iris': '还有艾瑞丝。你让她留下了。她本来是要离开的。', 'c6.elena.miss': '我真的很想你。', 'c6.june.iKnow': '我知道。可我的损失怎么办？',
   'c6.elena.sorry': '对不起。', 'c6.june.notToday': '今天不行，埃莱娜。', 'c6.june.careful': '路上小心。',
   'c7.mara.drafts': '七封草稿。都是写给琳的。', 'c7.mara.unsent': '她一封都没有寄出去。', 'c7.mara.notMine': '这不是我能替她寄的。但我可以把名字放回去。',
