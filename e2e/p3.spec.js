@@ -484,7 +484,7 @@ test.describe('P3.2 focused checks', () => {
     page.once('dialog', async (dialog) => { message = dialog.message(); await dialog.dismiss(); });
     await page.getByTestId('replay').click();
     expect(message).toContain('replace the saved progress');
-    await expect(page.getByTestId('island-canvas')).toBeVisible();
+    await expect(page.getByTestId('view')).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('p3.save.v2'))).toBe(before);
   });
 
