@@ -206,7 +206,7 @@ export function buildTown(opts) {
     const sail = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2.0, 3), mat(0xfff8ee, { side: THREE.DoubleSide })); sail.position.set(0, 1.7, -0.1); sail.scale.set(1, 1, 0.05); b.add(sail);
     return b;
   }
-  const boats = [boat(4.2, 21, 0.3, 0x3f7cc4), boat(-5, 27, -0.5, 0xd6443c)];
+  const boats = [boat(-4.4, 20.5, 0.3, 0x3f7cc4), boat(-5, 27, -0.5, 0xd6443c)];
   const canalBoat = boat(-6.5, (CANAL.z0 + CANAL.z1) / 2, Math.PI / 2, 0xffd27a); canalBoat.scale.setScalar(0.6); canalBoat.position.y = -0.55;
 
   // ---- the old pier (1998) and the closed pier (2004) ----------------------------------------------------

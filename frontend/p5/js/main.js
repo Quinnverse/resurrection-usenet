@@ -574,7 +574,7 @@ function tickParticles(dt) {
 async function anomaly() {
   rt.mode = 'cut'; renderHudFade(); holdEnd();
   const w = rt.worlds.town;
-  rt.shot = { pos: new THREE.Vector3(-0.6, 2.2, 22.6), look: new THREE.Vector3(16.6, 5.6, 19.4) };
+  rt.shot = { pos: new THREE.Vector3(-2.4, 2.8, 27.0), look: new THREE.Vector3(14, 4.6, 20.4) };   // over Mara's shoulder, the lighthouse and its beam in frame
   A.play('anomaly'); w.startAnomaly(rt.t);
   await wait(reduce() ? 1.2 : 5.0);
   rt.mode = 'play';
