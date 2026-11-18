@@ -92,13 +92,19 @@ async function walkTo(page, ctl, x, z, tol, stopIf) {
     const dx = x - s.x, dz = z - s.z, d = Math.hypot(dx, dz);
     if (d < tolerance || (stopIf && stopIf(s))) { break; }
     if (d < best - 0.05) { best = d; lastProgress = Date.now(); }
-    if (Date.now() - lastProgress > 6000) { if (kd) { await kd.release(); } else { await ctl.stick.release(); } throw new Error(`stuck walking to ${x},${z}: ${JSON.stringify({ x: s.x, z: s.z, scene: s.scene, busy: s.busy, dialog: s.dialog })}`); }
+    if (Date.now() - lastProgress > 9000) { if (kd) { await kd.release(); } else { await ctl.stick.release(); } throw new Error(`stuck walking to ${x},${z}: ${JSON.stringify({ x: s.x, z: s.z, scene: s.scene, busy: s.busy, dialog: s.dialog })}`); }
     if (s.busy || s.dialog) { if (kd) { await kd.release(); } else { await ctl.stick.release(); } await page.waitForTimeout(150); continue; }
     const fwdX = -Math.sin(s.yaw), fwdZ = -Math.cos(s.yaw), rgtX = Math.cos(s.yaw), rgtZ = -Math.sin(s.yaw);
     const fz = (dx * fwdX + dz * fwdZ) / d, fx = (dx * rgtX + dz * rgtZ) / d;
     if (kd) {
       const keys = new Set();
-      if (fz > 0.38) { keys.add('w'); } if (fz < -0.38) { keys.add('s'); } if (fx > 0.38) { keys.add('d'); } if (fx < -0.38) { keys.add('a'); }
+      if (Date.now() - lastProgress > 2000) {
+        // caught on a corner: like a player, try one straight direction for a moment
+        const alt = Math.floor((Date.now() - lastProgress) / 1000) % 2 === 0;
+        if (alt) { keys.add(fz >= 0 ? 'w' : 's'); } else { keys.add(fx >= 0 ? 'd' : 'a'); }
+      } else {
+        if (fz > 0.38) { keys.add('w'); } if (fz < -0.38) { keys.add('s'); } if (fx > 0.38) { keys.add('d'); } if (fx < -0.38) { keys.add('a'); }
+      }
       await kd.set(keys);
     } else { await ctl.stick.set(fx, fz); }
     await page.waitForTimeout(45);

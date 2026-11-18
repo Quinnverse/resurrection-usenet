@@ -45,7 +45,7 @@ export const SCENES = {
     ]
   },
   town: {
-    spawn: { x: 0, z: -12.5, yaw: Math.PI },
+    spawn: { x: 0, z: -9.2, yaw: Math.PI },
     camera: { dist: 6.2, pitch: 0.34, minPitch: 0.08, maxPitch: 0.95 },
     walk: [
       { k: 'rect', x0: -2.3, x1: 2.3, z0: -15, z1: -6 },
@@ -119,8 +119,8 @@ export const ROUTES = {
 // Walking graph for the town: nodes joined by straight walkable lines. plan() finds the shortest node path.
 export const PATHS = {
   town: {
-    nodes: { lane: [0, -6.5], gate: [0, -12.5], plazaW: [-3.4, -1.5], plazaE: [3.4, -1.5], kioskW: [-3.3, 3.0], kioskE: [3.3, 3.0], plazaS: [3.2, 4.2], plazaSW: [-3.2, 4.2],
-      road: [1.6, 9.0], roadEnd: [1.6, 12.6], prom: [11.5, 13.0], theo: [13.0, 15.0], light: [16.0, 16.6], pierFoot: [0, 13.2], pier: [0, 24.4], bakery: [-4.4, -4.6], mural: [4.4, -4.6] },
+    nodes: { lane: [0, -6.5], gate: [0, -12.5], plazaW: [-2.9, -1.5], plazaE: [2.9, -1.5], kioskW: [-3.3, 3.0], kioskE: [3.3, 3.0], plazaS: [2.2, 4.6], plazaSW: [-2.2, 4.6],
+      road: [1.2, 9.0], roadEnd: [1.6, 12.6], prom: [11.5, 13.0], theo: [13.0, 15.0], light: [16.0, 16.6], pierFoot: [0, 13.2], pier: [0, 24.4], bakery: [-4.4, -4.6], mural: [4.4, -4.6] },
     edges: [['gate', 'lane'], ['lane', 'plazaW'], ['lane', 'plazaE'], ['lane', 'bakery'], ['lane', 'mural'], ['plazaW', 'kioskW'], ['plazaE', 'kioskE'], ['plazaW', 'bakery'], ['plazaE', 'mural'],
       ['kioskW', 'plazaSW'], ['kioskE', 'plazaS'], ['plazaS', 'plazaSW'], ['plazaS', 'road'], ['plazaSW', 'road'], ['road', 'roadEnd'], ['roadEnd', 'prom'], ['roadEnd', 'pierFoot'], ['pierFoot', 'pier'], ['prom', 'theo'], ['prom', 'light'], ['theo', 'light']]
   }

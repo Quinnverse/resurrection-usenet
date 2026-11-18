@@ -80,7 +80,7 @@ if (!renderer || !renderer.getContext()) {
   throw new Error('WebGL unavailable');
 }
 // Adaptive quality: when the frame rate stays low, render fewer pixels and refresh shadows less often.
-const QUALITY = [{ ratio: 1.5, shadowEvery: 1 }, { ratio: 1, shadowEvery: 1 }, { ratio: 0.75, shadowEvery: 3 }, { ratio: 0.6, shadowEvery: 6 }];
+const QUALITY = [{ ratio: 1.5, shadowEvery: 1 }, { ratio: 1, shadowEvery: 1 }, { ratio: 0.75, shadowEvery: 4 }];
 const quality = { level: 0, slow: 0 };
 function applyQuality() { const q = QUALITY[quality.level]; renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.ratio)); renderer.shadowMap.autoUpdate = q.shadowEvery === 1; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -589,7 +589,7 @@ function frame(now) {
     if (rt.mode === 'title') { rt.cam.yaw = SPAWNS.study.yaw + Math.sin(rt.t * 0.12) * 0.35; }
     step(dt);
     if (rt.sceneId === 'study') { rt.world.update(dt, rt.t, reduce()); }
-    else if (rt.sceneId === 'archive') { rt.world.update(dt, rt.t, reduce(), rt.player, St.target(st)); }
+    else if (rt.sceneId === 'archive') { rt.world.update(dt, rt.t, reduce(), rt.player, St.target(st), camera.position); }
     else {
       rt.world.update(dt, rt.t, reduce(), townEvent);
       const th = rt.world.theo; const near = Math.hypot(th.position.x - rt.player.x, th.position.z - rt.player.z) < 4;

@@ -186,7 +186,7 @@ export function buildArchive(opts) {
       allPosts.forEach((p) => { if (p.userData.z < -31) { p.userData.bulb.material.color.set(0xffc46a); p.userData.sp.material.color.set(0xffc46a); } });
     },
     plazaCentre: { x: 0, z: -22, r: 11 },
-    update(dt, t, reduce, player, targetId) {
+    update(dt, t, reduce, player, targetId, eye) {
       // bridge lights run in a wave toward where the story points
       const toward = player && player.z < -31 ? -1 : -1;
       allPosts.forEach((p) => {
@@ -207,7 +207,7 @@ export function buildArchive(opts) {
       Object.keys(stones).forEach((id) => {
         const s = stones[id];
         if (!reduce) { s.pan.position.y = 1.75 + Math.sin(t * 1.4 + s.g.position.x) * 0.06; }
-        if (player) { s.pan.lookAt(player.x, 1.75, player.z); }
+        const v = eye || player; if (v) { s.pan.lookAt(v.x, s.g.position.y + s.pan.position.y, v.z); }
         if (s.special) { s.sp.material.opacity = 0.35 + 0.3 * (reduce ? 0.5 : (Math.sin(t * 2.2) + 1) / 2); }
       });
       if (gateOpen) {
