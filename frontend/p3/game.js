@@ -417,7 +417,7 @@
 
   // ---- island growth -------------------------------------------------------------------------------
   function startIsland() {
-    if (st.island.stage >= D.ISLAND_STAGES) { rt.isl = { stage: D.ISLAND_STAGES, t0: rt.t, done: true }; $.replay.hidden = false; return; }
+    if (st.island.stage >= D.ISLAND_STAGES) { rt.isl = { stage: D.ISLAND_STAGES, t0: rt.t, done: true }; $.replay.hidden = false; renderHud(); return; }
     rt.isl = { stage: 1, t0: rt.t, done: false };
     rt.frozen = true; $.replay.hidden = true;
     sfx('grow', 0); say('isl.grow1', 'sys');
@@ -427,7 +427,7 @@
     var g = rt.isl; if (!g || g.done) { return; }
     if (rt.t - g.t0 >= islandDur()) {
       if (g.stage >= D.ISLAND_STAGES) {
-        g.done = true; rt.frozen = false; st.island.stage = D.ISLAND_STAGES; $.replay.hidden = false; persist();
+        g.done = true; rt.frozen = false; st.island.stage = D.ISLAND_STAGES; $.replay.hidden = false; renderHud(); persist();
         return;
       }
       g.stage += 1; g.t0 = rt.t; sfx('grow', g.stage - 1); say('isl.grow' + g.stage, 'sys');

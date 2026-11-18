@@ -100,7 +100,8 @@ async function newGameTo(page, lang) {
 // One complete playthrough, from the title screen to the explored island.
 async function playAll(page, testInfo, o) {
   const c = controls(page, o.mode), lang = o.lang, T = (k, v) => tr(page, lang, k, v);
-  const t0 = Date.now(), marks = {};
+  const t0 = Date.now(), marks = {}, heard = new Set();
+  const collectHeard = async () => { (await page.evaluate(() => window.P3Audio.heard())).forEach((n) => heard.add(n)); };
   const mark = (n) => { marks[n] = (Date.now() - t0) / 1000; };
   await newGameTo(page, lang);
   await expect(page.getByTestId('start')).toHaveText(await T('ui.start'));
@@ -241,6 +242,7 @@ async function playAll(page, testInfo, o) {
     }
     // leave with an unfinished bridge, reload, and find it exactly as left
     await page.getByTestId('panel-close').click();
+    await collectHeard();
     await page.reload(); await page.waitForFunction(() => window.P3Debug);
     await page.getByTestId('continue').click();
     await sceneIs(page, 'world');
@@ -324,6 +326,7 @@ async function playAll(page, testInfo, o) {
   mark('island-explored');
 
   // the island and every memory in it come back after a reload
+  await collectHeard();
   await page.reload(); await page.waitForFunction(() => window.P3Debug);
   await page.getByTestId('continue').click(); await sceneIs(page, 'island');
   const again = await snap(page);
@@ -333,7 +336,8 @@ async function playAll(page, testInfo, o) {
   const total = (Date.now() - t0) / 1000;
   console.log(`P3_TIME ${o.name} total=${total.toFixed(1)}s ` + Object.keys(marks).map((k) => `${k}=${marks[k].toFixed(1)}s`).join(' ') + '  (automated, not human play time)');
   testInfo.annotations.push({ type: 'automated-seconds', description: total.toFixed(1) });
-  return { total, marks };
+  await collectHeard();
+  return { total, marks, heard: [...heard] };
 }
 
 // ---- full playthroughs -----------------------------------------------------------------------------
@@ -346,7 +350,7 @@ test.describe('P3.2 full playthrough', () => {
     const r = await playAll(page, testInfo, { name: 'en-desktop', lang: 'en', mode: 'keys', hidden: true, detour: true });
     expect(r.marks['first-interaction'], 'first interaction within 30 s').toBeLessThan(30);
     expect(r.marks['core-gameplay'], 'core gameplay within 2 minutes').toBeLessThan(120);
-    const played = await page.evaluate(() => window.P3Audio.heard());   // requests made; whether they were audible is UNVERIFIED
+    const played = r.heard;   // sound requests made across the whole run (reloads included); whether they were audible is UNVERIFIED
     expect(played).toEqual(expect.arrayContaining(['jump', 'land', 'step', 'star', 'hidden', 'check', 'click', 'thud', 'collect', 'powerup', 'meow', 'server', 'pick', 'putback', 'wrong', 'snap', 'plank', 'bridge', 'door', 'blip', 'grow']));
     expect(issues, issues.join('\n')).toEqual([]);
   });
