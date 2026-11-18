@@ -816,6 +816,17 @@ const server = http.createServer(async (req, res) => {
       return serveStaticFile(res, pathname.slice(1));
     }
 
+    // Resurrection V5, the full game, plus its technical demonstration page
+    if (pathname === '/v5' || pathname === '/v5/') {
+      return serveStaticFile(res, 'v5/index.html');
+    }
+    if (pathname === '/v5/tech' || pathname === '/v5/tech/') {
+      return serveStaticFile(res, 'v5/tech.html');
+    }
+    if (pathname.startsWith('/v5/')) {
+      return serveStaticFile(res, pathname.slice(1));
+    }
+
     // P5 playable slice (V3.4), separate from P4, P3 and the four-act game
     if (pathname === '/p5' || pathname === '/p5/') {
       return serveStaticFile(res, 'p5/index.html');

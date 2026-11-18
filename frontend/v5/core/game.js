@@ -267,7 +267,7 @@ function use(g, p) {
   ev.push({ type: 'use', id: p.id });
   switch (p.id) {
     case 'computer':
-      if (s.beat === '1.study') { dialog(g, 'c1.computer', () => { ev.push({ type: 'rebuild', messages: g.ar.publicView().messages.size, sources: g.ar.publicView().sources.length }); enterBeat(g, '1.town'); }); }
+      if (s.beat === '1.study') { dialog(g, 'c1.computer', () => { g.rt.ev.push({ type: 'rebuild', messages: g.ar.publicView().messages.size, sources: g.ar.publicView().sources.length }); enterBeat(g, '1.town'); }); }
       else { ev.push({ type: 'letter', text: g.ar.drafts }); dialog(g, 'c7.letter', () => { s.flags.letterRead = true; enterBeat(g, '7.town'); }); }
       return;
     case 'photo': case 'keepbox': case 'drawing': case 'shelf': case 'window': say(g, 'mara', 'look.' + p.id + (s.beat === '7.study' ? '7' : ''), 4.5); return;
@@ -276,12 +276,12 @@ function use(g, p) {
     case 'theo':
       if (s.beat === '1.town' && !seen(g, 'c1.theo1')) { dialog(g, 'c1.theo1'); return; }
       say(g, 'theo', s.beat === '7.town' ? 'c7.theo.idle' : (s.restored.bridge ? 'c1.theo.idle' : 'c1.theo.wait'), 3.2); return;
-    case 'pierEnd': dialog(g, 'c1.memory', () => { ev.push({ type: 'memory' }); enterBeat(g, '1.chase'); }); return;
+    case 'pierEnd': dialog(g, 'c1.memory', () => { g.rt.ev.push({ type: 'memory' }); enterBeat(g, '1.chase'); }); return;
     case 'hand':
       rt.train.caught = true; ev.push({ type: 'caught' }); Co.react(rt.june, 'grin', 'reach', 2);
       dialog(g, 'c1.hand', () => { s.flags.chased = true; enterBeat(g, '2.train'); }); return;
     case 'cart':
-      if (!seen(g, 'c3.window')) { dialog(g, 'c3.window', () => { rt.carry = 'window'; ev.push({ type: 'carry', what: 'window' }); }); } else { rt.carry = 'window'; ev.push({ type: 'carry', what: 'window' }); }
+      if (!seen(g, 'c3.window')) { dialog(g, 'c3.window', () => { rt.carry = 'window'; g.rt.ev.push({ type: 'carry', what: 'window' }); }); } else { rt.carry = 'window'; ev.push({ type: 'carry', what: 'window' }); }
       return;
     case 'socket': {
       const w = Ar.sceneGraph(g.ar, 1998, s.restored, null).objects.find((o) => o.id === 'window');
@@ -298,7 +298,7 @@ function use(g, p) {
       if (s.beat === '5.depart') { s.flags.c5talk = true; dialog(g, 'c5.news', () => { const pick = s.choices.parting === 'c5.choice.stay' ? 'c5.stay' : 'c5.miss'; Co.react(rt.june, pick === 'c5.stay' ? 'hurt' : 'smile', 'idle', 2.5); dialog(g, pick, () => juneBoards(g)); }); }
       if (s.beat === '6.cottage') { s.flags.c6talk = true; Co.react(rt.june, 'quiet', 'turnaway', 1.5); dialog(g, 'c6.talk', () => { Co.react(rt.june, 'quiet', 'idle', 1.5); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; }); }); }
       return;
-    case 'bench': rt.seated = true; dialog(g, 'c5.alone', () => { ev.push({ type: 'fade' }); enterBeat(g, '6.cottage'); }); return;
+    case 'bench': rt.seated = true; dialog(g, 'c5.alone', () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '6.cottage'); }); return;
     case 'credits': restoreCredits(g); return;
     case 'iris': reviveIris(g); return;
     case 'seasons': createSeasons(g); return;

@@ -130,7 +130,7 @@ const ZH = {
   'prov.title': '它从哪里来', 'prov.record': '记录', 'prov.status': '状态', 'prov.copies': '副本', 'prov.close': '关闭',
   'status.RESTORED': '已恢复 · 来自幸存的记录', 'status.RECONSTRUCTED': '重建 · 由清单推导', 'status.CREATED': '新创作 · 2026 年',
   'copy.ok': '完整', 'copy.truncated': '中途截断', 'copy.stripped': '附件已删除', 'copy.corrupt': '已损坏', 'copy.rejected': '已拒绝',
-  'end.roles': '《最后的灯》（1998）', 'end.elena': '埃莱娜 —— 程序与音乐', 'end.june': '琳 —— 美术与故事', 'end.mara': '修复版、四季与冬日主题 —— 玛拉（新创作）',
+  'end.roles': '《最后的灯》（1998）', 'end.elena': 'Elena — Programming & Music（埃莱娜 · 程序与音乐）', 'end.june': 'June — Art & Story（琳 · 美术与故事）', 'end.mara': '修复版、四季与冬日主题 —— 玛拉（新创作）',
   'end.unsent': '埃莱娜写给琳的信从未寄出。现在也没有。', 'end.fiction': '所有人物、帖子和地点都是虚构的。', 'end.poem': '引用：白居易《琵琶行》（816 年），公有领域。所有音乐均为原创。',
   'verb.use': '使用', 'verb.read': '阅读', 'verb.look': '查看', 'verb.toggle': '开关', 'verb.talk': '交谈', 'verb.restore': '恢复', 'verb.touch': '触摸',
   'verb.hand': '抓住她的手', 'verb.window': '拿起窗户', 'verb.place': '装上窗户', 'verb.crank': '摇动灯塔手柄', 'verb.enter': '进去', 'verb.play': '弹奏',

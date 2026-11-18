@@ -10,7 +10,8 @@ export const DT = 1 / 30;
 export function makeBot(g, opts) {
   const o = Object.assign({ choices: { train: 1, parting: 0, finish: 1 }, glide: true, log: false }, opts || {});
   const bot = { g, t: 0, events: [], beats: [], o, stuck: [] };
-  bot.tick = (input) => { const ev = Gm.tick(g, DT, input || {}); bot.t += DT; ev.forEach((e) => { bot.events.push(Object.assign({ at: Math.round(bot.t * 10) / 10 }, e)); if (e.type === 'beat') { bot.beats.push(e.beat); if (o.log) { console.log(bot.t.toFixed(1), 'beat', e.beat); } } }); return ev; };
+  // o.step lets a harness run the same plan through the browser shell instead of calling the core directly
+  bot.tick = (input) => { const ev = o.step ? o.step(input || {}) : Gm.tick(g, DT, input || {}); bot.t += DT; ev.forEach((e) => { bot.events.push(Object.assign({ at: Math.round(bot.t * 10) / 10 }, e)); if (e.type === 'beat') { bot.beats.push(e.beat); if (o.log) { console.log(bot.t.toFixed(1), 'beat', e.beat); } } }); return ev; };
   bot.snap = () => Gm.snapshot(g);
   bot.wait = (secs, input) => { for (let i = 0; i < secs / DT; i++) { bot.tick(input); } };
   // read dialogue to the end, choosing as planned; also handles a pending choice

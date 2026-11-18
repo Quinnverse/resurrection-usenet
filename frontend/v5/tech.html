@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resurrection V5 — archive to world (tech demo)</title>
+  <style>
+    :root { --ink:#efe9dc; --dim:#a9a294; --gold:#ffd27a; --sea:#7fc4ff; --bad:#ff8a7a; --ok:#9be39b; --bg:#0d0b12; --panel:#17141f; --mono:"Courier New", "Noto Sans Mono CJK SC", monospace; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+    header { padding:18px 22px 10px; border-bottom:1px solid #2a2533; display:flex; flex-wrap:wrap; gap:12px 24px; align-items:baseline; }
+    header h1 { font-size:1.15rem; margin:0; letter-spacing:.02em; }
+    .fixture { color:#111; background:var(--gold); padding:2px 8px; border-radius:4px; font-weight:700; font-size:.78rem; letter-spacing:.08em; }
+    .bar { display:flex; flex-wrap:wrap; gap:8px; padding:12px 22px; position:sticky; top:0; background:rgba(13,11,18,.96); z-index:2; border-bottom:1px solid #2a2533; }
+    button { font:inherit; color:var(--ink); background:#262130; border:1px solid #3a3446; border-radius:6px; padding:6px 12px; cursor:pointer; }
+    button:hover { border-color:var(--gold); } button.primary { background:#5b4314; border-color:var(--gold); } button:disabled { opacity:.45; cursor:default; }
+    button[aria-pressed="true"] { background:#33405a; border-color:var(--sea); }
+    .timer { margin-left:auto; color:var(--dim); font-family:var(--mono); align-self:center; }
+    main { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap:16px; padding:16px 22px 40px; }
+    section { background:var(--panel); border:1px solid #2a2533; border-radius:8px; padding:12px 14px; min-width:0; transition:border-color .3s; }
+    section.now { border-color:var(--gold); }
+    h2 { font-size:.95rem; margin:0 0 8px; color:var(--gold); letter-spacing:.03em; } h2 small { color:var(--dim); font-weight:400; }
+    pre { font:12px/1.35 var(--mono); background:#0a090e; padding:8px; border-radius:4px; overflow:auto; max-height:300px; margin:6px 0; white-space:pre; }
+    table { border-collapse:collapse; width:100%; font-size:.84rem; } th, td { text-align:left; padding:3px 6px; border-bottom:1px solid #26222e; vertical-align:top; } th { color:var(--dim); font-weight:500; white-space:nowrap; }
+    td.mono, .mono { font-family:var(--mono); font-size:.8rem; word-break:break-all; }
+    .ok { color:var(--ok); } .bad { color:var(--bad); } .dim { color:var(--dim); } .sea { color:var(--sea); }
+    canvas { width:100%; height:auto; background:#0a090e; border-radius:4px; display:block; }
+    .legend { display:flex; flex-wrap:wrap; gap:12px; font-size:.78rem; color:var(--dim); margin-top:6px; } .sw { display:inline-block; width:12px; height:10px; margin-right:4px; vertical-align:middle; }
+    .note { color:var(--dim); font-size:.82rem; margin:6px 0 0; }
+    .verdict { font-weight:700; margin:6px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Resurrection V5 — the archive builds the world <span class="dim">· 档案构建世界</span></h1>
+    <span class="fixture" data-testid="fixture">FICTIONAL FIXTURE · 虚构测试数据</span>
+    <span class="dim">Every post, address and host below is invented for the game. No real archive is contacted.</span>
+  </header>
+  <div class="bar">
+    <button class="primary" type="button" id="play" data-testid="play">▶ 3-minute walkthrough</button>
+    <button type="button" id="restore" data-testid="restore">Restore bridge · 修复桥</button>
+    <button type="button" id="reset" data-testid="reset">Reset · 重置</button>
+    <button type="button" id="variant" aria-pressed="false" data-testid="variant">Variant input: missing plank · 变体输入</button>
+    <a href="/v5/" style="align-self:center;color:var(--sea)">Play the game →</a>
+    <span class="timer" id="timer"></span>
+  </div>
+  <main id="main"><section><p data-testid="loading">Loading the fixture archive…</p></section></main>
+  <script type="module" src="/v5/tech.js"></script>
+</body>
+</html>

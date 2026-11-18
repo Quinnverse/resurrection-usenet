@@ -195,6 +195,8 @@ describe('V5 the whole game, played headlessly', () => {
     assert.equal(g.s.window.placed, true); assert.ok(g.s.edition.seasons && g.s.edition.snow);
     assert.equal(g.s.season, 'winter');
     for (let c = 1; c <= 7; c++) { assert.ok(bot.events.some((e) => e.type === 'beat' && e.chapter === c), `chapter ${c}`); }
+    // events raised when a dialogue ends must reach the shell (the rebuild screen, the memory card, the carry)
+    for (const type of ['rebuild', 'memory', 'carry', 'fade', 'letter', 'credits-roll', 'years-later', 'placed', 'lit']) { assert.ok(bot.events.some((e) => e.type === type), `event ${type}`); }
     for (const id of ['c1.hand', 'c2.backs', 'c3.listen', 'c4.after', 'c5.news', 'c6.talk', 'c6.leave', 'c7.snow']) { assert.ok(g.s.seen.includes(id), id); }
   });
   it('the other choices change words and expressions, never what happens', () => {

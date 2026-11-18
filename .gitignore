@@ -58,3 +58,7 @@ build/
 # Runtime save data (player sessions). Never commit.
 combined-server/data/
 *.tmp
+
+# Local test output
+test-results/
+playwright-report/
