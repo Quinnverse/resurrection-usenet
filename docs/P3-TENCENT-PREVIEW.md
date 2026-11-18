@@ -18,6 +18,26 @@
 
 任何一项不满足，脚本会在改动前停止并说明原因。
 
+## 0. 先只读检查服务器（不改任何东西）
+
+从 GitHub 分支下载 `deploy/p3-preview/inspect.sh`（https://github.com/Quinnverse/resurrection-usenet/blob/p3-life-in-fragments/deploy/p3-preview/inspect.sh ），在你的电脑上执行，**不需要先上传任何文件**：
+
+```bash
+ssh <user>@<server> 'bash -s' < inspect.sh          # 如果 docker 需要 sudo：ssh -t <user>@<server> 'sudo bash -s' < inspect.sh
+```
+
+它只读取并打印：当前容器的镜像/限制/端口/挂载（环境变量只打印名字，不打印值）、`resurrection_saves` 卷、已有镜像、18080/18081 端口、当前 `/`、`/p3/` 与 `/api/health` 的返回、nginx 是否把所有路径转发到 18080、本机经 nginx 访问 `/` 和 `/p3/` 的状态码，并给出 PASS/WARN/FAIL。它不会启动、停止、重命名容器，不会构建或拉取镜像，不会写文件，也不会重载 nginx。把完整输出贴回来，确认无 FAIL 后再继续。
+
+## 不部署也能先玩（本机）
+
+需要 Node 20 以上。解压 ZIP 后：
+
+```bash
+cd resurrection-p3-<sha7> && node combined-server/server.js     # 然后打开 http://127.0.0.1:3000/p3/
+```
+
+存档保存在浏览器本地，和服务器无关。
+
 ## 1. 上传
 
 在你的电脑上（ZIP 从 GitHub 分支 `p3-life-in-fragments` 的 `release/` 目录下载）：
