@@ -191,10 +191,12 @@ describe('V5 the whole game, played headlessly', () => {
     assert.deepEqual([...new Set(bot.beats)], Gm.BEATS.slice(1));
     assert.equal(g.s.beat, 'end'); assert.equal(bot.stuck.length, 0, JSON.stringify(bot.stuck));
     assert.deepEqual(Object.keys(g.s.restored).sort(), ['bridge', 'credits', 'iris', 'lamp']);
-    assert.ok(['dare0', 'dare1', 'dare2', 'sketched', 'heldHand', 'carved', 'boat', 'stars', 'walked', 'beachTalk3', 'lens', 'foundJune', 'beamDone', 'tuned', 'suitcase', 'boxA', 'boxB', 'read98', 'c6talk', 'toldCareful'].every((k) => g.s.flags[k]), JSON.stringify(g.s.flags));
+    assert.ok(['dare0', 'dare1', 'dare2', 'sketched', 'heldHand', 'carved', 'boat', 'stars', 'walked', 'beachTalk3', 'beamPier', 'lens', 'foundJune', 'beamDone', 'tuned', 'suitcase', 'boxA', 'boxB', 'read98', 'c6talk', 'toldCareful'].every((k) => g.s.flags[k]), JSON.stringify(g.s.flags));
     assert.ok(g.s.photos.some((p) => p.dare === 'lighthouse') && g.s.photos.some((p) => p.dare === 'kite') && g.s.photos.some((p) => p.kind === 'sleep') && g.s.photos.some((p) => p.id === 'platform-1998') && g.s.photos.some((p) => p.id === 'platform-2004'));
     assert.ok(g.s.photos.length >= 2 && g.s.photos.some((p) => p.id === 'june-elena'));
-    assert.equal(g.s.window.placed, true); assert.ok(g.s.edition.seasons && g.s.edition.snow);
+    assert.equal(g.s.window.placed, true); assert.ok(g.s.edition.seasons && g.s.edition.snow && g.s.edition.pier_walk);
+    // the 2004 snapshot never gets the new planks; the present edition does
+    assert.equal(Gm.worldFor(Gm.createGame(AR, Object.assign(Gm.newSave(), { edition: {} })), 'town', 2004).floors.filter((f) => f.created).length, 0); assert.equal(Gm.worldFor(g, 'town', 2004).floors.filter((f) => f.created).length, 2);
     assert.equal(g.s.season, 'winter');
     for (let c = 1; c <= 7; c++) { assert.ok(bot.events.some((e) => e.type === 'beat' && e.chapter === c), `chapter ${c}`); }
     // events raised when a dialogue ends must reach the shell (the rebuild screen, the memory card, the carry)

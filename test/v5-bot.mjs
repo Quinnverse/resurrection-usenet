@@ -63,6 +63,8 @@ export function makeBot(g, opts) {
   bot.hold = async (id, secs) => { for (let i = 0; i < secs / DT; i++) { const s = bot.snap(); if (!s.prompt || s.prompt.id !== id) { return; } await bot.tick({ useHeld: true, use: i === 0 }); } };
   bot.go = async (id, x, z) => { if (!(await bot.walkTo(x, z, bot.promptIs(id)))) { const s = bot.snap(); throw new Error(`could not reach ${id} at beat ${s.beat} from (${s.x.toFixed(2)},${s.z.toFixed(2)}) prompt=${JSON.stringify(s.prompt)}`); } };
   bot.goUse = async (id, x, z) => { await bot.go(id, x, z); await bot.use(id); await bot.talk(); };
+  // like until, but also stops when `alt` holds
+  bot.untilOr = async (fn, secs, input, alt) => bot.until((s) => fn(s) || (alt && alt(s)), secs, input);
   bot.until = async (fn, secs, input) => { for (let i = 0; i < (secs || 60) / DT; i++) { const s = bot.snap(); if (fn(s)) { return s; } if (s.dialog || s.choice) { await bot.talk(); continue; } await bot.tick(typeof input === 'function' ? input(s) : input); } throw new Error('timed out at beat ' + bot.snap().beat + ' ' + JSON.stringify({ prompt: bot.snap().prompt, x: bot.snap().x, z: bot.snap().z })); };
   // point the train camera at a world position (carriage coordinates) and take the picture
   bot.shootAt = async (posFn) => {
@@ -236,11 +238,14 @@ export async function playThrough(g, opts) {
   await bot.go('lampRestore', 15.2, 17.2); await bot.hold('lampRestore', 4); await bot.talk();
   await bot.go('seasons', 15.2, 17.2); await bot.hold('seasons', 4); await bot.talk();
   // the last light: turn the beam to the old pier
-  await bot.until((s) => s.beat === 'end', 90, (s) => {
+  await bot.untilOr((s) => s.beat === 'end', 90, (s) => {
     if (!s.beam || s.beam.targetA === undefined) { return {}; }
     const d1 = wrap(s.beam.targetA - s.beam.a), d2 = wrap(s.beam.targetA - (s.beam.a + Math.PI)); const d = Math.abs(d1) < Math.abs(d2) ? d1 : d2;
     return { mx: Math.abs(d) < 0.04 ? 0 : -Math.sign(d) * Math.min(1, Math.abs(d) * 4 + 0.15) };
-  });
+  }, (s) => s.flags.beamPier);
+  // new planks in the present edition, then walk Theo out to the end
+  await bot.go('newPier', 0.2, 13.0); await bot.hold('newPier', 5); await bot.talk();
+  await bot.until((s) => s.beat === 'end', 90, (s) => (s.theo && s.z < 24.0 ? bot.axes(s.theo.x - 0.3 - s.x, Math.min(24.0, s.theo.z - 0.9) - s.z) : {}));
   m('end');
   bot.finish(); bot.marks = mark;
   return bot;

@@ -32,7 +32,7 @@ const BEAT_YEAR = { '1.carve': 1998, '4.porch': 1998, '6.beach': 2004, '1.chase'
 const PLAYER = { study: 'mara', town: 'mara', station: 'elena', train: 'elena', ride: 'elena', coast: 'elena', cottage: 'elena', porch: 'elena' };
 const BEAT_PLAYER = { '1.carve': 'elena' };
 export const chapterOf = (beat) => (beat === 'end' ? 7 : parseInt(beat, 10));
-export const HOLD = { bridge: 4.0, crank: 3.2, pulley: 3.0, chain: 2.0, credits: 2.5, rope: 2.0, seasons: 3.0, post: 2.5, lampRestore: 3.0 };
+export const HOLD = { bridge: 4.0, crank: 3.2, pulley: 3.0, chain: 2.0, credits: 2.5, rope: 2.0, seasons: 3.0, post: 2.5, lampRestore: 3.0, newPier: 4.0 };
 const MAX_PHOTOS = 10;
 
 export function newSave() {
@@ -136,7 +136,9 @@ export const DIALOGS = {
   'c7.lamp': [L('mara', 'c7.mara.lamp'), L('theo', 'c7.theo.lampLit', 'theo'), L('mara', 'c7.mara.notYet')],
   'c7.seasons': [L('mara', 'c7.mara.new')],
   'c7.snow': [L('theo', 'c7.theo.snow', 'theo'), L('mara', 'c7.mara.summerEnd', 'mara'), L('theo', 'c7.theo.honours', 'theo')],
-  'c7.final': [L('mara', 'c7.mara.final', 'mara'), L('theo', 'c7.theo.goodnight', 'theo')]
+  'c7.beamPier': [L('theo', 'c7.theo.evening', 'theo'), L('mara', 'c7.mara.noPier', 'mara'), L('theo', 'c7.theo.edition', 'theo')],
+  'c7.newPier': [L('mara', 'c7.mara.planks', 'mara'), L('theo', 'c7.theo.walk', 'theo')],
+  'c7.final': [L('theo', 'c7.theo.end', 'theo'), L('mara', 'c7.mara.final', 'mara'), L('theo', 'c7.theo.goodnight', 'theo')]
 };
 
 // ---- the game -------------------------------------------------------------------------------------------------
@@ -199,8 +201,12 @@ export function worldFor(g, scene, era) {
   let floors = [];
   if (br && br.state !== 'missing') { floors = bridgeFloors(br.data, 1); }
   else if (br && br.state === 'missing' && g.s.bridge > 0 && g.rt && g.rt.restoring) { floors = bridgeFloors(g.rt.restoring.data, g.s.bridge); }
-  return Ph.makeWorld(lay, { assets: sg.assets, floors });
+  const w = Ph.makeWorld(lay, { assets: sg.assets, floors: floors.concat(era === 2004 && g.s.edition.pier_walk ? NEW_PIER : []) });
+  if (era === 2004 && g.s.edition.pier_walk) { w.solids = w.solids.filter((sd) => sd.asset !== 'pier_closed'); }   // the fence opens in the present edition only
+  return w;
 }
+// New planks Mara lays in the present edition (CREATED): from the plaza to the 2004 stub, and from the stub to the end.
+const NEW_PIER = [{ k: 'rect', x0: -1, x1: 1, z0: 14.3, z1: 17.2, y: 0, created: true }, { k: 'rect', x0: -1, x1: 1, z0: 22.8, z1: 25.2, y: 0, created: true }];
 function refreshWorld(g) {
   const sc = g.rt.scene;
   g.rt.graph = sc === 'town' ? sceneGraphNow(g) : null;
@@ -320,6 +326,9 @@ const SETUP = {
   '7.town': (g) => {
     g.rt.theo = Co.newCompanion(1.2, -11.6, Math.PI); Co.invite(g.rt.theo, null, 'smile'); irisSetup(g);
     if (g.s.edition.iris_revived) { g.rt.iris.gone = true; g.rt.theo.x = 14.2; g.rt.theo.z = 15.6; Co.wait(g.rt.theo); }
+    if (g.s.edition.seasons && !g.s.flags.beamPier) { g.rt.seasonRun = { t: 20 }; g.rt.snowTalk = true; g.rt.season = 'winter'; g.rt.beam = { a: 2.4, target: 'pier', holdT: 0, ready: true }; g.rt.seated = true; g.rt.shot = g.rt.baseShot = 'town-beam'; }
+    if (g.s.flags.beamPier) { g.rt.seasonRun = { t: 20 }; g.rt.snowTalk = true; g.rt.season = 'winter'; g.rt.theo.x = 0.6; g.rt.theo.z = 12.6; }
+    if (g.s.edition.pier_walk) { Co.lead(g.rt.theo, [[0.2, 16.0], [0.1, 20.0], [0.2, 24.0]], { ahead: 2.5, waitR: 6, speed: 1.3 }); g.rt.theoPier = true; }
   },
   end: (g) => { g.rt.theo = Co.newCompanion(14.2, 15.6, Math.PI); Co.wait(g.rt.theo); irisSetup(g); if (g.rt.iris) { g.rt.iris.gone = true; } g.rt.season = 'winter'; }
 };
@@ -363,6 +372,7 @@ function points(g) {
       else if (ir && ir.leaving && ir.atDock && !ir.boarded) { at('rope', { verb: 'verb.untie', hold: true }); }
       else if (s.edition.iris_revived && (!ir || ir.gone) && !s.restored.lamp && s.era === 2004) { const q = p('lighthouse'); add('lampRestore', q.x, q.z, q.r, { verb: 'verb.restoreLamp', hold: true }); }
       else if (s.edition.iris_revived && (!ir || ir.gone) && s.restored.lamp && !s.edition.seasons && s.era === 2004) { const q = p('lighthouse'); add('seasons', q.x, q.z, q.r, { verb: 'verb.recompose', hold: true }); }
+      else if (s.flags.beamPier && !s.edition.pier_walk && s.era === 2004 && !rt.beam) { add('newPier', 0, 13.9, 1.6, { verb: 'verb.build', hold: true }); }
     }
     at('notice', { verb: 'verb.read', optional: true });
   } else if (sc === 'station') {
@@ -529,6 +539,10 @@ function holdTick(g, id, dt) {
   if (id === 'credits') { restoreCredits(g); }
   if (id === 'rope') { rt.iris.boarded = true; rt.iris.walking = false; rt.ev.push({ type: 'iris-board' }); rt.ev.push({ type: 'sfx', name: 'rope' }); dialog(g, 'c7.iris'); }
   if (id === 'seasons') { createSeasons(g); }
+  if (id === 'newPier') {
+    s.edition.pier_walk = true; refreshWorld(g); rt.ev.push({ type: 'created', id: 'pier_walk', status: Ar.STATUS.CREATED }); rt.ev.push({ type: 'save' });
+    dialog(g, 'c7.newPier', () => { Co.lead(g.rt.theo, [[0.4, 13.6], [0.2, 16.0], [0.1, 20.0], [0.2, 24.0]], { ahead: 2.5, waitR: 6, speed: 1.3 }); g.rt.theoPier = true; });
+  }
   if (id === 'lampRestore') {
     const c = Ar.restoreCandidate(g.ar, 'lamp', 1998);
     if (!c.ok) { rt.ev.push({ type: 'restore-failed', id: 'lamp' }); return; }
@@ -750,9 +764,10 @@ const TICK = {
         const bm = rt.beam; if (active) { bm.a -= (input.mx || 0) * 1.1 * dt; }
         const ta = Toys.beamTo(LIGHTHOUSE, PIER_END); bm.targetA = ta;
         const gap = Math.min(Toys.angleGap(bm.a, ta), Toys.angleGap(bm.a + Math.PI, ta)); bm.onTarget = gap < 0.1; bm.holdT = bm.onTarget ? bm.holdT + dt : 0;
-        if (bm.holdT > 0.8 && !bm.done) { bm.done = true; rt.ev.push({ type: 'found', what: 'pier' }); dialog(g, 'c7.final', () => { g.rt.ev.push({ type: 'credits-roll' }); enterBeat(g, 'end'); }); }
+        if (bm.holdT > 0.8 && !bm.done) { bm.done = true; rt.ev.push({ type: 'found', what: 'pier' }); dialog(g, 'c7.beamPier', () => { s.flags.beamPier = true; g.rt.beam = null; g.rt.seated = false; g.rt.shot = g.rt.baseShot = null; g.rt.ev.push({ type: 'save' }); }); }
       }
     }
+    if (rt.theoPier && rt.theo && rt.theo.state === 'WAIT' && rt.theo.z > 23 && rt.body.z > 22.6 && !rt.dialog && !rt.finalSaid) { rt.finalSaid = true; dialog(g, 'c7.final', () => { g.rt.ev.push({ type: 'credits-roll' }); enterBeat(g, 'end'); }); }
     if (s.beat === '7.town' && !s.flags.c7theo && rt.beatT > 1.5 && !rt.dialog) { s.flags.c7theo = true; dialog(g, 'c7.theo'); }
   },
   station(g, dt, input, active) {

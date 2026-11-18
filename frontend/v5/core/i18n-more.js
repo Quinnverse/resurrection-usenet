@@ -146,7 +146,13 @@ export const EN_MORE = {
   'c2.react.boat': 'Elena’s boat, drawn with June telling her where. It leans.',
   'c7.mara.lamp': 'The lamp, exactly as Mom wrote it in 1998. Restored from her backup, not invented.', 'c7.theo.lampLit': 'It’s lit! After all these years — it’s lit!', 'c7.mara.notYet': 'And now something that was never there. That part is mine.',
   'hint.4.cottage.1': 'June’s portfolio is on the table.', 'hint.4.cottage.2': 'Draw the boat first, then tune the guitar.', 'hint.4.cottage.3': 'E at the table, follow the dots with the mouse, then E at the guitar.',
-  'hint.7.town.3': 'Then the lighthouse on the point: hold E to restore the lamp, then hold E again to make something new. At the end, A and D turn the beam.'
+  'hint.7.town.3': 'Then the lighthouse on the point: hold E to restore the lamp, then hold E again to make something new. At the end, A and D turn the beam.',
+  'verb.build': 'Lay new planks', 'name.newPier': 'The old pier',
+  'c7.theo.evening': 'In the summer build I walked out there every evening. To the very end.', 'c7.mara.noPier': 'The 2004 pier stops halfway. I’m not changing 2004.',
+  'c7.theo.edition': 'There’s a 2026 now, isn’t there? Your edition. Could it have a plank or two?',
+  'c7.mara.planks': 'New planks. Pale wood, so nobody mistakes them for June’s. Labelled: made in 2026.', 'c7.theo.walk': 'Walk me out?',
+  'c7.theo.end': 'The end of the pier. Snow on it. I never imagined snow on it.',
+  'hint.7.town.2': 'Then Iris at the bakery. Her boat is at the little dock. Later: the pier foot, hold E for new planks.'
 };
 
 export const ZH_MORE = {
@@ -284,5 +290,11 @@ export const ZH_MORE = {
   'c2.react.boat': '埃莱娜画的船，琳在旁边告诉她往哪儿画。它是歪的。',
   'c7.mara.lamp': '这盏灯，和妈妈 1998 年写的一模一样。是从她的备份里恢复的，不是我编的。', 'c7.theo.lampLit': '亮了！这么多年——终于亮了！', 'c7.mara.notYet': '接下来是从来没有过的东西。那部分是我的。',
   'hint.4.cottage.1': '琳的作品集在桌上。', 'hint.4.cottage.2': '先画船，再给吉他调音。', 'hint.4.cottage.3': '在桌边按 E，用鼠标跟着点画，然后在吉他旁按 E。',
-  'hint.7.town.3': '然后是海角上的灯塔：按住 E 恢复那盏灯，再按住 E 创作新的东西。最后用 A 和 D 转动光束。'
+  'hint.7.town.3': '然后是海角上的灯塔：按住 E 恢复那盏灯，再按住 E 创作新的东西。最后用 A 和 D 转动光束。',
+  'verb.build': '铺新木板', 'name.newPier': '旧码头',
+  'c7.theo.evening': '在夏日版里，我每天傍晚都走到那里。一直走到尽头。', 'c7.mara.noPier': '2004 版的码头只到一半。我不会去改 2004 版。',
+  'c7.theo.edition': '现在有 2026 版了，对吧？你的版本。能不能有一两块木板？',
+  'c7.mara.planks': '新木板。用浅色的木头，免得有人把它们当成琳做的。标注：2026 年制作。', 'c7.theo.walk': '陪我走过去？',
+  'c7.theo.end': '码头的尽头。上面落了雪。我从来没想过这里会有雪。',
+  'hint.7.town.2': '然后去面包店找艾瑞丝。她的船在小码头。之后：在码头入口按住 E 铺新木板。'
 };

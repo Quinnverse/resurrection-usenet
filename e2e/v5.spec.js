@@ -112,7 +112,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
         await attach(testInfo, `beat-${beat}-${lang}-b`, await shot(page));
         const s = await snap(page);
         const mem = await page.evaluate(() => (performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null));
-        perf.push({ beat, lang, world: s.world, fps: s.fps, heapMB: mem, mode: s.mode });
+        perf.push({ beat, lang, world: s.world, fps: s.fps, heapMB: mem, mode: s.mode, audio: s.audio ? { state: s.audio.state, rms: +s.audio.rms.toFixed(4) } : null, theme: (s.heard || []).filter((h) => h.startsWith('theme:')).slice(-1)[0] });
         expect(s.beat === beat || BEATS.indexOf(s.beat) > BEATS.indexOf(beat), `${beat} -> ${s.beat}`).toBe(true);
       }
     }

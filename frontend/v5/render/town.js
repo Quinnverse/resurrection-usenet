@@ -230,6 +230,11 @@ export function buildTown(opts) {
   pierClosed.add(box(2.7, 0.1, 0.1, 0xd8dce4, 0, 1.0, 14.45), box(2.7, 0.1, 0.1, 0xd8dce4, 0, 0.4, 14.45));
   const closedSign = panel(1.2, 0.5, canvasTex(256, 110, signDraw('PIER CLOSED', '#e8ecf0', '#3a4a68', '2004')), 0xe8ecf0, { lit: true }); closedSign.position.set(0, 0.85, 14.38); closedSign.rotation.y = Math.PI; pierClosed.add(closedSign);
   anchors.pierGate = pierPiles; anchors.pierEnd = carved;
+  const fenceParts = pierClosed.children.slice(1);
+  // the present edition (2026): pale new planks laid by Mara, so they are never mistaken for June's
+  const newPier = new THREE.Group(); scene.add(newPier); const newPlanks = [];
+  [[14.3, 17.2], [22.8, 25.2]].forEach(([a, b]) => { for (let z = a; z < b - 0.05; z += 0.36) { const pl = box(2.2, 0.1, 0.32, 0xf0e4c8, 0, -0.05, z + 0.17); pl.visible = false; newPier.add(pl); newPlanks.push(pl); } });
+  const newLabel = panel(0.9, 0.35, canvasTex(256, 100, signDraw('NEW · 2026', '#fdf8ef', '#3f7cc4', 'Mara')), 0xfdf8ef, { lit: true }); newLabel.position.set(1.25, 0.6, 14.6); newLabel.rotation.y = Math.PI; newLabel.visible = false; newPier.add(newLabel);
 
   // ---- the rocky point: path (2004) or rocks and crates (1998) --------------------------------------------
   const point = new THREE.Group(); scene.add(point);
@@ -419,6 +424,7 @@ export function buildTown(opts) {
     // null lets the beam turn by itself; a number holds it where the player points it
     setBeamAngle(a) { beamAngle = a; },
     setRope(tied) { rope.visible = !!tied; },
+    setNewPier(k) { const n = Math.round(Math.max(0, Math.min(1, k)) * newPlanks.length); newPlanks.forEach((pl, i) => { pl.visible = i < n; }); newLabel.visible = k >= 1; fenceParts.forEach((f) => { f.visible = k < 1; }); },
     get bridgePlanks() { return planks.length; },
     plankWorld(i) { const m = planks[i]; if (!m) { return null; } return new THREE.Vector3(BRIDGE.x + m.userData.home.x, m.userData.home.y, BRIDGE.z0 + m.userData.home.z); },
     activeBlockers() { return blockers.filter((b) => { let n = b; while (n) { if (!n.visible) { return false; } n = n.parent; } return true; }); },

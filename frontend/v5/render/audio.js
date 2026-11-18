@@ -3,7 +3,7 @@
 // differently: a bright summer version, a bouncing train version, the guitar duet, a slow parting version, a sparse
 // 2004 version with notes missing, and a fuller winter version (new work for the restored edition).
 const KEY = 'v5.audio.v1';
-let ctx = null, master = null, musicBus = null, sfxBus = null, ambBus = null;
+let analyser = null; let ctx = null, master = null, musicBus = null, sfxBus = null, ambBus = null;
 const prefs = Object.assign({ muted: false, music: 0.7, sfx: 0.8 }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
 const heard = new Set(); const noiseBuf = {};
 let theme = null, tune = null, seqAt = 0, seqI = 0, timer = null, beds = [];
@@ -14,7 +14,7 @@ function context() {
   if (ctx) { return ctx; }
   const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext); if (!AC) { return null; }
   try {
-    ctx = new AC(); master = ctx.createGain(); master.connect(ctx.destination);
+    ctx = new AC(); master = ctx.createGain(); master.connect(ctx.destination); analyser = ctx.createAnalyser(); analyser.fftSize = 2048; master.connect(analyser);
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.connect(master);
     musicBus = ctx.createGain(); musicBus.connect(comp); sfxBus = ctx.createGain(); sfxBus.connect(comp); ambBus = ctx.createGain(); ambBus.connect(comp);
     apply();
@@ -133,3 +133,6 @@ export function unlock() { const c = context(); if (c && c.state === 'suspended'
 export const getPrefs = () => Object.assign({}, prefs);
 export function setPref(k, v) { prefs[k] = v; save(); apply(); }
 export const heardList = () => Array.from(heard);
+// Output level for automated checks (RMS of what reaches the speakers, 0..1) and the context state. This shows that
+// sound is produced; it says nothing about whether it sounds good.
+export function level() { if (!analyser) { return { state: ctx ? ctx.state : 'none', rms: 0 }; } const b = new Float32Array(analyser.fftSize); analyser.getFloatTimeDomainData(b); let s = 0; for (let i = 0; i < b.length; i++) { s += b[i] * b[i]; } return { state: ctx.state, rms: Math.sqrt(s / b.length) }; }

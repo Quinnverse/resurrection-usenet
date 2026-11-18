@@ -376,7 +376,7 @@ function syncCast(dt) {
   if (worldId === 'station') { world.setSuitcase(s.beat !== '5.depart' ? 'none' : s.carry === 'suitcase' ? 'carried' : (g.s.flags.suitcase ? (g.rt.boarding ? 'none' : 'door') : 'bench')); }
   if (worldId === 'train') { world.setOutside(g.rt.photoT || 0); }
   if (worldId === 'coast') { world.setLens(g.rt.hold.pulley || 0, !!g.s.flags.lens); world.setBeamAngle(s.beam ? s.beam.a : null); world.setStars(s.stars ? s.stars.linked.length : 0); }
-  if (worldId === 'town') { world.setBeamAngle(s.beam ? s.beam.a : null); world.setRope(!(s.iris && s.iris.boarded)); }
+  if (worldId === 'town') { world.setBeamAngle(s.beam ? s.beam.a : null); world.setRope(!(s.iris && s.iris.boarded)); world.setNewPier(s.era === 2004 ? (g.s.edition.pier_walk ? 1 : (g.rt.hold.newPier || 0)) : 0); }
   if (worldId === 'cottage') { const st = {}; ['boxA', 'boxB'].forEach((k) => { st[k] = s.carry === k ? 'carried' : (g.s.flags[k] ? 'placed' : 'floor'); }); world.setBoxes(st); }
   if (worldId === 'coast' && s.beat === '3.yard') { world.crankAngle(g.s.crank * 18); }
   if (worldId === 'town' && g.rt.restoring) { if (rt.bridgeData !== g.rt.restoring.data) { rt.bridgeData = g.rt.restoring.data; world.setBridgeData(rt.bridgeData); } world.setBridgeProgress(g.s.bridge, rt.t, true); }
@@ -590,7 +590,7 @@ function tick(now) {
 }
 
 // Read-only view for automated browser tests. It cannot change anything.
-window.V5Debug = { snapshot() { const s = g ? Gm.snapshot(g) : null; return Object.assign({ mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }, s || {}); } };
+window.V5Debug = { snapshot() { const s = g ? Gm.snapshot(g) : null; return Object.assign({ mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }, s || {}); } };
 
 // ---- start ------------------------------------------------------------------------------------------------------
 async function loadArchive() {
