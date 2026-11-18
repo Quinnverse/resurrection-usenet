@@ -310,7 +310,7 @@
     }
 
     S.cameraFor = function (px, py, world, vw, vh) {
-      return { x: clamp(Math.round(px * T - VW / 2), 0, Math.max(0, world.w * T - VW)), y: clamp(Math.round(py * T - 112), 0, Math.max(0, world.h * T - VH)) };
+      return { x: clamp(Math.round(px * T - VW / 2), 0, Math.max(0, world.w * T - VW)), y: clamp(Math.round(py * T - 112), -24, Math.max(0, world.h * T - VH)) };
     };
 
     S.drawWorld = function (ctx, v) {
@@ -454,7 +454,7 @@
           if (seen) { R(ctx, x - 3, y - 66, 6, 4, C.green); R(ctx, x - 2, y - 65, 4, 2, C.cream); }
         } else if (o.id === 'exit') {
           R(ctx, x - 12, y - 40, 24, 40, C.metalDD); R(ctx, x - 10, y - 38, 20, 38, C.metalD); R(ctx, x - 8, y - 36, 16, 36, '#ffe6a0', 0.9); R(ctx, x - 8, y - 36, 16, 3, C.cream);
-          R(ctx, x - 6, y - 50, 12, 6, C.green); text(ctx, '?', x - 2, y - 49, C.ink);
+          R(ctx, x - 7, y - 46, 14, 4, C.ink); R(ctx, x - 6, y - 45, 12, 2, C.green); ellipse(ctx, x, y - 44, 14, 6, C.green, reduce ? 0.12 : 0.08 + 0.06 * Math.sin(t * 3));
         }
       });
       data.SERVER_FLOPPIES.forEach(function (f) {
@@ -469,7 +469,7 @@
       // drifting data motes
       if (!reduce) { for (var m = 0; m < 26; m++) { R(ctx, (m * 61 + t * 8) % VW, 140 - ((m * 37 + t * 14) % 130), 1, 1, m % 3 ? C.green : C.cyan, 0.5); } }
       if (v.player) { art.drawMara(ctx, v.player.x * T - cam.x, v.player.y * T, v.anim, t, v.player.facing); }
-      if (v.near) { prompt(ctx, v.near.x * T - cam.x, v.near.id === 'exit' ? 86 : 78, t, 'E', reduce); }
+      if (v.near) { prompt(ctx, v.near.x * T - cam.x, v.near.id === 'exit' ? 74 : 78, t, 'E', reduce); }
       sparkles(ctx, v.particles || [], t, cam.x, 0);
       R(ctx, 0, 0, VW, VH, C.cyan, 0.03);
       vignette(ctx, 0.5);

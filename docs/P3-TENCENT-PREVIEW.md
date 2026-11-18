@@ -1,6 +1,8 @@
 # P3 腾讯云试玩部署说明
 
-目标：在现有 `https://resurrection.quinnverse.tech/p3/` 试玩 P3 关卡，旧版四幕游戏（`/`）、存档和 API 保持不变。
+目标：在现有 `https://resurrection.quinnverse.tech/p3/` 试玩 P3.2 第一章《她十七岁的那个夏天》（Resurrection — The Internet Remembers You），旧版四幕游戏（`/`）、存档和 API 保持不变。
+
+> 玩家的 P3.2 存档保存在浏览器本地（键 `p3.save.v2`）。早先 P3 原型的本地存档（`p3.save.v1`）不会被读取，也不会被删除。
 
 本部署包只更新已经在运行的预览容器，不新建站点，不改 nginx，不依赖服务器访问 GitHub，不需要任何 GitHub Secrets。
 
@@ -37,7 +39,7 @@ bash deploy/p3-preview/deploy.sh --verify-only
 `--verify-only` 会构建新镜像，并在 `127.0.0.1:18081` 启动一个临时候选容器（使用临时数据卷，**不挂载** `resurrection_saves`），检查后删除。运行中的游戏不受影响。检查项：
 
 - `/api/health` 正常
-- `/p3/`、`/p3`、`/p3/level.js` 等路由返回 P3 内容
+- `/p3/`、`/p3`、`/p3/puzzle.js`、`/p3/game.js` 等 9 个脚本路由返回 P3.2 内容
 - 旧版首页 `/` 与当前运行版本逐字节一致
 - 会话 API 可创建并读回
 - 容器以 `node` 用户运行、内存/CPU/进程数限制已生效、数据目录可写

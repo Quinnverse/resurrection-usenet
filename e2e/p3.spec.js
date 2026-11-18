@@ -272,6 +272,7 @@ async function playAll(page, testInfo, o) {
 
   // the bridge builds plank by plank, and the player walks across it
   await until(page, () => window.P3Debug.snapshot().panel === null && window.P3Debug.snapshot().building > 0, null, 10000);
+  await page.waitForTimeout(1100);                              // about half the planks are down
   await shot(page, testInfo, o.name + '-15-bridge-building', true);
   await until(page, () => window.P3Debug.snapshot().bridge && !window.P3Debug.snapshot().frozen, null, 15000);
   await shot(page, testInfo, o.name + '-16-bridge-built', true);
