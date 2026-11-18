@@ -11,7 +11,7 @@
 
 export const STATES = ['INVITE', 'LEAD', 'WAIT', 'PLAY', 'COOPERATE', 'REACT', 'TRANSITION'];
 export const EXPRESSIONS = ['neutral', 'smile', 'grin', 'shy', 'tease', 'surprise', 'hurt', 'quiet', 'angry'];
-export const ANIMS = ['idle', 'walk', 'run', 'wave', 'reach', 'camera', 'hideface', 'pose', 'sit', 'hum', 'hold', 'turnaway', 'look'];
+export const ANIMS = ['idle', 'walk', 'run', 'wave', 'reach', 'camera', 'hideface', 'pose', 'sit', 'hum', 'hold', 'turnaway', 'look', 'sleep'];
 
 export function newCompanion(x, z, facing) {
   return { x, z, y: 0, facing: facing || 0, speed: 0, state: 'WAIT', prev: null, anim: 'idle', expr: 'neutral', look: null,
@@ -60,6 +60,7 @@ export function tick(c, dt, player) {
     case 'PLAY':
       c.playT = (c.playT || 0) + dt;
       if (c.play === 'window') { c.anim = 'look'; c.look = 'window'; }
+      if (c.play === 'sleep') { c.anim = 'sleep'; c.expr = 'quiet'; }
       break;
     case 'COOPERATE': {
       const goal = c.route[c.routeI];

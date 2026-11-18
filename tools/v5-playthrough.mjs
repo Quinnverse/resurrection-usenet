@@ -19,7 +19,7 @@ if (process.argv[1] && process.argv[1].endsWith('v5-playthrough.mjs')) {
   const args = process.argv.slice(2);
   const g = Gm.createGame(loadArchive(args.includes('--variant')));
   try {
-    const bot = playThrough(g, { log: !args.includes('--quiet'), glide: !args.includes('--no-glide') });
+    const bot = await playThrough(g, { log: !args.includes('--quiet'), glide: !args.includes('--no-glide') });
     console.log('COMPLETE in', bot.t.toFixed(1), 's of game time');
     console.log('marks', JSON.stringify(Object.fromEntries(Object.entries(bot.marks).map(([k, v]) => [k, Math.round(v)]))));
     console.log('photos', JSON.stringify(g.s.photos.map((p) => p.reaction)), 'choices', JSON.stringify(g.s.choices), 'window', JSON.stringify(g.s.window));

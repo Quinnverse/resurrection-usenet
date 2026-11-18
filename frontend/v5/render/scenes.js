@@ -3,6 +3,7 @@
 // Low-poly, procedural, in the same palette and material language as the town (render/kit.js).
 import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, skyDome } from './kit.js';
 import { LAYOUTS, roadInfo } from '../core/layout.js';
+import { trainTarget, STARS, dirOf } from '../core/toys.js';
 
 function lights(scene, o, sunPos, target, size) {
   const hemi = new THREE.HemisphereLight(0xffe0c0, 0x4a5a4a, 1.0); scene.add(hemi);
@@ -41,6 +42,13 @@ export function buildStation(opts) {
   for (let x = -28; x < 34; x += 7) { flowers.add(box(1.2, 0.4, 0.4, PAL.woodL, x, 0, -2.25)); [0, 1, 2, 3].forEach((i) => flowers.add(ball(0.1, 0, [0xff7aa8, 0xffd27a, 0xffffff, 0xe85a6a][i], x - 0.45 + i * 0.3, 0.5, -2.25))); }
   const signTex = canvasTex(512, 128, (ctx, w, h) => { ctx.fillStyle = '#2a4a6a'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#fdf8ef'; ctx.font = `bold 54px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText('LAST LIGHT', w / 2, 62); ctx.font = `28px ${FONT}`; ctx.fillText('coast line', w / 2, 104); });
   [-20, 10].forEach((x) => { const sg = panel(3.2, 0.8, signTex, 0x2a4a6a, { lit: true }); sg.position.set(x, 2.5, -2.42); scene.add(sg); });
+  // the soda machine (orange soda, two buttons) and June's suitcase
+  const kiosk = new THREE.Group(); kiosk.position.set(-8.0, 0, -2.05); scene.add(kiosk);
+  kiosk.add(box(1.3, 1.9, 0.6, 0xe0703a, 0, 0, 0), box(0.9, 0.9, 0.04, 0xfff0d8, -0.1, 0.8, 0.31, { mat: { emissive: 0xffd8a0, ei: 0.35 } }), box(0.14, 0.1, 0.04, 0xffffff, 0.45, 1.1, 0.31), box(0.14, 0.1, 0.04, 0xffffff, 0.45, 0.92, 0.31), box(0.6, 0.16, 0.06, 0x2a2a30, 0, 0.25, 0.31));
+  for (let i = 0; i < 4; i++) { kiosk.add(cyl(0.07, 0.07, 0.2, 8, 0xf29a3a, -0.4 + i * 0.2, 1.0, 0.3)); }
+  const suitcase = new THREE.Group(); suitcase.position.set(-5.0, 0, -1.55); scene.add(suitcase);
+  suitcase.add(box(0.7, 0.5, 0.24, 0x8a4a3a, 0, 0, 0), box(0.2, 0.06, 0.05, 0x2a2a30, 0, 0.52, 0), box(0.72, 0.05, 0.26, 0xd8a050, 0, 0.25, 0));
+  const dropped = suitcase.clone(); dropped.position.set(-2.2, 0, 1.25); dropped.visible = false; scene.add(dropped);
   // the luggage cart you vault over
   const cart = new THREE.Group(); cart.position.set(4.7, 0, -0.2); scene.add(cart);
   cart.add(box(1.4, 0.12, 4.4, 0x6a5a4a, 0, 0.46, 0), box(1.3, 0.12, 0.12, 0x3a3a40, 0, 0.1, 2.0), box(1.3, 0.12, 0.12, 0x3a3a40, 0, 0.1, -2.0));
@@ -77,6 +85,7 @@ export function buildStation(opts) {
       lampG.forEach((g) => { g.material.opacity = tm === 'dusk' || tm === 'evening' ? 0.6 : 0; });
       if (tm === 'dusk') { L.sun.position.set(-40, 8, 60); }
     },
+    setSuitcase(where) { suitcase.visible = where === 'bench'; dropped.visible = where === 'door'; },
     setTrain(x, visible) { train.position.x = x - doorX; train.visible = visible !== false; smoke.forEach((s2) => { s2.visible = train.visible; }); },
     update(dt, t, reduce) {
       smoke.forEach((s2) => { const k = (t * 0.4 + s2.userData.ph) % 1; s2.position.set(train.position.x + 12.4 - k * 4, 3.4 + k * 3, 3.6 + Math.sin(k * 6) * 0.3); s2.scale.setScalar(0.6 + k * 1.4); s2.visible = train.visible && !reduce; });
@@ -108,8 +117,21 @@ export function buildCarriage(opts) {
   const passing = [];
   for (let i = 0; i < 22; i++) { const side = i % 2 ? 1 : -1; const p = side > 0 ? cyl(0.06, 0.06, 3, 5, 0x6b4128, 6 + R() * 2, -0.5, -60 + i * 6) : ball(1 + R(), 0, PAL.grassD, -7 - R() * 6, 0, -60 + i * 6); outside.add(p); passing.push(p); }
   const sun = glowSprite(0xfff0c0, 30, 0.8); sun.position.set(80, 25, -40); scene.add(sun);
+  // the dares: the real lighthouse on the cape (sea side) and a kite (land side), placed by core/toys.js
+  const cape = new THREE.Group(); scene.add(cape);
+  cape.add(mesh(new THREE.CylinderGeometry(6, 9, 3, 10), mat(PAL.stoneD), 0, -1.5, 0), cyl(0.9, 1.2, 8, 10, PAL.white, 0, 0, 0), cyl(1.0, 1.0, 1.0, 10, PAL.red, 0, 2.5, 0), cyl(1.0, 1.0, 1.0, 10, PAL.red, 0, 5.0, 0), cone(1.1, 1.2, 10, 0x2a3040, 0, 8.4, 0));
+  const capeGlow = glowSprite(0xfff0b0, 5, 0.7); capeGlow.position.y = 8; cape.add(capeGlow);
+  const kite = new THREE.Group(); scene.add(kite);
+  const kiteBody = new THREE.Mesh(new THREE.OctahedronGeometry(1.1, 0), mat(0xe4506f, { side: THREE.DoubleSide })); kiteBody.scale.set(1, 1.4, 0.15); kite.add(kiteBody);
+  for (let i = 0; i < 5; i++) { kite.add(box(0.35, 0.12, 0.04, [0xffd27a, 0x3f7cc4, 0xffffff][i % 3], 0, -1.8 - i * 0.6, 0, { cast: false })); }
+  // the tunnel: the light goes, the carriage lamps come on
+  const lampsIn = new THREE.PointLight(0xffd8a0, 0, 8, 1.4); lampsIn.position.set(0, 2.1, 0); scene.add(lampsIn);
+  const tunnel = mesh(new THREE.CylinderGeometry(4, 4, 200, 12, 1, true), mat(0x1a1612, { side: THREE.BackSide }), 0, 0.5, 0, { rx: Math.PI / 2, cast: false }); tunnel.visible = false; scene.add(tunnel);
+  const sky0 = scene.background.clone(); let inTunnel = false;
   return {
     scene, blockers: [], seat: LAYOUTS.train.seat, juneSeat: LAYOUTS.train.june,
+    setOutside(t) { const a = trainTarget('lighthouse', t), b = trainTarget('kite', t); cape.position.set(a.x, -2.5, a.z); kite.position.set(b.x, b.y, b.z); kite.rotation.z = Math.sin(t * 2) * 0.25; },
+    setTunnel(on) { inTunnel = !!on; tunnel.visible = inTunnel; outside.visible = cape.visible = kite.visible = sun.visible = !inTunnel; scene.background.copy(inTunnel ? new THREE.Color(0x0c0a08) : sky0); L.hemi.intensity = inTunnel ? 0.25 : 1.35; L.sun.intensity = inTunnel ? 0 : 3.0; lampsIn.intensity = inTunnel ? 6 : 0; scene.fog.color.set(inTunnel ? 0x0c0a08 : 0xcfe8ff); },
     update(dt, t, reduce) { if (reduce) { return; } passing.forEach((p) => { p.position.z += dt * 14; if (p.position.z > 60) { p.position.z -= 132; } }); }
   };
 }
@@ -117,10 +139,14 @@ export function buildCarriage(opts) {
 // ---- the coast: road, half-built lighthouse, the windy ledge, the beach, the cottage ----------------------------
 export function buildCoast(opts) {
   const o = opts || {}; const scene = new THREE.Scene(); const R = rng(41); const blockers = [];
-  const sky = skyDome(TIMES.noon.sky, 420); scene.add(sky); scene.fog = new THREE.Fog(0xd8ecff, 60, 300);
+  const sky = skyDome(TIMES.noon.sky, 420); scene.add(sky); const skyNight = skyDome(['#05060f', '#0b1030', '#1a2050', '#2a2a5a', '#3a3460'], 420); skyNight.visible = false; scene.add(skyNight);
+  const sky04 = skyDome(TIMES.y2004.sky, 420); sky04.visible = false; scene.add(sky04); scene.fog = new THREE.Fog(0xd8ecff, 60, 300);
   const L = lights(scene, o, new THREE.Vector3(200, 60, -60), new THREE.Vector3(262, 0, 24), 40);
   const road = roadInfo();
-  scene.add(mesh(new THREE.PlaneGeometry(700, 300), mat(PAL.grass), 130, -0.03, 60, { rx: -Math.PI / 2, cast: false }));
+  // grass everywhere at the top of the cliff, but not over the beach below it (x 271..313, z 5..51)
+  const grassMat = mat(PAL.grass, { unique: true });
+  [[-220, 271, -90, 210], [271, 480, -90, 5], [271, 480, 51, 210], [313, 480, 5, 51]].forEach(([x0, x1, z0, z1]) => scene.add(mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), grassMat, (x0 + x1) / 2, -0.03, (z0 + z1) / 2, { rx: -Math.PI / 2, cast: false })));
+  scene.add(mesh(new THREE.PlaneGeometry(260, 300), mat(0x3f9ad8), 450, -6.0, 60, { rx: -Math.PI / 2, cast: false }));   // open sea east of the beach
   const sea = mesh(new THREE.PlaneGeometry(900, 500), mat(0x3f9ad8, { unique: true }), 130, -6.2, -240, { rx: -Math.PI / 2, cast: false }); scene.add(sea);
   // the cliff edge on the sea side of the road
   scene.add(mesh(new THREE.BoxGeometry(700, 6, 4), mat(PAL.stoneD), 130, -3.0, -18, { cast: false }));
@@ -139,6 +165,15 @@ export function buildCoast(opts) {
   for (let i = 0; i < 12; i++) { scene.add(box(0.36, 0.2, 4, 0xb8a888, 270 + i * 0.34, -i * 0.42 - 0.1, 16, { cast: false })); }
   scene.add(mesh(new THREE.BoxGeometry(44, 5, 46), mat(PAL.stoneD), 250, -2.6, 27, { cast: false }));
   scene.add(mesh(new THREE.PlaneGeometry(42, 46), mat(PAL.sand), 292, -5.0, 28, { rx: -Math.PI / 2, cast: false }));
+  scene.add(box(2.1, 0.1, 2.6, 0xc9bfae, 269.55, -0.04, 19.2, { cast: false }));   // the landing at the top of the stairs
+  // the ribbon gates June dares Elena through
+  const gates = new THREE.Group(); scene.add(gates);
+  LAYOUTS.coast.ride.gates.forEach((gt, i) => {
+    const p = road.at(gt.s); const cx = p.x + p.nx * gt.d, cz = p.z + p.nz * gt.d; const g2 = new THREE.Group(); g2.position.set(cx, 0, cz); g2.rotation.y = p.heading + Math.PI / 2; gates.add(g2);
+    [-1.0, 1.0].forEach((o2) => g2.add(cyl(0.05, 0.05, 2.2, 5, PAL.woodL, o2, 0, 0)));
+    for (let k = 0; k < 6; k++) { g2.add(box(0.06, 0.7, 0.02, [0xff9ac0, 0xffd27a, 0x6fe0a0, 0x9fd6ff][(k + i) % 4], -0.85 + k * 0.34, 1.75, 0, { cast: false })); }
+    g2.add(box(2.1, 0.04, 0.04, 0xfff6e0, 0, 2.15, 0, { cast: false }));
+  });
   // the windy ledge: a wooden lip with ribbons
   scene.add(box(2, 0.12, 10, PAL.woodL, 272.5, -0.06, 29));
   const ribbons = []; for (let i = 0; i < 4; i++) { const pole = cyl(0.04, 0.04, 1.6, 4, PAL.woodD, 273.4, 0, 25 + i * 2.8); scene.add(pole); const rb = box(0.8, 0.06, 0.02, [0xff9ac0, 0xffd27a, 0x6fe0a0, 0x9fd6ff][i], 273.8, 1.5, 25 + i * 2.8, { cast: false }); scene.add(rb); ribbons.push(rb); }
@@ -157,6 +192,24 @@ export function buildCoast(opts) {
   const socketFrame = box(1.3, 1.6, 0.1, 0x6b4128, 0, -0.8, -0.02); socket.add(socketFrame);
   const ghost = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.4), new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.25, depthWrite: false })); ghost.position.z = 0.04; socket.add(ghost);
   const windowSlot = new THREE.Group(); windowSlot.position.z = 0.06; socket.add(windowSlot);
+  // the pulley that lifts the lens to the gallery, and the gallery June stands on
+  const Yp = Y.pulley, Yg = Y.gallery;
+  const pulley = new THREE.Group(); pulley.position.set(Yp.x, 0, Yp.z); scene.add(pulley);
+  pulley.add(box(0.12, 2.0, 0.12, PAL.woodD, 0, 0, 0), cyl(0.18, 0.18, 0.1, 10, 0x8a8a92, 0, 1.9, 0, { rx: Math.PI / 2 }));
+  const ropeUp = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 4), mat(0xd8c8a0)); scene.add(ropeUp);
+  scene.add(box(1.6, 0.08, 0.9, PAL.woodL, Yg.x, Yg.y - 0.05, Yg.z, { cast: false }));
+  const lensBox = new THREE.Group(); scene.add(lensBox); lensBox.add(box(0.5, 0.4, 0.5, 0xb08a5a, 0, 0, 0), mesh(new THREE.OctahedronGeometry(0.22, 0), new THREE.MeshStandardMaterial({ color: 0xfff4d0, emissive: 0xffd27a, emissiveIntensity: 0.3, flatShading: true }), 0, 0.32, 0));
+  const lensAt = (k) => { const x = Yp.x + (Yg.x - Yp.x) * k, z = Yp.z + (Yg.z - Yp.z) * k, y = 0.3 + (Yg.y + 0.3 - 0.3) * k; lensBox.position.set(x, y, z); const top = new THREE.Vector3(Yp.x, 2.0, Yp.z), end = lensBox.position.clone().add(new THREE.Vector3(0, 0.25, 0)); ropeUp.position.copy(top.clone().lerp(end, 0.5)); ropeUp.scale.y = Math.max(0.1, top.distanceTo(end)); ropeUp.lookAt(end); ropeUp.rotateX(Math.PI / 2); };
+  lensAt(0);
+  // June's porch seat outside the cottage, for the stars
+  const porch = new THREE.Group(); porch.position.set(297.7, -5, 31.3); scene.add(porch);
+  porch.add(box(2.2, 0.08, 0.5, PAL.woodL, 0, 0.45, 0), box(0.08, 0.45, 0.45, PAL.woodD, -1.0, 0, 0), box(0.08, 0.45, 0.45, PAL.woodD, 1.0, 0, 0));
+  // June's constellation: five stars and the lines between those found
+  const seat = LAYOUTS.porch.seat; const starG = new THREE.Group(); starG.visible = false; scene.add(starG);
+  const starPos = STARS.map((st) => { const d = dirOf(st); return new THREE.Vector3(seat.x + d.x * 180, seat.y + d.y * 180, seat.z + d.z * 180); });
+  const starSprites = starPos.map((p, i) => { const sp2 = glowSprite(0xfff8e0, i === 0 ? 9 : 6, 0.95); sp2.position.copy(p); starG.add(sp2); return sp2; });
+  const field = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 900 }, (_, i) => { const k = Math.floor(i / 3), a = R() * Math.PI * 2, e = 0.12 + R() * 1.2; const d = [Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e)]; return [seat.x, seat.y, seat.z][i % 3] + d[i % 3] * 220; }), 3)), new THREE.PointsMaterial({ color: 0xdde4ff, size: 1.2, sizeAttenuation: true, transparent: true, opacity: 0.8, depthWrite: false })); starG.add(field);
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xffe6a8, transparent: true, opacity: 0.9 }); let lines = null;
   // the crank, June's cart
   const crank = new THREE.Group(); crank.position.set(Y.crank.x, 0, Y.crank.z); scene.add(crank); crank.add(box(0.4, 1.0, 0.4, 0x3a4a5a, 0, 0, 0)); const handle = new THREE.Group(); handle.position.y = 0.9; crank.add(handle); handle.add(box(0.5, 0.06, 0.06, 0x8a8a92, 0.25, 0, 0), box(0.06, 0.25, 0.06, 0x8a8a92, 0.5, 0, 0));
   const cart = new THREE.Group(); cart.position.set(Y.cart.x, 0, Y.cart.z); scene.add(cart);
@@ -170,15 +223,30 @@ export function buildCoast(opts) {
   const cot = new THREE.Group(); cot.position.set(303, -5, 30); scene.add(cot);
   cot.add(box(6, 3, 5, 0xe8dcc4, 0, 0, 0), mesh(new THREE.ConeGeometry(4.4, 2, 4), mat(PAL.roofA), 0, 4, 0, { ry: Math.PI / 4 }), box(0.9, 1.8, 0.1, PAL.woodD, -3.02, 0, 0, { ry: Math.PI / 2 }), box(1.0, 0.8, 0.06, 0xffe0a0, -3.02, 1.6, 1.4, { ry: Math.PI / 2, mat: { emissive: 0xffc070, ei: 0.6 } }));
   blockers.push(cot.children[0]);
-  const ribbonT = { t: 0 };
+  const ribbonT = { t: 0 }; let beamAngle = null, era = 1998, time = 'noon';
+  const only98 = [cart, bikeE, bikeJ, gates, pulley, ropeUp, lensBox, ...ribbons];
+  const api0 = {
+    setBeamAngle(a) { beamAngle = a; },
+    setLens(k, done) { lensAt(done ? 1 : Math.max(0, Math.min(1, k))); lensBox.visible = era === 1998 && !done; ropeUp.visible = era === 1998 && !done; },
+    setStars(n) { if (lines) { starG.remove(lines); lines = null; } if (n > 1) { lines = new THREE.Line(new THREE.BufferGeometry().setFromPoints(starPos.slice(0, n)), lineMat); starG.add(lines); } starSprites.forEach((sp2, i) => { sp2.material.opacity = i < n ? 1 : 0.75; sp2.scale.setScalar(i < n ? 9 : (i === n ? 7.5 : 5.5)); }); },
+    // noon (1998 day), night (1998, the porch) or 2004 (the same coast six years later, grey and unlit)
+    setTime(tm, year) {
+      time = tm; era = year || 1998;
+      sky.visible = tm === 'noon'; skyNight.visible = tm === 'night'; sky04.visible = tm === 'y2004'; starG.visible = tm === 'night';
+      const T = tm === 'night' ? { fog: 0x1a2040, hemi: 0x8090c0, ground: 0x202030, sun: 0x8090c0, sunI: 0.25, hemiI: 0.45, grass: 0x3a5a4a } : tm === 'y2004' ? { fog: 0xc0c4cc, hemi: 0xd0d8e4, ground: 0x4a5a5a, sun: 0xe0e4f0, sunI: 1.8, hemiI: 1.0, grass: 0x6a9070 } : { fog: 0xd8ecff, hemi: 0xffe0c0, ground: 0x4a5a4a, sun: 0xffc080, sunI: 3.0, hemiI: 1.0, grass: PAL.grass };
+      scene.fog.color.set(T.fog); L.hemi.color.set(T.hemi); L.hemi.groundColor.set(T.ground); L.hemi.intensity = T.hemiI; L.sun.color.set(T.sun); L.sun.intensity = T.sunI; grassMat.color.set(T.grass);
+      only98.forEach((x) => { x.visible = era === 1998; });
+      if (era !== 1998) { ghost.visible = false; }
+    }
+  };
   return {
-    scene, blockers, bikeE, bikeJ, cart, cartWindow, lh, socket, ghost,
-    setWindow(meshGroup) { while (windowSlot.children.length) { windowSlot.remove(windowSlot.children[0]); } if (meshGroup) { windowSlot.add(meshGroup); } ghost.visible = !meshGroup; cartWindow.visible = false; },
+    scene, blockers, bikeE, bikeJ, cart, cartWindow, lh, socket, ghost, ...api0,
+    setWindow(meshGroup) { while (windowSlot.children.length) { windowSlot.remove(windowSlot.children[0]); } if (meshGroup) { windowSlot.add(meshGroup); } ghost.visible = !meshGroup && era === 1998; cartWindow.visible = false; },
     showCartWindow(on) { cartWindow.visible = !!on; },
     setLit(on, lamp) { const c = lamp && lamp.color ? parseInt(lamp.color, 16) : 0xffd890; lampGlow.material.opacity = on ? 0.85 : 0; lampLight.intensity = on ? 90 : 0; lampLight.color.set(c); beam.visible = !!on; lens.material.emissiveIntensity = on ? 2.2 : 0.05; this.lampSpeed = lamp ? lamp.speed : 0.6; },
     crankAngle(a) { handle.rotation.z = a; },
     setBikes(e, j) { if (e) { bikeE.position.set(e.x, 0, e.z); bikeE.rotation.set(0, e.heading, e.lean || 0); } if (j) { bikeJ.position.set(j.x, 0, j.z); bikeJ.rotation.set(0, j.heading, 0); } bikeE.visible = !!e; bikeJ.visible = !!j; },
-    update(dt, t, reduce) { ribbonT.t += dt; ribbons.forEach((r2, i) => { r2.rotation.y = reduce ? 0.2 : Math.sin(t * 6 + i) * 0.4; }); if (beam.visible) { beam.rotation.y = t * (reduce ? 0.25 : (this.lampSpeed || 0.6)); } }
+    update(dt, t, reduce) { ribbonT.t += dt; ribbons.forEach((r2, i) => { r2.rotation.y = reduce ? 0.2 : Math.sin(t * 6 + i) * 0.4; }); if (beam.visible) { beam.rotation.y = beamAngle === null ? t * (reduce ? 0.25 : (this.lampSpeed || 0.6)) : beamAngle; } }
   };
 }
 
@@ -211,9 +279,19 @@ export function buildCottage(opts) {
   // 2004: dust sheets and a suitcase by the door
   const sheets = new THREE.Group(); scene.add(sheets);
   sheets.add(box(1.8, 0.6, 1.4, 0xe8e4dc, -3.05, 0, -2.25), box(1.5, 0.85, 1.1, 0xe8e4dc, 1.3, 0, -0.1)); const suitcase = box(0.6, 0.45, 0.2, 0x2f3a5a, 0.9, 0, 2.5); sheets.add(suitcase);
+  // 2004: two boxes to carry, the studio's letter, the game box, the crooked window she kept
+  const mkBox = (c) => { const g2 = new THREE.Group(); g2.add(box(0.55, 0.4, 0.4, c, 0, 0, 0), box(0.56, 0.04, 0.12, 0xd8c8a0, 0, 0.4, 0)); return g2; };
+  const boxes = { boxA: mkBox(0xb08a5a), boxB: mkBox(0xa07a4a) }; const home = { boxA: [-2.9, -0.9], boxB: [2.3, -1.5] }, placedAt = { boxA: [1.0, 2.25, 0], boxB: [1.0, 2.25, 0.42] };
+  Object.entries(boxes).forEach(([k, b]) => { b.position.set(home[k][0], 0, home[k][1]); sheets.add(b); });
+  const letter = box(0.22, 0.01, 0.3, 0xfdf8ef, 1.3, 0.92, 0.2, { ry: 0.3, cast: false }); sheets.add(letter);
+  const gamebox = box(0.3, 0.4, 0.06, 0x2f5d8a, 2.65, 1.25, 1.6, { ry: -Math.PI / 2 }); sheets.add(gamebox);
+  const kept = new THREE.Group(); kept.position.set(-0.9, 0, -2.75); kept.rotation.set(-0.15, 0.2, 0.08); sheets.add(kept);
+  kept.add(box(0.9, 1.15, 0.06, 0x3f7cc4, 0, 0.58, 0), box(0.72, 0.95, 0.03, 0xdde8f0, 0, 0.6, 0.03));
   const dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 240 }, (_, i) => (i % 3 === 1 ? 0.3 + R() * 2.2 : (R() - 0.5) * 7)), 3)), new THREE.PointsMaterial({ color: 0xfff0d0, size: 0.02, transparent: true, opacity: 0.5, depthWrite: false })); scene.add(dust);
   const api = {
     scene, blockers,
+    // where each box is: 'floor', 'carried' (in someone's arms, drawn on the person) or 'placed' (stacked by the door)
+    setBoxes(st) { Object.entries(boxes).forEach(([k, b]) => { const w = st[k] || 'floor'; b.visible = w !== 'carried'; const q = w === 'placed' ? placedAt[k] : [home[k][0], 0, home[k][1]]; b.position.set(q[0], w === 'placed' ? q[2] : 0, w === 'placed' ? q[1] : q[2]); }); },
     setEra(year) {
       const y04 = year === 2004;
       sheets.visible = y04; sketches.visible = !y04; bed.visible = !y04; table.visible = true;

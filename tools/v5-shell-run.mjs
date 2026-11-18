@@ -141,7 +141,7 @@ function check() {
   }
   // the player should be on screen whenever the camera is the follow camera
   const L = RENDER_LOG.last; const g = hook.game;
-  if (L && g && dbg.mode === 'play' && !dbg.shot && !dbg.dialog && dbg.scene !== 'train' && dbg.scene !== 'ride' && g.rt.body) {
+  if (L && g && dbg.mode === 'play' && !dbg.shot && !dbg.dialog && dbg.scene !== 'train' && dbg.scene !== 'ride' && dbg.scene !== 'porch' && g.rt.body) {
     const p = new THREE.Vector3(g.rt.body.x, g.rt.body.y + 1.0, g.rt.body.z).project(L.camera);
     if (!(Math.abs(p.x) <= 1.02 && Math.abs(p.y) <= 1.02 && p.z < 1)) { stats.offscreen += 1; b.off += 1; (b.samples = b.samples || []).length < 4 && b.samples.push({ f: b.frames, p: [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(3)], body: [g.rt.body.x, g.rt.body.y, g.rt.body.z].map((v) => +v.toFixed(2)), cam: L.camera.position.toArray().map((v) => +v.toFixed(2)), y: dbg.y }); }
     const d = L.camera.position.distanceTo(new THREE.Vector3(g.rt.body.x, g.rt.body.y + 1.35, g.rt.body.z)); b.maxDist = Math.max(b.maxDist || 0, d); b.minDist = Math.min(b.minDist === undefined ? 99 : b.minDist, d);
@@ -161,8 +161,8 @@ try {
   } else {
     click('start'); frameOnce({});
     const { playThrough } = await import('../test/v5-bot.mjs');
-    const choices = ALT ? { train: 0, parting: 1, finish: 0 } : { train: 1, parting: 0, finish: 1 };
-    const bot = playThrough(hook.game, { step: frameOnce, choices });
+    const choices = ALT ? { train: 0, parting: 1, finish: 0, closer: 1, defend: 1, offer: 1, letter: 1 } : { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter: 0 };
+    const bot = await playThrough(hook.game, { step: frameOnce, choices });
     waitFor(() => byTestId('credits'), 30, 'credits roll');
     const credits = byTestId('credits').textContent; const album = byTestId('album');
     const want = [tr(LANG, 'end.elena'), tr(LANG, 'end.june'), tr(LANG, 'end.unsent')];

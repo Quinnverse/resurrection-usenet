@@ -43,6 +43,7 @@ const ARR = {
   y2004: { tempo: 0.8, voice: 'sine', vol: 0.045, skip: 2, padOn: true, padVol: 0.025, transpose: -5 },
   cottage04: { tempo: 0.55, voice: 'sine', vol: 0.03, skip: 3, padOn: false },
   winter: { tempo: 0.75, voice: 'bell', vol: 0.06, bass: true, bassVol: 0.05, padOn: true, padVol: 0.06, hum: 0.02 },
+  night: { tempo: 0.6, voice: 'bell', vol: 0.035, padOn: true, padVol: 0.03, transpose: -12, hum: 0.012 },
   ending: { tempo: 0.7, voice: 'pluck', vol: 0.06, padOn: true, padVol: 0.05, bells: true }
 };
 function flat() { const t = tune || DEFAULT_TUNE; const out = []; t.phrases.forEach((ph, pi) => { ph.forEach((n, i) => out.push({ midi: n.midi, beats: n.beats, phrase: pi, first: i === 0 })); out.push({ midi: 0, beats: 1, phrase: pi }); }); return out; }
@@ -108,7 +109,16 @@ const FX = {
   season: (t) => { [72, 76, 79, 83, 86, 91].forEach((m, i) => bell(t + i * 0.2, m, 1.2, 0.025, sfxBus)); },
   credit: (t) => { [64, 67, 72, 76].forEach((m, i) => tone(t + i * 0.12, N(m), 1.4, 0.05, 'triangle')); },
   iris: (t) => { tone(t, N(71), 0.6, 0.04, 'sine'); tone(t + 0.3, N(76), 0.8, 0.04, 'sine'); },
-  lamp: (t) => tone(t, 1800, 0.03, 0.04, 'square'), hint: (t) => tone(t, N(88), 0.3, 0.02, 'sine')
+  lamp: (t) => tone(t, 1800, 0.03, 0.04, 'square'), hint: (t) => tone(t, N(88), 0.3, 0.02, 'sine'),
+  can: (t) => { tone(t, 180, 0.08, 0.06, 'triangle', null, 90); hiss(t + 0.05, 0.12, 0.06, 2200, 2); tone(t + 0.12, 1400, 0.05, 0.02, 'sine'); },
+  chain: (t) => { [0, 0.05, 0.1, 0.16].forEach((d) => tone(t + d, 2200 + d * 3000, 0.03, 0.02, 'square')); },
+  rope: (t) => { hiss(t, 0.35, 0.05, 900, 2.2); tone(t + 0.25, 140, 0.15, 0.04, 'triangle'); },
+  touch: (t) => { tone(t, N(84), 0.9, 0.025, 'sine'); tone(t + 0.12, N(88), 0.9, 0.02, 'sine'); },
+  express: (t) => { hiss(t, 3.2, 0.12, 300, 0.6, null, 'lowpass'); tone(t, N(79), 1.2, 0.03, 'sine', null, N(75)); },
+  star: (t) => { bell(t, 84, 0.8, 0.03, sfxBus); }, dot: (t) => tone(t, N(84), 0.15, 0.02, 'triangle'), carve: (t) => hiss(t, 0.25, 0.06, 3200, 3),
+  tuned: (t) => { tone(t, N(64), 1.0, 0.05, 'triangle'); tone(t, N(64) * 2, 0.6, 0.02, 'sine'); }, detuned: (t) => { tone(t, N(64) * 1.04, 0.5, 0.04, 'triangle'); tone(t, N(64), 0.5, 0.03, 'triangle'); },
+  found: (t) => { [79, 84, 88].forEach((m, i) => tone(t + i * 0.1, N(m), 1.2, 0.04, 'sine')); }, lens: (t) => { tone(t, 600, 0.06, 0.04, 'triangle'); hiss(t, 0.2, 0.04, 2400, 2); },
+  gate: (t) => { hiss(t, 0.25, 0.05, 2600, 1); tone(t, N(86), 0.3, 0.03, 'sine'); }
 };
 export function play(name) { heard.add(name); if (prefs.muted || !FX[name]) { return; } const c = context(); if (!c) { return; } if (c.state === 'suspended') { c.resume(); } FX[name](c.currentTime + 0.01); }
 // A duet note: the player's guitar, and June's humming once she joins.

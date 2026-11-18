@@ -17,6 +17,17 @@
     #app.cine .vignette { background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 45%, rgba(10,6,20,.7) 100%); }
     button { font-family:var(--font); } button:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
 
+    .meter { position:absolute; z-index:6; left:50%; bottom:22%; transform:translateX(-50%); width:min(420px, 80vw); text-align:center; color:var(--ink); text-shadow:var(--shadow); }
+    .meter .dial { position:relative; height:16px; border-radius:8px; background:rgba(20,14,30,.55); border:1px solid rgba(255,246,234,.5); }
+    .meter .mid { position:absolute; left:40%; width:20%; top:0; bottom:0; background:rgba(255,210,122,.25); border-radius:6px; } .meter .mid.in { background:rgba(155,227,155,.55); }
+    .meter .needle { position:absolute; top:-6px; width:3px; height:28px; margin-left:-1px; background:var(--gold); box-shadow:0 0 8px var(--gold); }
+    .meter .strings { margin-top:8px; letter-spacing:.3em; font-size:.9rem; }
+    .paper { position:absolute; z-index:6; left:50%; top:46%; transform:translate(-50%, -50%) rotate(-1.5deg); width:min(520px, 86vw); height:auto; border-radius:4px; box-shadow:0 12px 40px rgba(0,0,0,.45); }
+    .reticle { position:absolute; z-index:5; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border:1.5px solid rgba(255,246,234,.7); border-radius:50%; transition:transform .2s, border-color .2s; pointer-events:none; }
+    .reticle.on { transform:scale(1.6); border-color:var(--gold); }
+    .act { position:absolute; z-index:6; left:50%; bottom:max(96px, calc(env(safe-area-inset-bottom) + 80px)); transform:translateX(-50%); color:var(--dim); font-size:.85rem; letter-spacing:.06em; text-shadow:var(--shadow); opacity:0; transition:opacity .4s; pointer-events:none; white-space:nowrap; }
+    .act.on { opacity:.95; }
+    #app.cine .act { opacity:0; }
     /* almost no HUD: a chapter marker that fades, a prompt only in reach, subtitles, and choices when asked */
     .chapter { position:absolute; z-index:6; top:max(18px, env(safe-area-inset-top)); left:max(22px, env(safe-area-inset-left)); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); text-shadow:var(--shadow); opacity:0; transition:opacity 1.2s; pointer-events:none; }
     .chapter.on { opacity:.95; }

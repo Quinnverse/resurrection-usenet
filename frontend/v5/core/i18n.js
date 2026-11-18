@@ -205,6 +205,8 @@ const ZH = {
   'hint.end.1': '小镇现在是你的了。', 'hint.end.2': 'Tab 依然会显示原样的 1998 和 2004。', 'hint.end.3': 'Esc 打开菜单。'
 };
 
+import { EN_MORE, ZH_MORE } from './i18n-more.js';
+Object.assign(EN, EN_MORE); Object.assign(ZH, ZH_MORE);
 export const dictionaries = { en: EN, zh: ZH };
 export function t(lang, key, vars) {
   const d = dictionaries[lang] || EN;

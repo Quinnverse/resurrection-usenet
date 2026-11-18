@@ -33,9 +33,11 @@ const ui = {
   chapter: el('div', { class: 'chapter', 'data-testid': 'chapter' }), era: el('button', { class: 'era', type: 'button', 'data-testid': 'era', hidden: '' }),
   prompt: el('div', { class: 'prompt', 'data-testid': 'prompt', hidden: '' }), subs: el('div', { class: 'subs', 'data-testid': 'subs' }), choice: el('div', { class: 'choices', 'data-testid': 'choices', hidden: '' }),
   banner: el('div', { class: 'banner', 'data-testid': 'banner' }), tip: el('div', { class: 'tip', 'data-testid': 'tip' }), fade: el('div', { class: 'fade' }), aim: el('div', { class: 'aimframe', hidden: '' }),
+  meter: el('div', { class: 'meter', hidden: '', 'data-testid': 'meter' }), paper: el('canvas', { class: 'paper', width: '520', height: '360', hidden: '', 'data-testid': 'paper' }), reticle: el('div', { class: 'reticle', hidden: '' }), act: el('div', { class: 'act', 'data-testid': 'act' }),
   panel: el('div', { class: 'panel', hidden: '', role: 'dialog', 'data-testid': 'panel' }), overlay: el('div', { class: 'overlay', hidden: '' }), saved: el('div', { class: 'saved' }), source: el('button', { class: 'source', type: 'button', hidden: '', 'data-testid': 'source' })
 };
 ui.subs.append(el('div', { class: 'who' }), el('div', { class: 'line' }), el('div', { class: 'next' }));
+ui.meter.append(el('div', { class: 'dial' }, [el('span', { class: 'mid' }), el('span', { class: 'needle' })]), el('div', { class: 'strings' }));
 Object.values(ui).forEach((n) => app.appendChild(n));
 
 // ---- renderer --------------------------------------------------------------------------------------------------
@@ -64,7 +66,7 @@ function getWorld(id) {
   const w = id === 'study' ? buildStudy({ shadow: lowShadow }) : id === 'town' ? buildTown({ shadow: lowShadow, low: prefs.quality === 'low' }) : id === 'station' ? buildStation({ shadow: lowShadow }) : id === 'train' ? buildCarriage({ shadow: lowShadow }) : id === 'cottage' ? buildCottage({ shadow: lowShadow }) : buildCoast({ shadow: lowShadow });
   worlds[id] = w; return w;
 }
-const sceneWorldId = (sc) => (sc === 'ride' ? 'coast' : sc);
+const sceneWorldId = (sc) => (sc === 'ride' || sc === 'porch' ? 'coast' : sc);
 function person(id) {
   if (cast[id]) { return cast[id]; }
   cast[id] = id === 'theo' ? makeTheo() : makeCast(id); return cast[id];
@@ -81,11 +83,15 @@ function stageWorld() {
   add(person(avatarId()));
   if (s.june) { add(person(juneId())); }
   if (s.theo && id === 'town') { add(person('theo')); }
+  if (id === 'town' && w.theo) { w.theo.visible = false; }   // the town module's own Theo; the shell draws its own
   dressWorld(s);
   A.setAmbience({ study: 'room', town: s.season === 'winter' ? 'winter' : 'sea', station: 'sea', train: 'train', coast: 'wind', cottage: 'room' }[id]);
   A.setTheme(themeFor(s));
 }
 function themeFor(s) {
+  if (s.beat === '4.porch') { return 'night'; }
+  if (s.beat === '6.beach') { return 'cottage04'; }
+  if (s.beat === '1.carve') { return 'summer'; }
   if (s.beat === 'end' || (s.beat === '7.town' && s.season === 'winter')) { return 'winter'; }
   if (s.scene === 'study') { return 'study'; }
   if (s.scene === 'town') { return s.era === 1998 ? 'summer' : 'y2004'; }
@@ -108,7 +114,7 @@ function dressWorld(s) {
     w.setBridgeData(data); w.setGhost(br && br.state === 'missing' ? (br.partial || null) : null, false);
     w.setBridgeProgress(br && br.state !== 'missing' ? 1 : g.s.bridge, rt.t, false);
     const win = sg.objects.find((o) => o.id === 'window'); if (win && win.data) { w.setWindow(win.data, g.s.window.finish || 'honey'); }
-    const lamp = sg.objects.find((o) => o.id === 'lamp'); w.setLamp(!!(lamp && g.s.edition.seasons), lamp && lamp.data ? parseInt(lamp.data.color, 16) : null);
+    const lamp = sg.objects.find((o) => o.id === 'lamp'); w.setLamp(!!(lamp && s.era === 2004 && g.s.restored.lamp), lamp && lamp.data ? parseInt(lamp.data.color, 16) : null);
     w.setSeason(s.season || 'summer');
     if (g.rt.iris) { w.iris.visible = !g.rt.iris.gone || false; }
   }
@@ -116,9 +122,10 @@ function dressWorld(s) {
   if (worldId === 'station') { w.setTime(s.beat === '1.chase' ? 'morning' : s.beat === '5.depart' ? 'dusk' : 'y2004'); }
   if (worldId === 'cottage') { w.setEra(s.year || 1998); }
   if (worldId === 'coast') {
+    w.setTime(s.beat === '4.porch' ? 'night' : s.beat === '6.beach' ? 'y2004' : 'noon', s.beat === '6.beach' ? 2004 : 1998);
     const win = Ar.sceneGraph(ar, 1998, g.s.restored, null).objects.find((o) => o.id === 'window');
-    w.setWindow(g.s.window.placed && win ? windowMesh(win.data, g.s.window.finish) : null); w.showCartWindow(!g.s.window.placed && !s.carry);
-    const lamp = Ar.sceneGraph(ar, 1998, g.s.restored, null).objects.find((o) => o.id === 'lamp'); w.setLit(!!g.s.flags.lit, lamp && lamp.data);
+    w.setWindow(g.s.window.placed && win && s.beat !== '6.beach' ? windowMesh(win.data, g.s.window.finish) : null); w.showCartWindow(!g.s.window.placed && !s.carry && s.beat !== '6.beach');
+    const lamp = Ar.sceneGraph(ar, 1998, g.s.restored, null).objects.find((o) => o.id === 'lamp'); w.setLit(!!g.s.flags.lit && s.beat !== '6.beach', lamp && lamp.data);
   }
 }
 // The same crooked window mesh the town uses, for the coast socket.
@@ -192,7 +199,7 @@ function handle(ev) {
   rt.log.push(ev.type); if (rt.log.length > 60) { rt.log.shift(); }
   switch (ev.type) {
     case 'beat': onBeat(ev); break;
-    case 'world': case 'tab': case 'restored': case 'revived': case 'created': case 'placed': case 'season': case 'lit': if (world) { dressWorld(Gm.snapshot(g)); } break;
+    case 'world': case 'tab': case 'restored': case 'revived': case 'created': case 'placed': case 'season': case 'lit': case 'lens': if (world) { dressWorld(Gm.snapshot(g)); } break;
     default: break;
   }
   switch (ev.type) {
@@ -223,6 +230,13 @@ function handle(ev) {
     case 'duet-start': break;
     case 'choice': A.play('choice'); break;
     case 'use': if (ev.id === 'door') { A.play('door'); } break;
+    case 'tunnel': if (worldId === 'train') { world.setTunnel(ev.on); } if (ev.on) { A.play('express'); } break;
+    case 'platform-photo': A.play('shutter'); rt.pendingShot = ev.photo.id; break;
+    case 'sketch-done': A.play('page'); setThumb('sketch', drawSketch()); break;
+    case 'drawn': A.play('page'); setThumb('boat', drawBoat()); break;
+    case 'star': A.play('star'); break; case 'dot': A.play('dot'); break; case 'tuned': A.play('tuned'); break; case 'detuned': A.play('detuned'); break;
+    case 'carved': A.play('carve'); break; case 'lens': A.play('lens'); break; case 'found': A.play('found'); break; case 'gate': A.play('gate'); break;
+    case 'item': A.play('open'); break; case 'hold-start': if (ev.id === 'rope' || ev.id === 'chain' || ev.id === 'post') { A.play(ev.id === 'post' ? 'carve' : ev.id); } break;
     case 'body': if (ev.what === 'jump') { A.play('jump'); } if (ev.what === 'land') { A.play('land'); } if (ev.what === 'fall') { fadeBlink(); } break;
     case 'iris-board': break;
     case 'credits-roll': showCredits(); break;
@@ -256,6 +270,10 @@ function shotFor(name, s) {
     case 'twoshot': case 'window': if (jn) { const mid = me.position.clone().lerp(jn.position, 0.5); const d = jn.position.clone().sub(me.position); const n = new THREE.Vector3(-d.z, 0, d.x).normalize(); return { pos: mid.clone().addScaledVector(n, Math.max(2.2, d.length() * 1.3)).add(new THREE.Vector3(0, 1.45, 0)), look: mid.clone().add(new THREE.Vector3(0, 1.25, 0)) }; } break;
     case 'beam': return { pos: new THREE.Vector3(254, 3.5, 12), look: new THREE.Vector3(264, 7.5, 28) };
     case 'bench': return { pos: new THREE.Vector3(-6.5, 1.8, 1.8), look: new THREE.Vector3(-1.0, 0.9, -1.8) };
+    case 'beamctl': return { pos: new THREE.Vector3(256.5, 10.5, 15.5), look: new THREE.Vector3(278, -1, 31) };
+    case 'town-beam': return { pos: new THREE.Vector3(22.5, 9.5, 12.0), look: new THREE.Vector3(3, 0.5, 24) };
+    case 'paper': return { pos: new THREE.Vector3(1.3, 2.05, 1.05), look: new THREE.Vector3(1.3, 0.75, 0.05) };
+    case 'platform': return { pos: new THREE.Vector3(-6.2, 1.6, 0.4), look: new THREE.Vector3(-2.2, 1.2, 1.6) };
     case 'town-wide': return { pos: new THREE.Vector3(-14, 11, -16), look: new THREE.Vector3(4, 2, 8) };
     case 'duet': if (jn) { const mid = me.position.clone().lerp(jn.position, 0.5); return { pos: mid.clone().add(new THREE.Vector3(1.6, 1.25, 1.8)), look: mid.clone().add(new THREE.Vector3(0, 0.9, 0)) }; } break;
     default: break;
@@ -269,6 +287,10 @@ function updateCamera(snap) {
     const seat = LAYOUTS.train.seat;
     if (s.aim) { const yaw = g.rt.aimYaw, pitch = g.rt.aimPitch; camera.fov += (40 - camera.fov) * 0.3; const pos = new THREE.Vector3(seat.x, seat.y, seat.z); const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)); want = { pos, look: pos.clone().add(dir) }; }
     else { camera.fov += (55 - camera.fov) * 0.2; want = shotFor(s.shot, s) || { pos: new THREE.Vector3(seat.x - 0.35, 1.55, seat.z + 1.35), look: new THREE.Vector3(0.45, 1.05, -0.7) }; }
+  } else if (s.scene === 'porch') {
+    const seat = LAYOUTS.porch.seat; camera.fov += (50 - camera.fov) * 0.2;
+    if (s.shot === 'june' || s.shot === 'twoshot') { const jn = person(juneId()); const h = new THREE.Vector3(jn.position.x, jn.position.y + 1.2, jn.position.z); want = { pos: new THREE.Vector3(seat.x - 0.3, seat.y + 0.05, seat.z - 0.9), look: h }; }
+    else { const yaw = g.rt.aimYaw, pitch = g.rt.aimPitch; const pos = new THREE.Vector3(seat.x, seat.y, seat.z); const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)); want = { pos, look: pos.clone().add(dir) }; }
   } else if (s.scene === 'ride' && g.rt.ride) {
     const r = g.rt.ride; const p = Toys.ridePose(r, r.s, r.d); const ahead = Toys.ridePose(r, r.s + 6, r.d * 0.5); const f = new THREE.Vector3(Math.sin(p.heading), 0, Math.cos(p.heading));
     const back = 5.5 + Math.min(3, r.v * 0.2); want = { pos: new THREE.Vector3(p.x, 2.4 + r.v * 0.05, p.z).addScaledVector(f, -back), look: new THREE.Vector3(ahead.x, 1.0, ahead.z) };
@@ -305,8 +327,10 @@ function syncCast(dt) {
   else if (s.scene === 'ride' && g.rt.ride) {
     const r = g.rt.ride; const p = Toys.ridePose(r, r.s, r.d), j = Toys.ridePose(r, r.june.s, r.june.d);
     world.setBikes({ x: p.x, z: p.z, heading: p.heading, lean: -r.lean }, { x: j.x, z: j.z, heading: j.heading });
-    me.position.set(p.x, 0.25, p.z); me.rotation.set(0, p.heading, -r.lean); animate(me, rt.t, rt.t * r.v * 1.2, 0, 'sit', reduce());
-    const jn = person(juneId()); jn.visible = true; if (jn.parent !== world.scene) { world.scene.add(jn); } jn.position.set(j.x, 0.25, j.z); jn.rotation.y = j.heading; animate(jn, rt.t, rt.t * r.june.v * 1.2, 0, 'sit', reduce()); setExpression(jn, r.june.mode === 'overtake' ? 'grin' : 'smile');
+    me.position.set(p.x, 0.25, p.z); me.rotation.set(0, p.heading, -r.lean); animate(me, rt.t, rt.rideP = (rt.rideP || 0) + r.v * 0.016 * 2.2, 0, 'bike', reduce());
+    const jn = person(juneId()); jn.visible = true; if (jn.parent !== world.scene) { world.scene.add(jn); } jn.position.set(j.x, 0.25, j.z); jn.rotation.y = j.heading; animate(jn, rt.t, rt.rideJ = (rt.rideJ || 0) + r.june.v * 0.016 * 2.2, 0, r.june.noHands ? 'nohands' : 'bike', reduce()); setExpression(jn, r.june.mode === 'overtake' || r.june.noHands ? 'grin' : (r.stop ? 'tease' : 'smile'));
+  } else if (s.scene === 'porch') {
+    me.visible = false;
   } else {
     me.position.set(b.x, b.y, b.z); me.rotation.set(0, b.facing, 0);
     // in conversation she turns to whoever she is talking to, so close-ups see faces, not the back of a head
@@ -316,16 +340,20 @@ function syncCast(dt) {
     }
     const mode = s.seated ? (s.beat === '4.duet' ? 'guitar' : 'sit') : (b.gliding ? 'pose' : (!b.grounded ? 'run' : (s.carry ? 'hold' : 'walk')));
     animate(me, rt.t, (me.userData.phase = (me.userData.phase || 0) + Math.hypot(b.vx, b.vz) * dt * 4.2), s.seated ? 0 : Math.hypot(b.vx, b.vz), s.duet ? 'guitar' : mode, reduce());
-    showProp(me, 'window', s.carry === 'window'); showProp(me, 'guitar', s.beat === '4.duet' && (s.seated || !!s.duet)); showProp(me, 'camera', false);
+    showProp(me, 'window', s.carry === 'window'); showProp(me, 'guitar', (s.beat === '4.duet' && (s.seated || !!s.duet)) || !!s.tuning); showProp(me, 'camera', false);
+    showProp(me, 'suitcase', s.carry === 'suitcase'); showProp(me, 'box', !!(s.carry && s.carry.startsWith('box')));
+    if (s.carry && s.carry.startsWith('box') && !s.seated) { animate(me, rt.t, me.userData.phase || 0, Math.hypot(b.vx, b.vz), 'carry', reduce()); }
+    if (s.tuning) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = 0.5; animate(me, rt.t, 0, 0, 'guitar', reduce()); }
     if (s.beat === '4.duet' && s.seated) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = 0.5; }
   }
   if (s.june && s.scene !== 'ride') {
     const jn = person(juneId()); const j = g.rt.june;
-    if (s.scene === 'train') { const js = LAYOUTS.train.june; jn.position.set(js.x, 0.05, js.z); jn.rotation.y = s.dialog || s.june.anim === 'camera' || s.june.anim === 'pose' || s.june.anim === 'hideface' ? 0 : (Toys.juneMoodAt(g.rt.photoT || 0) === 'window' ? Math.PI / 2 : 0); }
+    if (s.scene === 'porch') { const pj = LAYOUTS.porch.june; jn.position.set(pj.x, -4.95, pj.z); jn.rotation.y = Math.PI; }
+    else if (s.scene === 'train') { const js = LAYOUTS.train.june; jn.position.set(js.x, 0.05, js.z); jn.rotation.y = s.dialog || s.june.anim === 'camera' || s.june.anim === 'pose' || s.june.anim === 'hideface' ? 0 : (Toys.juneMoodAt(g.rt.photoT || 0) === 'window' ? Math.PI / 2 : 0); }
     else { jn.position.set(j.x, j.y || 0, j.z); jn.rotation.y = j.facing; }
-    const m = s.scene === 'train' ? (['camera', 'pose', 'hideface'].includes(s.june.anim) ? s.june.anim : (Toys.juneMoodAt(g.rt.photoT || 0) === 'tease' ? 'camera' : 'sit')) : s.june.anim;
+    const m = s.scene === 'porch' ? (s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] === 'june' ? 'hum' : 'sit') : s.scene === 'train' ? (['camera', 'pose', 'hideface', 'sleep', 'sketch'].includes(s.june.anim) ? s.june.anim : (Toys.juneMoodAt(g.rt.photoT || 0) === 'tease' ? 'camera' : 'sit')) : s.june.anim;
     animate(jn, rt.t, j.phase || 0, j.speed || 0, m, reduce()); setExpression(jn, s.june.expr);
-    showProp(jn, 'camera', m === 'camera'); showProp(jn, 'suitcase', s.beat === '5.depart');
+    showProp(jn, 'camera', m === 'camera'); showProp(jn, 'suitcase', s.beat === '5.depart' && !!g.rt.boarding); showProp(jn, 'sketch', m === 'sketch'); showProp(jn, 'box', !!g.rt.juneCarry && s.june.state === 'TRANSITION');
     if (s.scene === 'train' && (m === 'sit' || m === 'camera')) { jn.position.y = 0.05; }
   }
   if (s.theo && worldId === 'town') { const th = person('theo'); th.position.set(s.theo.x, 0, s.theo.z); th.rotation.y = g.rt.theo.facing; animate(th, rt.t, g.rt.theo.phase || 0, g.rt.theo.speed || 0, s.dialog && s.dialog.line && s.dialog.line[0] === 'theo' ? 'talk' : (s.theo.state === 'INVITE' && !g.s.seen.includes('c1.theo1') ? 'wave' : 'idle'), reduce()); }
@@ -334,7 +362,12 @@ function syncCast(dt) {
     animate(world.iris, rt.t, rt.t * 3, ir.walking ? 1.4 : 0, ir.walking ? 'walk' : (s.era === 2004 && !ir.leaving ? 'hold' : 'idle'), reduce());
     if (ir.boarded) { world.canalBoat.position.x = -5.8 + ir.boatX; }
   }
-  if (worldId === 'station' && g.rt.train) { world.setTrain(g.rt.train.x, !g.rt.train.gone && s.beat !== '5.alone'); }
+  if (worldId === 'station' && g.rt.train) { world.setTrain(g.rt.train.x, !g.rt.train.gone && (s.beat !== '5.alone' || g.rt.train.moving)); }
+  if (worldId === 'station') { world.setSuitcase(s.beat !== '5.depart' ? 'none' : s.carry === 'suitcase' ? 'carried' : (g.s.flags.suitcase ? (g.rt.boarding ? 'none' : 'door') : 'bench')); }
+  if (worldId === 'train') { world.setOutside(g.rt.photoT || 0); }
+  if (worldId === 'coast') { world.setLens(g.rt.hold.pulley || 0, !!g.s.flags.lens); world.setBeamAngle(s.beam ? s.beam.a : null); world.setStars(s.stars ? s.stars.linked.length : 0); }
+  if (worldId === 'town') { world.setBeamAngle(s.beam ? s.beam.a : null); world.setRope(!(s.iris && s.iris.boarded)); }
+  if (worldId === 'cottage') { const st = {}; ['boxA', 'boxB'].forEach((k) => { st[k] = s.carry === k ? 'carried' : (g.s.flags[k] ? 'placed' : 'floor'); }); world.setBoxes(st); }
   if (worldId === 'coast' && s.beat === '3.yard') { world.crankAngle(g.s.crank * 18); }
   if (worldId === 'town' && g.rt.restoring) { if (rt.bridgeData !== g.rt.restoring.data) { rt.bridgeData = g.rt.restoring.data; world.setBridgeData(rt.bridgeData); } world.setBridgeProgress(g.s.bridge, rt.t, true); }
 }
@@ -385,7 +418,27 @@ function renderHud() {
   ui.aim.hidden = !(s.scene === 'train' && s.aim);
   if (s.scene === 'train' && !s.aim && !cine && mode === 'play' && !g.s.flags.juneSnap) { if (!ui.tip.classList.contains('on')) { tip(T('ui.aimHint'), 0.1); ui.tip.classList.add('on'); } } else if (s.scene === 'train' && (cine || s.aim)) { ui.tip.classList.remove('on'); }
   if (s.duet && s.duet.cueIn !== null && s.duet.cueIn !== undefined) { app.classList.toggle('cue', Math.abs(s.duet.cueIn) < 0.45); } else { app.classList.remove('cue'); }
+  // activity overlays: only while the activity runs
+  ui.meter.hidden = !(s.tuning && !s.dialog);
+  if (s.tuning) { ui.meter.querySelector('.needle').style.left = (50 + s.tuning.needle * 46) + '%'; ui.meter.querySelector('.mid').classList.toggle('in', Math.abs(s.tuning.needle) < 0.2); ui.meter.querySelector('.strings').textContent = ['E', 'A', 'D'].map((n, i) => (i < s.tuning.string ? n + '✓' : n)).join('  '); }
+  ui.paper.hidden = !s.pen; if (s.pen) { drawPaper(s.pen); }
+  ui.reticle.hidden = !(s.scene === 'porch' && !s.dialog); ui.reticle.classList.toggle('on', !!(s.stars && s.stars.onStar));
+  const act = s.dialog || s.choice ? '' : s.tuning ? T('ui.tune') : s.pen ? T('ui.pen') : s.sketch ? T('ui.sketch') : (s.scene === 'porch' && s.stars && s.stars.i < 5) ? T('ui.stars') : (s.beam && s.beam.ready && !s.beam.done) ? T('ui.beam') : (s.scene === 'ride' && s.ride && s.ride.s < 40) ? T('ui.ride') : '';
+  if (ui.act.textContent !== act) { ui.act.textContent = act; ui.act.classList.toggle('on', !!act); }
 }
+// the sketchbook page in chapter 4: dots to reach, the line so far, the pen
+function drawPaper(pen) {
+  const c = ui.paper.getContext('2d'); if (!c) { return; } const W = ui.paper.width, H = ui.paper.height;
+  c.fillStyle = '#fbf3e2'; c.fillRect(0, 0, W, H); c.strokeStyle = 'rgba(120,150,190,.25)'; for (let y = 30; y < H; y += 28) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
+  c.lineWidth = 4; c.lineCap = 'round'; c.strokeStyle = '#2b2a38'; c.beginPath(); pen.trail.forEach(([x, y], i) => (i ? c.lineTo(x * W, y * H) : c.moveTo(x * W, y * H))); if (pen.trail.length && !pen.done) { c.lineTo(pen.x * W, pen.y * H); } c.stroke();
+  Toys.BOAT.forEach(([x, y], i) => { c.fillStyle = i < pen.i ? '#2b2a38' : i === pen.i ? '#e4506f' : 'rgba(43,42,56,.25)'; c.beginPath(); c.arc(x * W, y * H, i === pen.i ? 9 : 6, 0, Math.PI * 2); c.fill(); });
+  c.fillStyle = '#e4506f'; c.beginPath(); c.arc(pen.x * W, pen.y * H, 5, 0, Math.PI * 2); c.fill();
+}
+// June's drawing of Elena and Elena's boat, as album pictures
+function paperCanvas(draw) { try { const c = document.createElement('canvas'); c.width = 320; c.height = 200; const x = c.getContext('2d'); x.fillStyle = '#fbf3e2'; x.fillRect(0, 0, 320, 200); x.strokeStyle = '#2b2a38'; x.lineWidth = 3; x.lineCap = 'round'; draw(x); return c.toDataURL('image/jpeg', 0.8); } catch (e) { return null; } }
+function drawSketch() { return paperCanvas((x) => { x.beginPath(); x.ellipse(160, 92, 48, 58, 0, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.moveTo(130, 80); x.lineTo(146, 78); x.moveTo(174, 78); x.lineTo(190, 80); x.moveTo(160, 86); x.lineTo(172, 112); x.lineTo(158, 114); x.moveTo(144, 128); x.quadraticCurveTo(160, 138, 176, 128); x.moveTo(112, 70); x.quadraticCurveTo(160, 10, 210, 70); x.lineTo(236, 150); x.stroke(); x.font = '16px "Courier New", monospace'; x.fillStyle = '#2b2a38'; x.fillText('E., on the train', 96, 186); }); }
+function drawBoat() { const tr = g && g.rt.pen ? g.rt.pen.trail : Toys.BOAT; return paperCanvas((x) => { x.beginPath(); tr.forEach(([a, b], i) => (i ? x.lineTo(a * 320, b * 200) : x.moveTo(a * 320, b * 200))); x.stroke(); x.strokeStyle = '#3f7cc4'; x.beginPath(); for (let i = 0; i < 6; i++) { x.moveTo(30 + i * 50, 172); x.quadraticCurveTo(45 + i * 50, 162, 60 + i * 50, 172); } x.stroke(); }); }
+function setThumb(id, url) { const p = g && g.s.photos.find((q) => q.id === id); if (p && url) { p.thumb = url; save(false); } }
 const keyLabel = (code) => (code || '').replace(/^Key/, '').replace(/^Digit/, '').replace('Space', 'Space').replace('ShiftLeft', 'Shift');
 
 // ---- photos ---------------------------------------------------------------------------------------------------
@@ -523,6 +576,7 @@ function tick(now) {
   renderHud();
   if (mode === 'play' && rt.t - rt.lastSave > 5) { save(false); }
   renderer.render(world.scene, camera);
+  if (rt.pendingShot && (rt.pendingT = (rt.pendingT || 0) + 1) > 6) { const id = rt.pendingShot; rt.pendingShot = null; rt.pendingT = 0; setThumb(id, thumbFromCanvas()); fadeBlinkWhite(); }
 }
 
 // Read-only view for automated browser tests. It cannot change anything.

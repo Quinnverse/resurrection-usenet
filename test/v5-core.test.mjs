@@ -186,45 +186,47 @@ describe('V5 toys', () => {
 });
 
 describe('V5 the whole game, played headlessly', () => {
-  it('plays from the study to the credits, all seven chapters, with no stuck moments', () => {
-    const g = Gm.createGame(AR); const bot = playThrough(g);
+  it('plays from the study to the credits, all seven chapters, with no stuck moments', async () => {
+    const g = Gm.createGame(AR); const bot = await playThrough(g);
     assert.deepEqual([...new Set(bot.beats)], Gm.BEATS.slice(1));
     assert.equal(g.s.beat, 'end'); assert.equal(bot.stuck.length, 0, JSON.stringify(bot.stuck));
     assert.deepEqual(Object.keys(g.s.restored).sort(), ['bridge', 'credits', 'iris', 'lamp']);
+    assert.ok(['dare0', 'dare1', 'dare2', 'sketched', 'heldHand', 'carved', 'boat', 'stars', 'walked', 'beachTalk3', 'lens', 'foundJune', 'beamDone', 'tuned', 'suitcase', 'boxA', 'boxB', 'read98', 'c6talk', 'toldCareful'].every((k) => g.s.flags[k]), JSON.stringify(g.s.flags));
+    assert.ok(g.s.photos.some((p) => p.dare === 'lighthouse') && g.s.photos.some((p) => p.dare === 'kite') && g.s.photos.some((p) => p.kind === 'sleep') && g.s.photos.some((p) => p.id === 'platform-1998') && g.s.photos.some((p) => p.id === 'platform-2004'));
     assert.ok(g.s.photos.length >= 2 && g.s.photos.some((p) => p.id === 'june-elena'));
     assert.equal(g.s.window.placed, true); assert.ok(g.s.edition.seasons && g.s.edition.snow);
     assert.equal(g.s.season, 'winter');
     for (let c = 1; c <= 7; c++) { assert.ok(bot.events.some((e) => e.type === 'beat' && e.chapter === c), `chapter ${c}`); }
     // events raised when a dialogue ends must reach the shell (the rebuild screen, the memory card, the carry)
     for (const type of ['rebuild', 'memory', 'carry', 'fade', 'letter', 'credits-roll', 'years-later', 'placed', 'lit']) { assert.ok(bot.events.some((e) => e.type === type), `event ${type}`); }
-    for (const id of ['c1.hand', 'c2.backs', 'c3.listen', 'c4.after', 'c5.news', 'c6.talk', 'c6.leave', 'c7.snow']) { assert.ok(g.s.seen.includes(id), id); }
+    for (const id of ['c1.noDisk', 'c1.disk', 'c1.hand', 'c2.dare1', 'c2.dare2ok', 'c2.snap', 'c2.wakeShot', 'c2.backs', 'c3.chain', 'c3.listen', 'c3.lensUp', 'c3.found', 'c3.beamDone', 'c4.arrive', 'c4.tuned', 'c4.scoot', 'c4.after', 'c5.arrive', 'c5.news', 'c6.box1', 'c6.box2', 'c6.talk', 'c6.defend', 'c6.fix', 'c6.end', 'c6.leave', 'c7.read', 'c7.credits98', 'c7.irisRope', 'c7.iris', 'c7.snow']) { assert.ok(g.s.seen.includes(id), id); }
   });
-  it('the other choices change words and expressions, never what happens', () => {
-    const g = Gm.createGame(AR); const bot = playThrough(g, { choices: { train: 0, parting: 1, finish: 0 }, glide: false });
+  it('the other choices change words and expressions, never what happens', async () => {
+    const g = Gm.createGame(AR); const bot = await playThrough(g, { choices: { train: 0, parting: 1, finish: 0, closer: 1, defend: 1, offer: 1, letter: 1 }, glide: false, optional: false, sleepShot: false });
     assert.equal(g.s.beat, 'end'); assert.equal(g.s.choices.train, 'c2.choice.playful'); assert.equal(g.s.choices.parting, 'c5.choice.miss'); assert.equal(g.s.window.finish, 'sea');
-    assert.ok(g.s.seen.includes('c2.playful') && g.s.seen.includes('c5.miss')); assert.ok(g.s.seen.includes('c6.talk'), 'June still leaves; 2004 still happens');
+    assert.ok(['c2.playful', 'c5.miss', 'c4.keep', 'c6.admit', 'c6.forgive', 'c7.close', 'c2.wake'].every((k) => g.s.seen.includes(k))); assert.ok(g.s.seen.includes('c6.talk'), 'June still leaves; 2004 still happens');
     assert.equal(bot.stuck.length, 0);
   });
-  it('with an altered archive the restore is refused safely in play, and the 1998 bridge shows the hole', () => {
+  it('with an altered archive the restore is refused safely in play, and the 1998 bridge shows the hole', async () => {
     const v = Ar.createArchive(texts({ disk: read('variant-missing-plank.spool') }));
     const s = Gm.newSave(); s.beat = '1.town';
     const g = Gm.createGame(v, s); const b = makeBot(g);
-    b.walkTo(0, 7.4); b.until((q) => q.prompt && q.prompt.id === 'theo', 10, () => b.axes(0, 1)); b.use('theo'); b.talk();
-    b.until((q) => q.prompt && q.prompt.id === 'gap', 10, () => b.axes(0, 1)); b.hold('gap', 6);
+    await b.walkTo(0, 7.4); await b.until((q) => q.prompt && q.prompt.id === 'theo', 10, () => b.axes(0, 1)); await b.use('theo'); await b.talk();
+    await b.until((q) => q.prompt && q.prompt.id === 'gap', 10, () => b.axes(0, 1)); await b.hold('gap', 6);
     assert.ok(b.events.some((e) => e.type === 'restore-failed')); assert.equal(g.s.bridge, 0); assert.equal(g.s.restored.bridge, undefined);
     const w98 = Gm.worldFor(g, 'town', 1998); assert.equal(w98.floors.filter((f) => f.plank !== undefined).length, 14);
     const w = Gm.worldFor(Gm.createGame(AR, s), 'town', 1998); assert.equal(w.floors.filter((f) => f.plank !== undefined).length, 15);
   });
-  it('the train never fails you: standing still makes June wait and the chase restarts at once', () => {
+  it('the train never fails you: standing still makes June wait and the chase restarts at once', async () => {
     const s = Gm.newSave(); s.beat = '1.chase'; const g = Gm.createGame(AR, s); const bot = makeBot(g);
-    bot.wait(60);
+    await bot.wait(60);
     const retries = bot.events.filter((e) => e.type === 'retry');
     assert.ok(retries.length >= 1); assert.equal(g.s.beat, '1.chase'); assert.ok(bot.events.some((e) => e.type === 'caption' && e.key === 'c1.june.wait'));
   });
-  it('Tab is safe: denied where the other era has no floor, never strands the player', () => {
+  it('Tab is safe: denied where the other era has no floor, never strands the player', async () => {
     const s = Gm.newSave(); s.beat = '1.pier'; s.restored.bridge = Ar.restoreCandidate(AR, 'bridge').provenance; s.bridge = 1; s.era = 1998; s.flags.tab = true; s.pos.town = { x: 0, z: 15.8, y: 0, yaw: Math.PI };
     const g = Gm.createGame(AR, s); const bot = makeBot(g);
-    bot.tick({ tab: true }); assert.equal(g.s.era, 1998); assert.ok(bot.events.some((e) => e.type === 'tab-denied'));
+    await bot.tick({ tab: true }); assert.equal(g.s.era, 1998); assert.ok(bot.events.some((e) => e.type === 'tab-denied'));
     // from every standable point in either era the switch either lands on floor or is refused
     for (const era of [1998, 2004]) {
       for (let x = -10; x <= 18; x += 1.5) {
@@ -238,14 +240,17 @@ describe('V5 the whole game, played headlessly', () => {
       }
     }
   });
-  it('seen dialogue can be skipped and still moves the story on; unseen cannot', () => {
-    const s = Gm.newSave(); s.beat = '1.study'; s.seen = ['c1.computer']; const g = Gm.createGame(AR, s); const bot = makeBot(g);
-    bot.go('computer', 3.0, -1.7); bot.use('computer'); assert.equal(bot.snap().dialog.seen, true);
-    bot.tick({ skip: true }); assert.equal(g.s.beat, '1.town');
-    const g2 = Gm.createGame(AR); const b2 = makeBot(g2); b2.go('computer', 3.0, -1.7); b2.use('computer'); b2.tick({ skip: true }); assert.ok(b2.snap().dialog, 'not skippable the first time');
+  it('seen dialogue can be skipped and still moves the story on; unseen cannot', async () => {
+    const s = Gm.newSave(); s.beat = '1.study'; s.seen = ['c1.computer', 'c1.noDisk']; s.flags.disk = true; const g = Gm.createGame(AR, s); const bot = makeBot(g);
+    await bot.go('computer', 3.0, -1.7); await bot.use('computer'); assert.equal(bot.snap().dialog.seen, true);
+    await bot.tick({ skip: true }); assert.equal(g.s.beat, '1.town');
+    const g2 = Gm.createGame(AR); const b2 = makeBot(g2); await b2.go('computer', 3.0, -1.7); await b2.use('computer'); await b2.tick({ skip: true }); assert.ok(b2.snap().dialog, 'not skippable the first time');
+    // a skipped dialogue with a choice still makes the choice
+    const s3 = Gm.newSave(); s3.beat = '5.depart'; s3.seen = ['c5.arrive', 'c5.news']; s3.flags = { c5arrive: true, suitcase: true, walked: true }; const g3 = Gm.createGame(AR, s3); const b3 = makeBot(g3);
+    await b3.go('june', -26.3, -0.5); await b3.use('june'); await b3.tick({ skip: true }); assert.equal(g3.s.choices.parting, 'c5.choice.stay'); assert.ok(b3.snap().dialog && b3.snap().dialog.id === 'c5.stay');
   });
-  it('saves round-trip, and an edited save cannot claim a restoration without real bytes', () => {
-    const g = Gm.createGame(AR); playThrough(g);
+  it('saves round-trip, and an edited save cannot claim a restoration without real bytes', async () => {
+    const g = Gm.createGame(AR); await playThrough(g);
     const back = Gm.parseSave(JSON.parse(JSON.stringify(Gm.serialize(g))), AR);
     assert.equal(back.beat, 'end'); assert.deepEqual(Object.keys(back.restored).sort(), ['bridge', 'credits', 'iris', 'lamp']); assert.equal(back.window.placed, true);
     const forged = Gm.serialize(g); forged.restored.bridge.sha256 = '0'.repeat(64); forged.beat = '3.yard';

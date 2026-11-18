@@ -355,6 +355,11 @@ export function buildTown(opts) {
   // Iris, June's baker, and the boat she leaves on
   const iris = makeCast('iris'); iris.position.set(IRIS_TOWN.bakery.x, 0, IRIS_TOWN.bakery.z); iris.rotation.y = 0; scene.add(iris);
   canalBoat.position.set(-5.8, -0.55, 9.6); canalBoat.rotation.y = Math.PI / 2;
+  // the path down to the little dock, the mooring post and Iris's rope
+  scene.add(box(2.6, 0.08, 2.2, 0xd8cdb8, -5.1, -0.02, 5.9, { cast: false }));
+  const mooring = new THREE.Group(); mooring.position.set(-5.7, 0, 7.9); scene.add(mooring);
+  mooring.add(cyl(0.09, 0.11, 0.7, 6, PAL.woodD, 0, 0, 0), cyl(0.12, 0.12, 0.08, 6, 0x2a2a30, 0, 0.66, 0));
+  const rope = box(0.05, 0.05, 1.4, 0xd8c8a0, 0, 0.45, 0.75, { rx: 0.35, cast: false }); mooring.add(rope);
   // winter, newly made for the restored edition: snow on roofs and falling snow
   const snowCaps = new THREE.Group(); scene.add(snowCaps); snowCaps.visible = false;
   houses.forEach((h2) => { const cap = box(1, 0.12, 1, 0xf8fbff, 0, 0, 0, { cast: false }); const r0 = h2.userData.roof; const bb = new THREE.Box3().setFromObject(r0); const sz = bb.getSize(new THREE.Vector3()), c0 = bb.getCenter(new THREE.Vector3()); cap.scale.set(sz.x * 0.95, 1, sz.z * 0.95); cap.position.set(c0.x, bb.max.y - 0.02, c0.z); snowCaps.add(cap); });
@@ -402,7 +407,7 @@ export function buildTown(opts) {
   }
 
   // ---- anomaly timeline -------------------------------------------------------------------------------------
-  let anomalyT = -1;
+  let anomalyT = -1; let beamAngle = null;
   const api = {
     scene, anchors, blockers, theo,
     get build() { return build; },
@@ -411,6 +416,9 @@ export function buildTown(opts) {
     setCredits(credits) { redraw(creditTex, signDraw('LAST LIGHT', '#fdf8ef', '#c0443c', (credits || []).filter((c) => c.who !== 'mara').map((c) => c.who === 'skylark' ? 'Elena' : c.who === 'junebug' ? 'June' : c.who).join(' & '))); },
     setWindow(data, finish) { windowSlots.forEach((w) => { while (w.slot.children.length) { w.slot.remove(w.slot.children[0]); } w.slot.add(windowMesh(data, finish)); }); },
     setLamp(on, color) { lampGlowT.material.opacity = on ? 0.85 : 0; lampLightT.intensity = on ? 70 : 0; beamT.visible = !!on; if (color) { lampLightT.color.set(color); } },
+    // null lets the beam turn by itself; a number holds it where the player points it
+    setBeamAngle(a) { beamAngle = a; },
+    setRope(tied) { rope.visible = !!tied; },
     get bridgePlanks() { return planks.length; },
     plankWorld(i) { const m = planks[i]; if (!m) { return null; } return new THREE.Vector3(BRIDGE.x + m.userData.home.x, m.userData.home.y, BRIDGE.z0 + m.userData.home.z); },
     activeBlockers() { return blockers.filter((b) => { let n = b; while (n) { if (!n.visible) { return false; } n = n.parent; } return true; }); },
@@ -440,7 +448,7 @@ export function buildTown(opts) {
         wp.needsUpdate = true;
       }
       spout.scale.y = reduce ? 1 : 1 + Math.sin(t * 6) * 0.08; fish.rotation.y = t * 0.5;
-      if (beamT.visible) { beamT.rotation.y = t * (reduce ? 0.25 : 0.6); }
+      if (beamT.visible) { beamT.rotation.y = beamAngle === null ? t * (reduce ? 0.25 : 0.6) : beamAngle; }
       if (snow.visible && !reduce) { const a2 = snow.geometry.attributes.position.array; for (let i = 0; i < a2.length; i += 3) { a2[i + 1] -= dt * 1.1; a2[i] += Math.sin(t + i) * dt * 0.2; if (a2[i + 1] < 0) { a2[i + 1] = 16; } } snow.geometry.attributes.position.needsUpdate = true; }
       boats.forEach((b, i) => { b.position.y = -0.55 + (reduce ? 0 : Math.sin(t * 1.2 + i) * 0.08); b.rotation.z = reduce ? 0 : Math.sin(t * 0.9 + i) * 0.04; });
       gulls.forEach((g2) => { const u = g2.userData; const a = t * u.sp + u.ph; g2.position.set(u.cx + Math.cos(a) * u.r, u.h + Math.sin(t * 0.7 + u.ph) * 0.6, u.cz + Math.sin(a) * u.r); g2.rotation.y = -a; const f = reduce ? 0.2 : Math.sin(t * 6 + u.ph) * 0.45; u.w1.rotation.z = f; u.w2.rotation.z = -f; });

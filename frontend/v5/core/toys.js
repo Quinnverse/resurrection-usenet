@@ -98,4 +98,62 @@ export function takePhoto(cam, target, t, count) {
   if (!f.inFrame) { reaction = 'missed'; } else if (mood === 'window') { reaction = 'candid'; } else if (mood === 'tease') { reaction = 'duel'; } else if (f.size > 0.5) { reaction = 'hide'; } else { reaction = ['shy', 'pose', 'smile'][Math.min(2, count)]; }
   return { id: 'photo-' + (count + 1), t: Math.round(t * 10) / 10, reaction, mood, framed: f.inFrame, centred: !!f.centred, size: Math.round(f.size * 100) / 100 };
 }
-export const REACTIONS = { missed: { expr: 'tease', anim: 'look' }, candid: { expr: 'surprise', anim: 'look' }, duel: { expr: 'grin', anim: 'camera' }, hide: { expr: 'shy', anim: 'hideface' }, shy: { expr: 'shy', anim: 'hideface' }, pose: { expr: 'grin', anim: 'pose' }, smile: { expr: 'smile', anim: 'idle' } };
+export const REACTIONS = { missed: { expr: 'tease', anim: 'look' }, candid: { expr: 'surprise', anim: 'look' }, duel: { expr: 'grin', anim: 'camera' }, hide: { expr: 'shy', anim: 'hideface' }, shy: { expr: 'shy', anim: 'hideface' }, pose: { expr: 'grin', anim: 'pose' }, smile: { expr: 'smile', anim: 'idle' },
+  lighthouse: { expr: 'grin', anim: 'pose' }, kite: { expr: 'grin', anim: 'pose' }, asleep: { expr: 'quiet', anim: 'sleep' }, last: { expr: 'grin', anim: 'pose' }, empty: { expr: 'neutral', anim: 'idle' } };
+
+// ---- photo dares on the train ------------------------------------------------------------------------------------
+// Things outside the window, in carriage coordinates (the seat faces -z; +x is the sea side). They loop so a dare can
+// always be taken again. The renderer places its lighthouse and kite with the same function.
+export const DARES = ['lighthouse', 'kite', 'june'];
+export function trainTarget(id, t) {
+  if (id === 'lighthouse') { return { x: 34, y: 5.5, z: -70 + ((t * 2.2) % 120) }; }
+  if (id === 'kite') { return { x: -16, y: 6.5 + Math.sin(t * 1.3) * 0.8, z: -46 + ((t * 4.0) % 70) }; }
+  return null;
+}
+// Is target `id` in this photo? June is judged by takePhoto; outside things by framing and distance.
+export function dareShot(cam, id, t) {
+  const p = trainTarget(id, t); if (!p) { return { ok: false }; }
+  const f = frame(cam, p); return { ok: f.inFrame && Math.abs(f.nx) < 0.75 && Math.abs(f.ny) < 0.75, f };
+}
+
+// ---- tuning the guitar (chapter 4) ----------------------------------------------------------------------------
+// A needle swings across the dial; press when it is in the middle. Misses never block: after three, June calls it
+// close enough. Each string swings a little faster.
+export function newTuning() { return { string: 0, t: 0, misses: 0, done: false, tuned: [] }; }
+export const needleAt = (tu) => Math.sin(tu.t * (1.6 + tu.string * 0.45) + Math.PI / 2);   // starts at the edge
+export function tickTuning(tu, dt, pressed) {
+  const ev = []; tu.t += dt;
+  if (pressed && !tu.done && tu.t > 0.35) {
+    const n = needleAt(tu);
+    if (Math.abs(n) < 0.2 || tu.misses >= 3) { ev.push({ type: 'tuned', string: tu.string, exact: Math.abs(n) < 0.2 }); tu.tuned.push(tu.string); tu.string += 1; tu.misses = 0; tu.t = 0; if (tu.string >= 3) { tu.done = true; ev.push({ type: 'tuning-done' }); } }
+    else { tu.misses += 1; ev.push({ type: 'detuned', string: tu.string, sharp: n > 0, misses: tu.misses }); }
+  }
+  return ev;
+}
+
+// ---- the lighthouse beam (chapter 3) -------------------------------------------------------------------------
+// Angle in radians around the tower, measured like Three.js rotation.y on the +x axis.
+export const beamTo = (from, to) => Math.atan2(-(to.z - from.z), to.x - from.x);
+export const angleGap = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+// ---- June's constellation (chapter 4) ------------------------------------------------------------------------
+// Five stars over the sea, as camera directions from the porch (yaw 0 looks south, negative pitch looks up). Joined in
+// order they make a crooked window. A star counts when the middle of the view rests on it.
+export const STARS = [{ yaw: 0.38, pitch: -0.24 }, { yaw: 0.02, pitch: -0.3 }, { yaw: -0.04, pitch: -0.64 }, { yaw: 0.33, pitch: -0.6 }, { yaw: 0.17, pitch: -0.43 }];
+export const dirOf = (a) => ({ x: -Math.sin(a.yaw) * Math.cos(a.pitch), y: -Math.sin(a.pitch), z: -Math.cos(a.yaw) * Math.cos(a.pitch) });
+export function starGap(view, star) { const a = dirOf(view), b = dirOf(star); return Math.acos(Math.max(-1, Math.min(1, a.x * b.x + a.y * b.y + a.z * b.z))); }
+
+// ---- June teaches Elena to draw a boat (chapter 4) ----------------------------------------------------------
+// The pen moves with the mouse (or the movement keys) over a sheet of paper, 0..1 in both directions. Reach each dot
+// in turn; the line is drawn as you go. There is no wrong boat.
+export const BOAT = [[0.2, 0.6], [0.3, 0.76], [0.7, 0.76], [0.8, 0.6], [0.5, 0.6], [0.5, 0.24], [0.73, 0.55]];
+export function newPen() { return { x: 0.12, y: 0.4, i: 0, done: false, trail: [] }; }
+export function tickPen(pen, dt, input) {
+  const ev = [];
+  pen.x = Math.max(0, Math.min(1, pen.x + (input.aimDX || 0) * 0.0011 + (input.mx || 0) * 0.45 * dt));
+  pen.y = Math.max(0, Math.min(1, pen.y + (input.aimDY || 0) * 0.0011 - (input.mz || 0) * 0.45 * dt));
+  if (pen.done) { return ev; }
+  const [tx, ty] = BOAT[pen.i];
+  if (Math.hypot(pen.x - tx, pen.y - ty) < 0.045) { pen.trail.push([tx, ty]); pen.i += 1; ev.push({ type: 'dot', i: pen.i - 1 }); if (pen.i >= BOAT.length) { pen.done = true; ev.push({ type: 'drawn' }); } }
+  return ev;
+}

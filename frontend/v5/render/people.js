@@ -63,6 +63,7 @@ export function makePerson(spec) {
   props.sketch = part(new THREE.BoxGeometry(0.2, 0.26, 0.03), 0xd8c8a0, 0, -0.6, 0.06); armL.pivot.add(props.sketch); props.sketch.visible = s.prop === 'sketchbook';
   props.suitcase = new THREE.Group(); props.suitcase.add(part(new THREE.BoxGeometry(0.42, 0.3, 0.14), 0x8a4a3a, 0, -0.18, 0), part(new THREE.BoxGeometry(0.12, 0.04, 0.03), 0x2a2a30, 0, 0.0, 0)); props.suitcase.position.set(0, -0.68, 0); armL.pivot.add(props.suitcase); props.suitcase.visible = false;
   props.guitar = new THREE.Group(); const gb = part(new THREE.CylinderGeometry(0.2, 0.2, 0.09, 12), 0xc08040, 0, 0, 0); gb.rotation.x = Math.PI / 2; props.guitar.add(gb, part(new THREE.BoxGeometry(0.05, 0.5, 0.03), 0x6b4128, 0, 0.32, 0)); props.guitar.position.set(0.02, 0.18, 0.28); props.guitar.rotation.z = 1.15; torso.add(props.guitar); props.guitar.visible = false;
+  props.box = new THREE.Group(); props.box.add(part(new THREE.BoxGeometry(0.55, 0.4, 0.4), 0xb08a5a, 0, 0, 0), part(new THREE.BoxGeometry(0.56, 0.04, 0.12), 0xd8c8a0, 0, 0.2, 0)); props.box.position.set(0, 0.25, 0.38); torso.add(props.box); props.box.visible = false;
   props.window = new THREE.Group(); props.window.add(part(new THREE.BoxGeometry(0.9, 1.1, 0.06), 0xfff4d6, 0, 0, 0)); props.window.position.set(0, 0.35, 0.42); torso.add(props.window); props.window.visible = false;
   root.userData = { legL: legL.pivot, legR: legR.pivot, armL: armL.pivot, armR: armR.pivot, torso, head, body, pony, eyeL, eyeR, browL, browR, mouths, blushMat, props, expr: 'neutral', spec: s };
   return root;
@@ -112,6 +113,13 @@ export function animate(p, t, phase, speed, mode, reduce) {
     case 'hum': u.legL.rotation.x = -1.5; u.legR.rotation.x = -1.5; u.body.position.y = -0.36; u.head.rotation.z = Math.sin(t * 1.6) * 0.12 * w; u.head.rotation.x = -0.1; break;
     case 'hold': u.armL.rotation.x = -0.15; u.armR.rotation.x = -1.2; u.armR.rotation.z = -0.15; break;
     case 'turnaway': u.head.rotation.y = 0.6; u.armL.rotation.set(-0.3, 0, 0.3); u.armR.rotation.set(-0.3, 0, -0.3); break;
+    case 'carry': u.armL.rotation.set(-1.25, 0, 0.25); u.armR.rotation.set(-1.25, 0, -0.25); break;
+    case 'sleep': u.legL.rotation.x = -1.5; u.legR.rotation.x = -1.5; u.body.position.y = -0.36; u.body.position.z = 0.1; u.armL.rotation.x = -0.5; u.armR.rotation.x = -0.5; u.head.rotation.z = 0.42; u.head.rotation.x = 0.25 + Math.sin(t * 0.9) * 0.02 * w; u.torso.rotation.z = 0.08; break;
+    case 'sketch': u.legL.rotation.x = -1.5; u.legR.rotation.x = -1.5; u.body.position.y = -0.36; u.body.position.z = 0.1; u.armL.rotation.set(-1.2, 0, -0.2); u.armR.rotation.set(-1.0 + Math.sin(t * 7) * 0.12 * w, 0, 0.25); u.head.rotation.x = 0.2 - Math.abs(Math.sin(t * 0.8)) * 0.25 * w; break;
+    case 'climb': u.armL.rotation.x = -2.6 + Math.sin(t * 5) * 0.4 * w; u.armR.rotation.x = -2.6 - Math.sin(t * 5) * 0.4 * w; u.legL.rotation.x = -0.6 + Math.sin(t * 5) * 0.4 * w; u.legR.rotation.x = -0.6 - Math.sin(t * 5) * 0.4 * w; break;
+    case 'talk': u.armR.rotation.set(-0.5 + Math.sin(t * 2.2) * 0.25 * w, 0, -0.2); u.head.rotation.x = Math.sin(t * 3) * 0.04 * w; break;
+    case 'bike': u.legL.rotation.x = -1.2 + Math.sin(phase) * 0.5; u.legR.rotation.x = -1.2 - Math.sin(phase) * 0.5; u.body.position.y = -0.18; u.armL.rotation.x = -1.1; u.armR.rotation.x = -1.1; u.torso.rotation.x = 0.25; break;
+    case 'nohands': u.legL.rotation.x = -1.2 + Math.sin(phase) * 0.5; u.legR.rotation.x = -1.2 - Math.sin(phase) * 0.5; u.body.position.y = -0.18; u.armL.rotation.set(-2.8, 0, 0.5); u.armR.rotation.set(-2.8, 0, -0.5); u.torso.rotation.x = -0.05; break;
     default: break;
   }
   if (u.pony) { u.pony.rotation.x = moving ? Math.sin(phase * 2) * 0.14 - 0.12 * k : Math.sin(t * 1.3) * 0.04 * w; }
