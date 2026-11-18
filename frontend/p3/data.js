@@ -119,8 +119,9 @@
     { id: 'sign3',    x: 55.6,  y: 10, type: 'read' },
     { id: 'blueprint',x: 58.7,  y: 10, type: 'look' },
     { id: 'bridge',   x: 60.7,  y: 10, type: 'use' },
-    { id: 'door',     x: 62.5,  y: 12, type: 'use', range: 1.5 },
-    { id: 'sign4',    x: 74.6,  y: 9,  type: 'read' },
+    { id: 'door',        x: 62.5,  y: 12, type: 'use', range: 1.5 },
+    { id: 'serverReturn', x: 63.5, y: 10, type: 'use', range: 1.5, requires: 'bridge' },
+    { id: 'sign4',       x: 74.6,  y: 9,  type: 'read' },
     { id: 'crab',     x: 85.5,  y: 9,  type: 'pet' },
     { id: 'sign5',    x: 100.5, y: 10, type: 'read' },
     { id: 'terminal', x: 118.2, y: 10, type: 'use' }

@@ -73,7 +73,7 @@
     $.padJump = padTap('pad-jump', function () { rt.jumpQ = true; }); $.padUse = padTap('pad-use', function () { rt.useQ = true; });
     $.pad = el('div', { 'class': 'pad', 'data-testid': 'pad' }, [el('div', { 'class': 'padL' }, [$.padLeft, $.padRight]), el('div', { 'class': 'padR' }, [$.padJump, $.padUse])]);
     $.keys = el('p', { 'class': 'small keys' });
-    $.replay = btn('', function () { newGame(); }, 'btn', 'replay');
+    $.replay = btn('', requestNewGame, 'btn', 'replay');
     $.play = el('section', { 'class': 'playui' }, [$.cap, $.pad, $.keys, $.replay]);
     $.host = el('section', { 'class': 'panelhost' });
     root.appendChild(header); root.appendChild($.stage); root.appendChild($.title); root.appendChild($.play); root.appendChild($.host);
@@ -154,7 +154,7 @@
     c.appendChild(el('p', { 'class': 'lede', text: tr('game.tagline') }));
     if (rt.saved && rt.saved.corrupt) { c.appendChild(el('p', { 'class': 'notice', text: tr('ui.saveCorrupt') })); }
     var row = el('div', { 'class': 'row' });
-    if (hasSave()) { row.appendChild(btn(tr('ui.continue'), continueGame, 'btn primary', 'continue')); row.appendChild(btn(tr('ui.newGame'), newGame, 'btn', 'new-game')); }
+    if (hasSave()) { row.appendChild(btn(tr('ui.continue'), continueGame, 'btn primary', 'continue')); row.appendChild(btn(tr('ui.newGame'), requestNewGame, 'btn', 'new-game')); }
     else { row.appendChild(btn(tr('ui.start'), newGame, 'btn primary', 'start')); }
     c.appendChild(row);
     c.appendChild(el('p', { 'class': 'small', text: tr('ui.saveNote') }));
@@ -205,6 +205,11 @@
     if (rt.scene === 'server') { c.y = 0; }
     if (snap || reduce()) { return c; }
     return { x: rt.cam.x + (c.x - rt.cam.x) * 0.14, y: rt.cam.y + (c.y - rt.cam.y) * 0.14 };
+  }
+
+  function requestNewGame() {
+    if (typeof window.confirm === 'function' && !window.confirm(tr('ui.confirmNewGame'))) { return; }
+    newGame();
   }
 
   function newGame() {
@@ -273,6 +278,7 @@
   function nearest() {
     var best = null, bd = 99, p = rt.player;
     objectsHere().forEach(function (o) {
+      if (o.requires && !st[o.requires]) { return; }
       var range = o.range || D.CONFIG.interactRange, dx = Math.abs(p.x - o.x), dy = Math.abs(p.y - o.y);
       if (dx <= range && dy < 1.2 && dx < bd) { best = o; bd = dx; }
     });
@@ -383,7 +389,7 @@
       if (st.bridge) { say('say.bridgeDone', 'mara'); }
       else if (st.backpack.length === 0 && !Pz.SLOTS.some(function (s) { return st.placed[s.id]; })) { sfx('click'); say('say.bridgeNone', 'mara'); }
       else { sfx('server'); openRestore(); }
-    } else if (id === 'door') {
+    } else if (id === 'door' || id === 'serverReturn') {
       sfx('door'); say('say.door', 'mara'); rt.frozen = true;
       schedule(0.5, function () { transition(function () { enterScene('server', null); if (st.serverSeen.length === 0) { say('say.serverIntro', 'mara'); } persist(); }); });
     } else if (id === 'terminal') { sfx('powerup'); openDialogue(); }

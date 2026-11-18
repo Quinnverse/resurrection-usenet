@@ -454,6 +454,53 @@ test.describe('P3.2 focused checks', () => {
     expect(issues, issues.join('\n')).toEqual([]);
   });
 
+  test('canceling New Game preserves the existing browser save', async ({ page }) => {
+    await page.goto(PATH);
+    await page.waitForFunction(() => window.P3Debug && window.P3State);
+    await page.evaluate(() => {
+      const s = window.P3State.newState();
+      s.scene = 'world'; s.pos.world = { x: 41.5, y: 10 }; s.stars = ['s01'];
+      localStorage.setItem('p3.save.v2', JSON.stringify(s));
+    });
+    await page.reload();
+    await expect(page.getByTestId('continue')).toBeVisible();
+    await expect(page.getByTestId('new-game')).toBeVisible();
+    const before = await page.evaluate(() => localStorage.getItem('p3.save.v2'));
+    let message = '';
+    page.once('dialog', async (dialog) => { message = dialog.message(); await dialog.dismiss(); });
+    await page.getByTestId('new-game').click();
+    expect(message).toContain('replace the saved progress');
+    await expect(page.getByTestId('continue')).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('p3.save.v2'))).toBe(before);
+  });
+
+  test('canceling Play Again preserves the completed island save', async ({ page }) => {
+    await seed(page, 'en', { scene: 'island', ended: true, bridge: true, placed: SOLUTION, 'island.stage': 5, 'flags.tape': true, 'flags.catPetted': true, 'flags.garden': true });
+    await sceneIs(page, 'island');
+    await expect(page.getByTestId('replay')).toBeVisible();
+    const before = await page.evaluate(() => localStorage.getItem('p3.save.v2'));
+    let message = '';
+    page.once('dialog', async (dialog) => { message = dialog.message(); await dialog.dismiss(); });
+    await page.getByTestId('replay').click();
+    expect(message).toContain('replace the saved progress');
+    await expect(page.getByTestId('island-canvas')).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('p3.save.v2'))).toBe(before);
+  });
+
+  test('the completed bridge exposes a return entrance to the server room', async ({ page }, testInfo) => {
+    const issues = []; watch(page, issues);
+    await seed(page, 'en', { scene: 'world', cp: 6, 'pos.world': { x: 69.5, y: 10 }, bridge: true, placed: SOLUTION });
+    await sceneIs(page, 'world');
+    const c = controls(page, 'keys');
+    await walkTo(page, c, 63.5);
+    await expect(page.getByTestId('view')).toBeVisible();
+    await interact(page, c, 'serverReturn');
+    await sceneIs(page, 'server');
+    await shot(page, testInfo, 'return-server-after-bridge', true);
+    expect((await snap(page)).scene).toBe('server');
+    expect(issues, issues.join('\\n')).toEqual([]);
+  });
+
   test('the old four-act game is untouched', async ({ page }) => {
     const res = await page.goto('/');
     expect(res.status()).toBe(200);

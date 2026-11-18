@@ -373,12 +373,13 @@
       ctx.drawImage(sp.noteStand, px(40.5) - 9, py(1) - 26);
       // posts, signs, door, cat, crab, flags
       data.WORLD_OBJECTS.forEach(function (o) {
+        if (o.requires && !st[o.requires]) { return; }
         var x = px(o.x), y = py(o.y);
         if (x < -40 || x > VW + 40) { return; }
         var read = st.read && st.read.indexOf(o.id) >= 0;
         if (o.id === 'cat') { ctx.drawImage(P.cat[reduce ? 0 : (Math.floor(t * 1.2) % 2)], x - 10, y - 12); }
         else if (o.id === 'crab') { var cxo = reduce ? 0 : Math.round(Math.sin(t * 0.8) * 10); ctx.drawImage(P.crab[reduce ? 0 : (Math.floor(t * 4) % 2)], x - 8 + cxo, y - 10); }
-        else if (o.id === 'door') { ctx.drawImage(P.door[reduce ? 0 : (Math.floor(t * 1.5) % 2)], x - 24, y - 28 + 4); }
+        else if (o.id === 'door' || o.id === 'serverReturn') { ctx.drawImage(P.door[reduce ? 0 : (Math.floor(t * 1.5) % 2)], x - 24, y - 28 + 4); }
         else if (o.id === 'blueprint') { ctx.drawImage(sp.blueprint, x - 17, y - 36); }
         else if (o.id === 'terminal') { ctx.drawImage(sp.terminal[reduce ? 0 : (Math.floor(t * 1.5) % 2)], x - 18, y - 40); if (!reduce) { ellipse(ctx, x, y - 24, 22, 16, C.amber, 0.06 + 0.05 * Math.sin(t * 2)); } }
         else if (o.id === 'bridge' || o.id === 'garden') { /* drawn by posts / note stand */ }
@@ -421,7 +422,7 @@
         }
       }
       sparkles(ctx, v.particles || [], t, cam.x, cam.y);
-      if (v.near) { var o2 = v.near; prompt(ctx, px(o2.x), py(o2.y) - ({ terminal: 50, door: 36, bridge: 48, blueprint: 46, cat: 20, crab: 18 }[o2.id] || 30), t, 'E', reduce); }
+      if (v.near) { var o2 = v.near; prompt(ctx, px(o2.x), py(o2.y) - ({ terminal: 50, door: 36, serverReturn: 36, bridge: 48, blueprint: 46, cat: 20, crab: 18 }[o2.id] || 30), t, 'E', reduce); }
       // warm light and dusk tint
       R(ctx, 0, 0, VW, VH, '#ff9a68', 0.05 + dusk * 0.08);
       vignette(ctx, 0.25);

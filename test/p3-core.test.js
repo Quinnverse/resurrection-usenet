@@ -171,7 +171,7 @@ describe('P3.2 level data', () => {
   it('every interactive object, star and floppy is placed on the map, standing on ground', () => {
     [['study', D.STUDY_OBJECTS], ['world', D.WORLD_OBJECTS], ['server', D.SERVER_OBJECTS], ['island', D.ISLAND_OBJECTS]].forEach(([n, list]) => {
       const ids = new Set();
-      list.forEach((o) => { assert.ok(!ids.has(o.id), 'unique ' + n + '.' + o.id); ids.add(o.id); assert.ok(scenes[n].solid(Math.floor(o.x), o.y), n + '.' + o.id + ' ground'); assert.equal(E.boxHits(scenes[n], o.x, o.y), false, n + '.' + o.id + ' free'); });
+      list.forEach((o) => { assert.ok(!ids.has(o.id), 'unique ' + n + '.' + o.id); ids.add(o.id); if (!o.requires) { assert.ok(scenes[n].solid(Math.floor(o.x), o.y), n + '.' + o.id + ' ground'); } assert.equal(E.boxHits(scenes[n], o.x, o.y), false, n + '.' + o.id + ' free'); });
     });
     D.WORLD_STARS.forEach((s) => assert.equal(world.solid(s[1], s[2]), false, 'star ' + s[0]));
     D.SERVER_FLOPPIES.forEach((f) => assert.equal(server.solid(f[1], f[2]), false, 'floppy ' + f[0]));
@@ -241,6 +241,26 @@ describe('P3.2 level data', () => {
     ['s1', 's3'].forEach((s) => Pz.tilesFor(Pz.SOLUTION[s], s).forEach((t) => w2.set(t.col, t.row, 'P')));
     const arch = Pz.tilesFor('l-arch', 's2').map((t) => t.row);
     assert.notDeepEqual(arch, [10, 10, 10, 10], 'the arched piece is not flat');
+  });
+});
+
+describe('P3.2 return path after bridge restoration', () => {
+  it('keeps a visible serverReturn entrance on the completed bridge', () => {
+    const entry = D.WORLD_OBJECTS.find((o) => o.id === 'serverReturn');
+    assert.deepEqual(entry, { id: 'serverReturn', x: 63.5, y: 10, type: 'use', range: 1.5, requires: 'bridge' });
+    const built = D.buildWorld();
+    St.applyBridge(built, Pz.SOLUTION);
+    assert.equal(built.get(63, 10), 'P');
+    assert.equal(built.get(63, 12), 'R', 'the lower server ledge remains intact');
+  });
+
+  it('can walk back from the far bridge to the server entrance without falling', () => {
+    const built = D.buildWorld();
+    St.applyBridge(built, Pz.SOLUTION);
+    let s = settle(built, 69.5, 10);
+    const result = walk(built, s, 63.5, { noJump: true, respawn: { x: 69.5, y: 10 } });
+    assert.equal(result.falls, 0);
+    assert.ok(Math.abs(result.s.x - 63.5) < 0.3, `x=${result.s.x}`);
   });
 });
 
