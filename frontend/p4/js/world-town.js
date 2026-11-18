@@ -185,7 +185,7 @@ export function buildTown(opts) {
 
   // ---- lamp posts, benches, bunting, palms, boats, pier -------------------------------------------------
   const lampGlows = [];
-  [[-3.2, -7.0], [3.2, -7.0], [-6.6, 3.6], [6.6, 3.6], [-3.1, 11.8], [3.1, 11.8], [10, 11.8], [-10, 11.8], [13.4, 13.6]].forEach(([x, z]) => {
+  [[-3.2, -7.0], [3.2, -7.0], [-6.6, 3.6], [6.6, 3.6], [-3.1, 11.8], [3.1, 11.8], [10, 11.8], [-10, 11.8], [16.3, 12.4]].forEach(([x, z]) => {
     const p = new THREE.Group(); p.position.set(x, 0, z); scene.add(p);
     p.add(cyl(0.06, 0.09, 3.0, 6, 0x2a3040, 0, 0, 0), box(0.36, 0.05, 0.36, 0x2a3040, 0, 2.98, 0), cone(0.3, 0.22, 4, 0x2a3040, 0, 3.36, 0, { ry: Math.PI / 4 }));
     const bulb = box(0.26, 0.34, 0.26, 0xfff0c0, 0, 3.02, 0, { mat: { emissive: 0xffc070, ei: 1.4 } }); p.add(bulb);

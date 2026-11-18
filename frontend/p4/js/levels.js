@@ -62,7 +62,10 @@ export const SCENES = {
       { k: 'circ', x: 4.6, z: 2.2, r: 0.65 },   // 2004 copy booth
       { k: 'circ', x: 17.2, z: 19.6, r: 1.85 }, // lighthouse
       { k: 'rect', x0: -6.2, x1: -3.6, z0: 13.95, z1: 14.55 }, // bench by the sea wall
-      { k: 'rect', x0: 4.6, x1: 7.2, z0: 13.95, z1: 14.55 }   // bench by the sea wall
+      { k: 'rect', x0: 4.6, x1: 7.2, z0: 13.95, z1: 14.55 },  // bench by the sea wall
+      // lamp posts
+      { k: 'circ', x: -3.2, z: -7.0, r: 0.12 }, { k: 'circ', x: 3.2, z: -7.0, r: 0.12 }, { k: 'circ', x: -6.6, z: 3.6, r: 0.12 }, { k: 'circ', x: 6.6, z: 3.6, r: 0.12 },
+      { k: 'circ', x: -3.1, z: 11.8, r: 0.12 }, { k: 'circ', x: 3.1, z: 11.8, r: 0.12 }, { k: 'circ', x: 10, z: 11.8, r: 0.12 }, { k: 'circ', x: -10, z: 11.8, r: 0.12 }, { k: 'circ', x: 16.3, z: 12.4, r: 0.12 }
     ]
   }
 };
@@ -120,7 +123,7 @@ export const ROUTES = {
 export const PATHS = {
   town: {
     nodes: { lane: [0, -6.5], gate: [0, -12.5], plazaW: [-2.9, -1.5], plazaE: [2.9, -1.5], kioskW: [-3.3, 3.0], kioskE: [3.3, 3.0], plazaS: [2.2, 4.6], plazaSW: [-2.2, 4.6],
-      road: [1.2, 9.0], roadEnd: [1.6, 12.6], prom: [11.5, 13.0], theo: [13.0, 15.0], promE: [14.6, 13.4], light: [16.0, 16.6], pierFoot: [0, 13.2], pier: [0, 24.4], bakery: [-4.4, -4.6], mural: [4.4, -4.6] },
+      road: [1.2, 9.0], roadEnd: [1.6, 13.0], prom: [11.5, 13.0], theo: [13.0, 15.0], promE: [14.6, 13.4], light: [16.0, 16.6], pierFoot: [0, 13.2], pier: [0, 24.4], bakery: [-4.4, -4.6], mural: [4.4, -4.6] },
     edges: [['gate', 'lane'], ['lane', 'plazaW'], ['lane', 'plazaE'], ['lane', 'bakery'], ['lane', 'mural'], ['plazaW', 'kioskW'], ['plazaE', 'kioskE'], ['plazaW', 'bakery'], ['plazaE', 'mural'],
       ['kioskW', 'plazaSW'], ['kioskE', 'plazaS'], ['plazaS', 'plazaSW'], ['plazaS', 'road'], ['plazaSW', 'road'], ['road', 'roadEnd'], ['roadEnd', 'prom'], ['roadEnd', 'pierFoot'], ['pierFoot', 'pier'], ['prom', 'theo'], ['prom', 'promE'], ['promE', 'light'], ['theo', 'promE']]
   }

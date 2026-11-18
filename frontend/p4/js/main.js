@@ -297,12 +297,12 @@ async function runEvents(events) {
     } else if (ev.type === 'restore') {
       rt.busy = true; A.play('restore');
       rt.world.setRestored(true, true);
-      rt.focus = { x: 17.2, z: 19.6, y: 8.6, until: rt.t + 99 };
+      rt.focus = { shot: LIGHTHOUSE_SHOT, until: rt.t + 99 };
       await waitFor(() => !rt.world.restoring, 8);
       rt.focus = null; rt.busy = false;
     } else if (ev.type === 'theoLight') {
       rt.busy = true; rt.world.startLighting();
-      rt.focus = { x: 17.2, z: 19.6, y: 7.5, until: rt.t + 99 };
+      rt.focus = { shot: LIGHTHOUSE_SHOT, until: rt.t + 99 };
       await waitFor(() => !rt.world.lighting, 20);
       rt.focus = null; rt.busy = false;
       const r = St.lightDone(st); st = r.state; await runEvents(r.events);
@@ -511,7 +511,15 @@ function step(dt) {
   } else { A.setGuide(0); }
 }
 
+// Fixed view from the promenade that frames the whole lighthouse, the lamp room, Mara and Theo.
+const LIGHTHOUSE_SHOT = { pos: new THREE.Vector3(10.4, 2.6, 12.0), look: new THREE.Vector3(16.6, 4.6, 18.6) };
 function updateCamera(snap) {
+  const sh = rt.focus && rt.t < rt.focus.until && rt.focus.shot;
+  if (sh) {
+    const c = rt.cam; const k = snap || reduce() ? 1 : 0.07;
+    c.pos.lerp(sh.pos, k); c.look.lerp(sh.look, k);
+    camera.position.copy(c.pos); camera.lookAt(c.look); return;
+  }
   const p = rt.player, c = rt.cam;
   let yaw = c.yaw, dist = c.dist, pitch = c.pitch;
   const f = rt.focus;
@@ -520,6 +528,7 @@ function updateCamera(snap) {
     if (f.at === 'computer') { const cp = Lv.point('study', 'computer'); target.set(cp.x, 1.15, cp.z); dist = f.dist; yaw = Math.atan2(p.x - cp.x, p.z - cp.z); pitch = 0.18; }
     else { const toward = Math.atan2(p.x - f.x, p.z - f.z); yaw = toward; c.yaw += Math.atan2(Math.sin(toward - c.yaw), Math.cos(toward - c.yaw)) * 0.05; if (f.y) { target.lerp(new THREE.Vector3(f.x, f.y, f.z), 0.45); pitch = Math.min(pitch, 0.15); dist = c.dist * 1.25; } }
   } else if (f) { rt.focus = null; }
+  if (camera.aspect < 0.8) { dist *= 1.3; }      // portrait phones: pull back so the world, not Mara, fills the screen
   const cp = Math.cos(pitch);
   const want = new THREE.Vector3(target.x + Math.sin(yaw) * cp * dist, target.y + Math.sin(pitch) * dist, target.z + Math.cos(yaw) * cp * dist);
   // keep the camera out of walls and buildings

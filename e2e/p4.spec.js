@@ -132,7 +132,7 @@ async function useNear(page, ctl, id) {
   await page.waitForTimeout(250);
 }
 // Reads every dialogue line to the end with E (or taps), waits for scene changes and cutscenes to finish.
-async function settle(page, ctl, onLine) {
+async function settle(page, ctl, onLine, onBusy) {
   const seen = [];
   for (let i = 0; i < 200; i++) {
     const s = await snap(page);
@@ -143,6 +143,7 @@ async function settle(page, ctl, onLine) {
       await page.waitForTimeout(120);
       continue;
     }
+    if (s.busy && onBusy) { await onBusy(s); }
     if (!s.busy && s.mode !== 'intro') { await page.waitForTimeout(250); const s2 = await snap(page); if (!s2.busy && !s2.dialog) { return seen; } }
     await page.waitForTimeout(200);
   }
@@ -273,7 +274,7 @@ test.describe('P4 full playthrough', () => {
     await expect(page.getByTestId('prompt')).toContainText(await tr(page, 'en', 'verb.restore'));
     await shot(page, testInfo, '21-town-restore-prompt'); await rec('at the lighthouse in the 1998 copy: [E] Restore the lamp');
     await useNear(page, ctl, 'lighthouse');
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(2600);
     await shot(page, testInfo, '22-town-restoring'); await rec('the lamp assembles from the old copy');
     await settle(page, ctl);
     await objectiveIs(page, 'en', 'obj.C4');
@@ -283,11 +284,13 @@ test.describe('P4 full playthrough', () => {
     await follow(page, ctl, 'town', 'theo');
     await shot(page, testInfo, '23-town-restored-dark'); await rec('back in the present: the lamp is there, still dark');
     await useNear(page, ctl, 'theo');
-    await settle(page, ctl);
+    let litShot = false;
+    await settle(page, ctl, null, async (s) => { if (!litShot && s.lighting) { litShot = true; await page.waitForTimeout(5200); await shot(page, testInfo, '23b-town-lighting'); await rec('Theo climbs the lighthouse and lights the lamp'); } });
+    expect(litShot, 'the lighting cutscene played').toBe(true);
     await until(page, () => window.P4Debug.snapshot().flags.lit, null, 30000);
     await objectiveIs(page, 'en', 'obj.C5'); mark('lit');
     await page.waitForTimeout(800);
-    await shot(page, testInfo, '24-town-lit'); await rec('Theo lights the lamp: the beam sweeps the sea');
+    await shot(page, testInfo, '24-town-lit'); await rec('the lamp is lit: the beam sweeps the sea');
     await useNear(page, ctl, 'theo');
     await settle(page, ctl, async (d) => { if (d.key === 'theo.10') { await shot(page, testInfo, '25-town-theo-june'); await rec('Theo: someone erased June from the newer copies'); } });
     await expect(page.getByTestId('ending')).toBeVisible({ timeout: 15000 });
