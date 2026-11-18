@@ -42,7 +42,7 @@ Object.values(ui).forEach((n) => app.appendChild(n));
 
 // ---- renderer --------------------------------------------------------------------------------------------------
 let renderer = null;
-try { renderer = new THREE.WebGLRenderer({ antialias: prefs.quality !== 'low', powerPreference: 'high-performance' }); } catch (e) { renderer = null; }
+try { renderer = new THREE.WebGLRenderer({ antialias: prefs.quality !== 'low', powerPreference: 'high-performance', preserveDrawingBuffer: true }); } catch (e) { renderer = null; }
 if (!renderer || !renderer.getContext()) { ui.overlay.hidden = false; ui.overlay.className = 'overlay title'; ui.overlay.append(el('p', { class: 'err', text: T('ui.webgl'), 'data-testid': 'webgl-error' })); throw new Error('WebGL unavailable'); }
 renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
 renderer.shadowMap.enabled = prefs.quality !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -122,7 +122,7 @@ function dressWorld(s) {
   if (worldId === 'station') { w.setTime(s.beat === '1.chase' ? 'morning' : s.beat === '5.depart' ? 'dusk' : 'y2004'); }
   if (worldId === 'cottage') { w.setEra(s.year || 1998); }
   if (worldId === 'coast') {
-    w.setTime(s.beat === '4.porch' ? 'night' : s.beat === '6.beach' ? 'y2004' : 'noon', s.beat === '6.beach' ? 2004 : 1998);
+    w.setTime(s.beat === '4.porch' ? 'night' : s.beat === '6.beach' ? 'y2004' : (s.beat === '3.beam' || s.beat === '3.cliff') ? 'dusk' : 'noon', s.beat === '6.beach' ? 2004 : 1998);
     const win = Ar.sceneGraph(ar, 1998, g.s.restored, null).objects.find((o) => o.id === 'window');
     w.setWindow(g.s.window.placed && win && s.beat !== '6.beach' ? windowMesh(win.data, g.s.window.finish) : null); w.showCartWindow(!g.s.window.placed && !s.carry && s.beat !== '6.beach');
     const lamp = Ar.sceneGraph(ar, 1998, g.s.restored, null).objects.find((o) => o.id === 'lamp'); w.setLit(!!g.s.flags.lit && s.beat !== '6.beach', lamp && lamp.data);
@@ -392,7 +392,7 @@ function cardFlash(a, b) { ui.overlay.className = 'overlay card'; ui.overlay.hid
 function renderHud() {
   const s = Gm.snapshot(g);
   // prompt near the thing you can use: a key glyph, the verb, the name. Nothing else on screen.
-  const pr = s.prompt; const cine = !!s.dialog || !!s.shot || s.choice;
+  const pr = s.prompt; const cine = !!s.dialog || (!!s.shot && !['beamctl', 'town-beam', 'paper'].includes(s.shot)) || s.choice;
   app.classList.toggle('cine', cine);
   if (pr && !cine && mode === 'play') {
     const key = keyLabel(keys.use);
@@ -459,8 +459,8 @@ function capturePhoto(photo) {
   const p = g.s.photos.find((q) => q.id === photo.id); if (p && thumb) { p.thumb = thumb; } fadeBlinkWhite(); save(true);
 }
 function captureJunePhoto() {
-  const seat = LAYOUTS.train.seat, js = LAYOUTS.train.june; const c2 = camera.clone(); c2.fov = 42; c2.position.set(js.x, 1.15, js.z + 0.1); c2.lookAt(seat.x, 1.1, seat.z); c2.updateProjectionMatrix();
-  const me = person(avatarId()); const vis = me.visible; me.visible = true; setExpression(me, 'surprise'); renderer.render(world.scene, c2); me.visible = vis; const thumb = thumbFromCanvas(); setExpression(me, 'neutral');
+  const seat = LAYOUTS.train.seat, js = LAYOUTS.train.june; const c2 = camera.clone(); c2.fov = 46; c2.position.set(js.x + 0.1, 1.25, js.z - 0.35); c2.lookAt(seat.x, 1.22, seat.z); c2.updateProjectionMatrix();
+  const me = person(avatarId()); const vis = me.visible; me.visible = true; animate(me, rt.t, 0, 0, 'sit', true); showProp(me, 'camera', false); me.userData.lookAt = null; setExpression(me, 'surprise'); renderer.render(world.scene, c2); me.visible = vis; const thumb = thumbFromCanvas(); setExpression(me, 'neutral');
   const p = g.s.photos.find((q) => q.id === 'june-elena'); if (p && thumb) { p.thumb = thumb; } fadeBlinkWhite(); save(true);
 }
 function fadeBlinkWhite() { ui.fade.classList.add('white', 'on'); setTimeout(() => ui.fade.classList.remove('on', 'white'), reduce() ? 60 : 160); }
@@ -486,7 +486,7 @@ function showCredits() {
   mode = 'credits'; A.setTheme('ending'); save(true);
   ui.overlay.className = 'overlay credits'; ui.overlay.hidden = false; ui.overlay.textContent = '';
   const album = el('div', { class: 'album', 'data-testid': 'album' });
-  g.s.photos.forEach((p) => { const fig = el('figure', {}, [p.thumb ? el('img', { src: p.thumb, alt: '' }) : el('div', { class: 'noimg' }), el('figcaption', { text: p.by === 'june' ? T('c2.back.june') : T('c2.react.' + p.reaction) })]); album.append(fig); });
+  g.s.photos.forEach((p) => { const fig = el('figure', {}, [p.thumb ? el('img', { src: p.thumb, alt: '' }) : el('div', { class: 'noimg' }), el('figcaption', { text: p.id === 'june-elena' ? T('c2.back.june') : T('c2.react.' + p.reaction) })]); album.append(fig); });
   const sg = Ar.sceneGraph(ar, 2004, g.s.restored, g.s.edition);
   ui.overlay.append(el('div', { class: 'roll', 'data-testid': 'credits' }, [
     el('div', { class: 'end', text: T('ui.end') }), el('div', { class: 'h', text: T('end.roles') }), el('div', { class: 'role', text: T('end.elena') }), el('div', { class: 'role', text: T('end.june') }),

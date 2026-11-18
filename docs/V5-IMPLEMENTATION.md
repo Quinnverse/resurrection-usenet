@@ -20,6 +20,8 @@ Tests (Node 22, no dependencies):
 ```
 npm test                      # 229 unit/integration tests, includes test/v5-core.test.mjs
 npm run test:v5-shell         # the browser shell in Node: full game in EN and ZH, tech page walkthrough
+node tools/v5-estimate.mjs [--lang zh]                   # first-play time ESTIMATE (model, not a measurement)
+node tools/v5-export-script.mjs > docs/V5-SCRIPT.md     # the full bilingual script
 node tools/v5-playthrough.mjs [--variant] [--no-glide]   # headless playthrough timeline
 node tools/v5-shell-run.mjs --shots <dir>                # same as test:v5-shell + software previews
 npx playwright test e2e/v5.spec.js                       # real Chromium. Written, NOT RUN (see the test report)
@@ -42,12 +44,30 @@ Regenerate the fixture archive with `node tools/v5-make-archive.mjs`.
 | Choices | 1 / 2 / 3, or click | — |
 | Hint in a character's voice | H | — |
 | Pause, or skip a dialogue already seen | Esc | Start (pause), B (skip seen dialogue) |
+| Bicycle | W pedal, A/D steer, Shift sprint, E bell | left stick, LB, X |
+| Lighthouse beam (ch. 3 and the end) | A / D turn it | left stick |
+| Drawing the boat (ch. 4) | move the mouse (or WASD) | right stick |
+| Tuning (ch. 4) | E when the needle is in the middle | X |
+| Stars on the porch (ch. 4) | move the mouse; rest the middle of the view on a star | right stick |
+| Hold still for June's sketch (ch. 2) | do nothing | do nothing |
 
 Touch: the left half of the screen moves, the right half turns the camera, and a tap acts.
 Every keyboard binding can be changed in Pause → Settings → Keys (stored in `localStorage` `v5.keys.v1`).
 Settings also hold volume (music, effects), quality (low/medium/high, with an automatic drop when frames fall below
 24 fps), reduced motion, subtitle size and language (EN / 简体中文).
 The game saves itself every 5 s and at every chapter beat, restore, photo and ending (`v5.save.v1`).
+
+## Chapters and what you do in them
+
+| Chapter | Beats | Activities |
+|---|---|---|
+| 1 Catch the Summer | 1.study, 1.town, 1.pier, 1.carve, 1.chase | find Elena's backup disk; restore June's bridge from the archive (hold E); cross the pier by switching 1998/2004 (Tab); carve "E + J" with June (1998 memory); run for the train, jump the cart, take June's hand |
+| 2 You Are the View | 2.train | photo dares (the cape lighthouse, a kite, June when she isn't looking); hold still while June sketches; the tunnel (reach for her hand, optional); June dozes (a photo, optional) |
+| 3 Our Lighthouse | 3.ride, 3.yard, 3.beam, 3.cliff | 420 m bike ride with ribbon gates, the bell, June's slipped chain; carry and paint the crooked window; pull the lens up to June; crank the lamp; steer the beam to find June and then the cottage; glide down or take the stairs |
+| 4 A Song Only for You | 4.cottage, 4.duet, 4.porch | June's portfolio (her own ambitions); draw a boat with June guiding; tune the guitar; the duet twice (sit closer or not); join five stars into June's constellation; the poem and the almost-confession |
+| 5 Don't Leave Yourself Here | 5.depart, 5.alone | carry June's suitcase, the soda machine, a last photo, walk with her to the end of the platform, the news, the choice of words, run beside the leaving train; six years later the same machine, camera, door and walk give no answer |
+| 6 You Remember, So Do I | 6.cottage, 6.beach | pack June's boxes with her (her picture books, her residency), the 1999 studio letter, the walk along the beach and up to the dark lighthouse with the conversation in three stops and two choices; "Take care on the road" when you leave |
+| 7 Let Summer End | 7.study, 7.town, end | the unsent drafts (read one or close the folder; never sent); read the 1998 gate sign with Tab, then restore the names; free Iris from her loop and untie her boat; restore the lamp (RESTORED) then make the seasons (CREATED); turn the last light on the old pier; lay new pale planks (CREATED, present edition only) and walk Theo out in the snow |
 
 ## Architecture
 

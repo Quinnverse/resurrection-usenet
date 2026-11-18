@@ -172,6 +172,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
         expect(out.credits).toContain('Elena — Programming & Music');
         expect(out.credits).toContain('June — Art & Story');
         expect(out.snap.photos.length).toBeGreaterThanOrEqual(6);
+        console.log('V5_PHOTOS ' + run.lang + ' ' + JSON.stringify(out.snap.photos));
         expect(out.snap.photos.every((p) => p.thumb)).toBe(true);
         expect(out.album).toBeGreaterThanOrEqual(6);
         expect(out.stuck).toEqual([]);

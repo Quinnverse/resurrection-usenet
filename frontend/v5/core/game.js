@@ -240,6 +240,7 @@ function enterBeat(g, beat, loading) {
   refreshWorld(g);
   if (scene !== 'ride' && scene !== 'train' && scene !== 'porch') { place(g, scene, loading && beat !== '6.beach' && beat !== '1.carve' ? null : (BEAT_START[beat] || null)); } else { g.rt.body = Ph.newBody(0, 0, 0); g.rt.yaw = 0; }
   const setup = SETUP[beat]; if (setup) { setup(g, loading); }
+  if (beat === '3.beam' && !g.rt.dialog) { g.rt.shot = g.rt.baseShot; }
   g.rt.ev.push({ type: 'beat', beat, chapter: chapterOf(beat), scene, year: g.rt.year, loading: !!loading });
   g.rt.ev.push({ type: 'save' });
 }

@@ -140,7 +140,7 @@ export function buildCarriage(opts) {
 export function buildCoast(opts) {
   const o = opts || {}; const scene = new THREE.Scene(); const R = rng(41); const blockers = [];
   const sky = skyDome(TIMES.noon.sky, 420); scene.add(sky); const skyNight = skyDome(['#05060f', '#0b1030', '#1a2050', '#2a2a5a', '#3a3460'], 420); skyNight.visible = false; scene.add(skyNight);
-  const sky04 = skyDome(TIMES.y2004.sky, 420); sky04.visible = false; scene.add(sky04); scene.fog = new THREE.Fog(0xd8ecff, 60, 300);
+  const sky04 = skyDome(TIMES.y2004.sky, 420); sky04.visible = false; scene.add(sky04); const skyDusk = skyDome(TIMES.dusk.sky, 420); skyDusk.visible = false; scene.add(skyDusk); scene.fog = new THREE.Fog(0xd8ecff, 60, 300);
   const L = lights(scene, o, new THREE.Vector3(200, 60, -60), new THREE.Vector3(262, 0, 24), 40);
   const road = roadInfo();
   // grass everywhere at the top of the cliff, but not over the beach below it (x 271..313, z 5..51)
@@ -163,7 +163,13 @@ export function buildCoast(opts) {
   scene.add(box(4.2, 0.1, 4, 0xc9bfae, 268.1, -0.04, 16, { cast: false }));
   // stairs down the cliff (a ramp with steps drawn on it) and the beach below
   for (let i = 0; i < 12; i++) { scene.add(box(0.36, 0.2, 4, 0xb8a888, 270 + i * 0.34, -i * 0.42 - 0.1, 16, { cast: false })); }
-  scene.add(mesh(new THREE.BoxGeometry(44, 5, 46), mat(PAL.stoneD), 250, -2.6, 27, { cast: false }));
+  scene.add(mesh(new THREE.BoxGeometry(44, 5, 46), mat(0x9a8a74), 250, -2.6, 27, { cast: false }));
+  // the cliff face over the beach: layered rock, boulders at its foot, grass along the top edge
+  for (let i = 0; i < 5; i++) { scene.add(box(0.5 + (i % 2) * 0.3, 0.9, 46, [0xa8977c, 0x8f7e66, 0xb4a488, 0x7f705c, 0x9c8b72][i], 272.1 + (i % 2) * 0.1, -0.4 - i * 0.95, 27, { cast: false })); }
+  for (let i = 0; i < 14; i++) { const r2 = 0.4 + R() * 0.9; scene.add(mesh(new THREE.DodecahedronGeometry(r2, 0), mat([0x8a7a66, 0x9c8c76, 0x6f6252][i % 3]), 273 + R() * 2.5, -5 + r2 * 0.5, 6 + R() * 42)); }
+  for (let z = 5; z < 50; z += 1.4) { scene.add(cone(0.18, 0.5, 4, PAL.grassD, 271.7 + R() * 0.4, 0, z + R() * 0.6, { cast: false })); }
+  for (let i = 0; i < 6; i++) { scene.add(box(1.6 + R() * 1.4, 0.12, 0.18, 0xb0946a, 285 + R() * 22, -4.92, 10 + R() * 36, { ry: R() * 3, cast: false })); }   // driftwood
+  const surf = []; for (let i = 0; i < 3; i++) { const w2 = box(1.2, 0.04, 46, 0xf4f8fa, 312.5 + i * 1.5, -4.98, 28, { cast: false, mat: { emissive: 0xffffff, ei: 0.15 } }); scene.add(w2); surf.push(w2); }
   scene.add(mesh(new THREE.PlaneGeometry(42, 46), mat(PAL.sand), 292, -5.0, 28, { rx: -Math.PI / 2, cast: false }));
   scene.add(box(2.1, 0.1, 2.6, 0xc9bfae, 269.55, -0.04, 19.2, { cast: false }));   // the landing at the top of the stairs
   // the ribbon gates June dares Elena through
@@ -186,7 +192,7 @@ export function buildCoast(opts) {
   const lampGlow = glowSprite(0xffd27a, 9, 0); lampGlow.position.set(0, 7.6, 0); lh.add(lampGlow);
   const lampLight = new THREE.PointLight(0xffd890, 0, 50, 1.2); lampLight.position.set(0, 7.6, 0); lh.add(lampLight);
   const beam = new THREE.Group(); beam.position.set(0, 7.6, 0); beam.visible = false; lh.add(beam);
-  [0, Math.PI].forEach((a) => { const b2 = new THREE.Mesh(new THREE.ConeGeometry(2.0, 40, 16, 1, true), glow(0xfff0b0, { additive: true, opacity: 0.16, side: THREE.DoubleSide })); b2.rotation.z = Math.PI / 2; b2.position.x = 20; const arm = new THREE.Group(); arm.rotation.y = a; arm.add(b2); beam.add(arm); });
+  const beamCones = []; [0, Math.PI].forEach((a) => { const b2 = new THREE.Mesh(new THREE.ConeGeometry(2.0, 40, 16, 1, true), glow(0xfff0b0, { additive: true, opacity: 0.2, side: THREE.DoubleSide })); b2.rotation.z = Math.PI / 2; b2.position.x = 20; beamCones.push(b2); const arm = new THREE.Group(); arm.rotation.y = a; arm.add(b2); beam.add(arm); });
   const lens = new THREE.Mesh(new THREE.OctahedronGeometry(0.45, 0), new THREE.MeshStandardMaterial({ color: 0xfff4d0, emissive: 0xffd27a, emissiveIntensity: 0.05, flatShading: true })); lens.position.set(0, 7.6, 0); lh.add(lens);
   const socket = new THREE.Group(); socket.position.set(Y.socket.x, Y.socket.y, Y.socket.z); socket.rotation.y = Math.atan2(Y.socket.x - 264, Y.socket.z - 28); scene.add(socket);
   const socketFrame = box(1.3, 1.6, 0.1, 0x6b4128, 0, -0.8, -0.02); socket.add(socketFrame);
@@ -232,10 +238,10 @@ export function buildCoast(opts) {
     // noon (1998 day), night (1998, the porch) or 2004 (the same coast six years later, grey and unlit)
     setTime(tm, year) {
       time = tm; era = year || 1998;
-      sky.visible = tm === 'noon'; skyNight.visible = tm === 'night'; sky04.visible = tm === 'y2004'; starG.visible = tm === 'night';
-      const T = tm === 'night' ? { fog: 0x1a2040, hemi: 0x8090c0, ground: 0x202030, sun: 0x8090c0, sunI: 0.25, hemiI: 0.45, grass: 0x3a5a4a } : tm === 'y2004' ? { fog: 0xc0c4cc, hemi: 0xd0d8e4, ground: 0x4a5a5a, sun: 0xe0e4f0, sunI: 1.8, hemiI: 1.0, grass: 0x6a9070 } : { fog: 0xd8ecff, hemi: 0xffe0c0, ground: 0x4a5a4a, sun: 0xffc080, sunI: 3.0, hemiI: 1.0, grass: PAL.grass };
+      sky.visible = tm === 'noon'; skyNight.visible = tm === 'night'; sky04.visible = tm === 'y2004'; skyDusk.visible = tm === 'dusk'; starG.visible = tm === 'night';
+      const T = tm === 'dusk' ? { fog: 0xf0a080, hemi: 0xffd0b0, ground: 0x4a4a5a, sun: 0xff9a60, sunI: 2.2, hemiI: 0.9, grass: 0x8ab060 } : tm === 'night' ? { fog: 0x1a2040, hemi: 0x8090c0, ground: 0x202030, sun: 0x8090c0, sunI: 0.25, hemiI: 0.45, grass: 0x3a5a4a } : tm === 'y2004' ? { fog: 0xc0c4cc, hemi: 0xd0d8e4, ground: 0x4a5a5a, sun: 0xe0e4f0, sunI: 1.8, hemiI: 1.0, grass: 0x6a9070 } : { fog: 0xd8ecff, hemi: 0xffe0c0, ground: 0x4a5a4a, sun: 0xffc080, sunI: 3.0, hemiI: 1.0, grass: PAL.grass };
       scene.fog.color.set(T.fog); L.hemi.color.set(T.hemi); L.hemi.groundColor.set(T.ground); L.hemi.intensity = T.hemiI; L.sun.color.set(T.sun); L.sun.intensity = T.sunI; grassMat.color.set(T.grass);
-      only98.forEach((x) => { x.visible = era === 1998; });
+      only98.forEach((x) => { x.visible = era === 1998; }); beamCones.forEach((c) => { c.material.opacity = tm === 'noon' ? 0.2 : 0.34; }); if (tm === 'dusk') { L.sun.position.set(330, 14, 60); }
       if (era !== 1998) { ghost.visible = false; }
     }
   };

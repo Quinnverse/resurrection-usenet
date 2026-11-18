@@ -107,7 +107,7 @@ export const REACTIONS = { missed: { expr: 'tease', anim: 'look' }, candid: { ex
 export const DARES = ['lighthouse', 'kite', 'june'];
 export function trainTarget(id, t) {
   if (id === 'lighthouse') { return { x: 34, y: 5.5, z: -70 + ((t * 2.2) % 120) }; }
-  if (id === 'kite') { return { x: -16, y: 6.5 + Math.sin(t * 1.3) * 0.8, z: -46 + ((t * 4.0) % 70) }; }
+  if (id === 'kite') { return { x: -12, y: 4.2 + Math.sin(t * 1.3) * 0.6, z: -46 + ((t * 4.0) % 70) }; }
   return null;
 }
 // Is target `id` in this photo? June is judged by takePhoto; outside things by framing and distance.
