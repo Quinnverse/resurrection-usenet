@@ -1,0 +1,11 @@
+const fs=require('fs');
+const {makeCanvas,toPNG}=require('./softcanvas.js');
+const Art=require('../frontend/p3/art.js');
+const art=Art.createArt(makeCanvas);
+const names=art.MARA_FRAMES;
+const sheet=makeCanvas(names.length*20+4, 64);
+const cx=sheet.getContext('2d');
+cx.fillStyle='#8fc0e8'; cx.fillRect(0,0,sheet.width,sheet.height);
+names.forEach((n,i)=>{ cx.drawImage(art.mara.right[n], 4+i*20, 4); cx.drawImage(art.mara.left[n], 4+i*20, 34); });
+fs.writeFileSync(process.argv[2]||'/projects/sandbox/review/mara.png', toPNG(sheet,6));
+console.log('ok', names.join(' '));

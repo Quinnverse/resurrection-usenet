@@ -43,8 +43,8 @@ log "preflight (read-only)"
 command -v docker >/dev/null || fail "docker is not installed"
 command -v curl   >/dev/null || fail "curl is not installed"
 docker info >/dev/null 2>&1  || fail "cannot talk to the docker daemon (try sudo, or add your user to the docker group)"
-[ -f "$SRC/Dockerfile" ] && [ -f "$SRC/combined-server/server.js" ] && [ -f "$SRC/frontend/p3/index.html" ] \
-  || fail "source tree incomplete: expected Dockerfile, combined-server/server.js, frontend/p3/index.html under $SRC"
+[ -f "$SRC/Dockerfile" ] && [ -f "$SRC/combined-server/server.js" ] && [ -f "$SRC/frontend/p3/index.html" ] && [ -f "$SRC/frontend/p3/puzzle.js" ] \
+  || fail "source tree incomplete: expected Dockerfile, combined-server/server.js, frontend/p3/index.html, frontend/p3/puzzle.js under $SRC"
 
 docker inspect "$CONTAINER" >/dev/null 2>&1 || fail "container $CONTAINER does not exist. This script updates an existing preview; it does not create one"
 docker volume inspect "$VOLUME" >/dev/null 2>&1 || fail "volume $VOLUME does not exist. Refusing to start with a new empty save volume"
@@ -125,12 +125,12 @@ wait_healthy "$CAND" 60 || { docker logs --tail 30 "$CAND" 2>&1 || true; fail "c
 
 C="http://$HOST_ADDR:$CANDIDATE_PORT"
 page_has "$C/api/health" '"status":"ok"'       || fail "candidate /api/health is not ok"
-page_has "$C/p3/" 'A Life in Fragments'        || fail "candidate /p3/ does not serve the P3 page"
-page_has "$C/p3" 'A Life in Fragments'         || fail "candidate /p3 (no slash) does not serve the P3 page"
-for f in level.js game.js i18n.js audio.js; do
+page_has "$C/p3/" 'The Internet Remembers You' || fail "candidate /p3/ does not serve the P3 page"
+page_has "$C/p3" 'The Internet Remembers You'  || fail "candidate /p3 (no slash) does not serve the P3 page"
+for f in engine.js puzzle.js data.js state.js i18n.js art.js scenes.js audio.js game.js; do
   http_get "$C/p3/$f" >/dev/null                             || fail "candidate /p3/$f is missing"
 done
-page_has "$C/p3/level.js" 'P3Level'            || fail "candidate /p3/level.js is not the P3 module"
+page_has "$C/p3/puzzle.js" 'P3Puzzle'          || fail "candidate /p3/puzzle.js is not the P3.2 module"
 
 # The original four-act page must be byte-identical to what is running now.
 OLD_ROOT_SUM="$(http_get "http://$HOST_ADDR:$HOST_PORT/" | sha256sum | cut -d' ' -f1)" || fail "cannot read / from the running container"
@@ -209,7 +209,7 @@ fi
 L="http://$HOST_ADDR:$HOST_PORT"
 post_ok=1
 page_has "$L/api/health" '"status":"ok"'  || post_ok=0
-page_has "$L/p3/" 'A Life in Fragments'   || post_ok=0
+page_has "$L/p3/" 'The Internet Remembers You' || post_ok=0
 http_get "$L/" >/dev/null                 || post_ok=0
 SAVES_AFTER="$(docker run --rm -v "$VOLUME:/data:ro" node:22-alpine sh -c 'find /data -type f | wc -l' 2>/dev/null | tr -d ' ' || echo '?')"
 if [ "$SAVES_BEFORE" != '?' ] && [ "$SAVES_AFTER" != '?' ] && [ "$SAVES_AFTER" -lt "$SAVES_BEFORE" ]; then post_ok=0; fi

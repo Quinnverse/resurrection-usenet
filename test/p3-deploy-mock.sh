@@ -116,7 +116,7 @@ OLD_PID="$(cat "$MOCK/c/resurrection-preview/pid")"
 SID="$(curl -fsS -X POST http://127.0.0.1:28080/api/sessions | sed -n 's/.*"sessionId":"\([a-f0-9]*\)".*/\1/p')"
 OLD_ROOT="$(curl -fsS http://127.0.0.1:28080/ | sha256sum)"
 check "setup: old release serves /, a save exists" "[ -n '$SID' ] && [ \"\$(find $MOCK/vol/resurrection_saves -type f | wc -l)\" -ge 1 ]"
-check "setup: old release has no P3 page" "! curl -fs http://127.0.0.1:28080/p3/ | grep -qF 'A Life in Fragments'"
+check "setup: old release has no P3 page" "! curl -fs http://127.0.0.1:28080/p3/ | grep -qF 'The Internet Remembers You'"
 
 echo "== 1. --verify-only leaves the running container alone"
 bash "$NEW_TREE/deploy/p3-preview/deploy.sh" --verify-only > "$W/verify.log" 2>&1; rc=$?
@@ -129,7 +129,7 @@ echo "== 2. full deploy"
 bash "$NEW_TREE/deploy/p3-preview/deploy.sh" > "$W/deploy.log" 2>&1; rc=$?
 [ $rc -ne 0 ] && sed 's/^/    | /' "$W/deploy.log" | tail -25
 check "deploy exits 0" "[ $rc -eq 0 ]"
-check "new container is resurrection-preview on 28080 serving /p3/" "curl -fs http://127.0.0.1:28080/p3/ | grep -qF 'A Life in Fragments'"
+check "new container is resurrection-preview on 28080 serving /p3/" "curl -fs http://127.0.0.1:28080/p3/ | grep -qF 'The Internet Remembers You'"
 check "four-act page unchanged after deploy" "[ \"\$(curl -fs http://127.0.0.1:28080/ | sha256sum)\" = '$OLD_ROOT' ]"
 check "old session still readable on the new release" "curl -fs http://127.0.0.1:28080/api/sessions/$SID | grep -q revision"
 check "old container kept (stopped) under a -prev- name" "ls $MOCK/c | grep -q '^resurrection-preview-prev-' && [ \"\$(cat $MOCK/c/resurrection-preview-prev-*/status)\" = exited ]"
@@ -145,7 +145,7 @@ echo "== 3. rollback"
 bash "$P3_STATE_DIR/rollback.sh" > "$W/rollback.log" 2>&1; rc=$?
 [ $rc -ne 0 ] && sed 's/^/    | /' "$W/rollback.log" | tail -15
 check "rollback exits 0" "[ $rc -eq 0 ]"
-check "old release is back (no P3 page)" "! curl -fs http://127.0.0.1:28080/p3/ | grep -qF 'A Life in Fragments'"
+check "old release is back (no P3 page)" "! curl -fs http://127.0.0.1:28080/p3/ | grep -qF 'The Internet Remembers You'"
 check "save still readable after rollback" "curl -fs http://127.0.0.1:28080/api/sessions/$SID | grep -q revision"
 check "failed release kept for logs, not deleted" "ls $MOCK/c | grep -q '^resurrection-preview-failed-'"
 
