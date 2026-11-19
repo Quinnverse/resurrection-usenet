@@ -38,7 +38,8 @@ function initHook() {
   // devices: the game reads its own input (keyboard, mouse, touch, pad) and the hook only counts frames
   h.input = (orig) => (h.virtual && !h.devices ? h.next : orig);
   h.events = (evs) => { h.last = evs; };
-  window.requestAnimationFrame = (cb) => { if (h.virtual) { h.raf = cb; return 1; } return real.raf(cb); };
+  // every callback is kept (the game's loop and anyone else's, e.g. a rAF-polling wait), and each runs once per frame
+  window.requestAnimationFrame = (cb) => { if (h.virtual) { (h.raf = h.raf || []).push(cb); return h.raf.length; } return real.raf(cb); };
   window.setTimeout = (fn, ms) => { if (!h.virtual) { return real.st(fn, ms); } const id = ++h.id; h.timers.push({ id, at: h.now + (ms || 0), fn }); return id; };
   window.clearTimeout = (id) => { const i = h.timers.findIndex((x) => x.id === id); if (i >= 0) { h.timers.splice(i, 1); } else { real.ct(id); } };
   // switch to virtual frames; wait for the game's pending real frame so its loop re-registers on the virtual clock
@@ -46,10 +47,10 @@ function initHook() {
   h.advance = () => {
     h.now += 1000 / 30;
     for (;;) { h.timers.sort((a, b) => a.at - b.at); if (!h.timers.length || h.timers[0].at > h.now) { break; } h.timers.shift().fn(); }
-    const cb = h.raf; h.raf = null; if (cb) { cb(h.now); }
+    const cbs = h.raf || []; h.raf = null; for (const cb of cbs) { cb(h.now); }
   };
   // one virtual frame, then give the browser a moment to paint (and the test runner a chance to take screenshots)
-  h.unvirtualize = () => { h.virtual = false; h.devices = false; const cb = h.raf; h.raf = null; if (cb) { real.raf(cb); } };
+  h.unvirtualize = () => { h.virtual = false; h.devices = false; const cbs = h.raf || []; h.raf = null; for (const cb of cbs) { real.raf(cb); } };
   h.frame = async () => { h.last = []; h.advance(); await new Promise((r) => real.st(r, 0)); return h.last; };
   h.step = async (input) => { h.next = input || {}; h.last = []; h.advance(); await new Promise((r) => real.st(r, 0)); return h.last; };
   window.__V5_TEST__ = h;
@@ -196,7 +197,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
         while (!done) {
           await page.waitForTimeout(200); if (done) { break; }
           const req = await page.evaluate(() => window.__V5_TEST__.shotReq || null).catch(() => null);
-          if (req) { await page.waitForTimeout(350); await page.waitForFunction(() => { const el = document.querySelector('.subs'); return !el || !el.classList.contains('on') || parseFloat(getComputedStyle(el).opacity) > 0.98; }, null, { timeout: 3000 }).catch(() => {}); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
+          if (req) { await page.waitForTimeout(350); await page.waitForFunction(() => { const el = document.querySelector('.subs'); return !el || !el.classList.contains('on') || parseFloat(getComputedStyle(el).opacity) > 0.98; }, null, { timeout: 3000, polling: 50 /* not 'raf': the virtual clock keeps one rAF callback, the game's */ }).catch(() => {}); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
           if (Date.now() - lastShot < 1500) { continue; }
           const s = await snap(page).catch(() => null); if (!s) { continue; }
           if (s.beat !== lastBeat || Date.now() - lastShot > 20000) { lastBeat = s.beat; lastShot = Date.now(); n += 1; await attach(testInfo, `${run.lang}-${String(n).padStart(3, '0')}-${s.beat}`, await shot(page)); }
