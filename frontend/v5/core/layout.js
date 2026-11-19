@@ -35,7 +35,7 @@ export const LAYOUTS = {
       rect(-2.3, 2.3, -15, -6), circ(0, 0, 7.6), rect(-2.6, 2.6, 6, CANAL.z0), rect(-2.6, 2.6, CANAL.z1 - 0.1, 13), rect(-12, 13, 11.8, 14.6),
       rect(-7.0, -4.4, 6.8, CANAL.z0),                                                         // the little dock by the canal
       rect(-6.4, -3.8, 4.8, 7.0),                                                              // the path down to it
-      rect(11, 16, 11.8, 16, 0, { asset: 'point_path' }), circ(16.2, 18.4, 4.2, 0, { asset: 'point_path' }),
+      rect(11, 16, 11.8, 16, 0, { asset: 'point_path' }), circ(16.2, 18.4, 4.2, 0, { asset: 'point_path' }), rect(12.0, 12.9, 15.9, 17.3, 0, { asset: 'point_path' }),   // no sliver between the path and the point
       rect(-PIER.halfWidth, PIER.halfWidth, PIER.near1998[0], PIER.near1998[1], 0, { asset: 'pier_old' }),
       rect(-PIER.halfWidth, PIER.halfWidth, PIER.far1998[0], PIER.far1998[1], 0, { asset: 'pier_old' }),
       rect(-PIER.halfWidth, PIER.halfWidth, PIER.stub2004[0], PIER.stub2004[1], 0, { asset: 'pier_closed' })
@@ -91,7 +91,7 @@ export const LAYOUTS = {
     solids: [wall(-3.9, -2.2, -2.9, -1.6, 1), wall(0.6, 2.0, -0.6, 0.4, 0.8), wall(2.6, 3.9, 1.0, 2.9, 1), wall(-4.4, -3.9, -3.4, 3.4), wall(3.9, 4.4, -3.4, 3.4), wall(-4.4, 4.4, -3.4, -2.9), wall(-4.4, -0.7, 2.9, 3.4), wall(0.7, 4.4, 2.9, 3.4)],
     points: [{ id: 'guitar', x: -1.4, z: -1.0, r: 1.4, y: 1.0 }, { id: 'june', x: 1.4, z: -2.1, r: 1.6, y: 1.6, moving: true }, { id: 'door', x: 0, z: 2.8, r: 1.3, y: 1.4 },
       { id: 'sketches', x: 1.3, z: 0.75, r: 1.2, y: 1.0 }, { id: 'shelf', x: 2.3, z: 1.9, r: 1.2, y: 1.3 }, { id: 'window', x: 0, z: -2.5, r: 1.3, y: 1.5 },
-      { id: 'boxA', x: -2.9, z: -0.9, r: 1.2, y: 0.6 }, { id: 'boxB', x: 2.3, z: -1.5, r: 1.2, y: 0.6 }, { id: 'drop', x: 1.2, z: 2.1, r: 1.2, y: 0.4 }, { id: 'gamebox', x: 2.3, z: 1.9, r: 1.2, y: 1.3 }, { id: 'letter', x: 1.3, z: 0.75, r: 1.2, y: 1.0 }],
+      { id: 'boxA', x: -2.9, z: -0.9, r: 1.2, y: 0.6 }, { id: 'boxB', x: 2.3, z: -1.5, r: 1.2, y: 0.6 }, { id: 'drop', x: 1.2, z: 2.1, r: 1.2, y: 0.4 }, { id: 'gamebox', x: 2.3, z: 1.9, r: 0.95, y: 1.3 }, { id: 'letter', x: 1.3, z: 0.75, r: 0.95, y: 1.0 }],
     guitarSeat: { x: -1.4, z: -1.0 }, juneSeat: { x: 0.0, z: -1.6 }, juneWindow: { x: 1.4, z: -2.3 }
   }
 };

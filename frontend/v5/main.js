@@ -152,7 +152,9 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') { e.preventDefault(); onEscape(); return; }
   if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('Arrow')) { if (mode === 'play') { e.preventDefault(); } }
   if (!down.has(e.code)) { pressed.add(e.code); } down.add(e.code);
-  if (mode === 'play' && g && Gm.snapshot(g).choice) { if (e.code === 'Digit1') { rt.choose = 0; } if (e.code === 'Digit2') { rt.choose = 1; } if (e.code === 'Digit3') { rt.choose = 2; } }
+  if (mode === 'play' && g) { const sn = Gm.snapshot(g); if (sn.choice || (sn.dialog && !Array.isArray(sn.dialog.line))) { if (e.code === 'Digit1') { rt.choose = 0; } if (e.code === 'Digit2') { rt.choose = 1; } if (e.code === 'Digit3') { rt.choose = 2; } } }
+  // menus from the keyboard: arrows move the focus; Enter on nothing focused presses the main button
+  if (mode !== 'play' && mode !== 'loading') { const root = menuRoot(); if (root) { if (e.code === 'ArrowDown' || e.code === 'ArrowRight') { e.preventDefault(); if (!(e.code === 'ArrowRight' && menuAdjust(1))) { menuMove(root, 1); } } if (e.code === 'ArrowUp' || e.code === 'ArrowLeft') { e.preventDefault(); if (!(e.code === 'ArrowLeft' && menuAdjust(-1))) { menuMove(root, -1); } } if (e.code === 'Enter' && focusables(root).indexOf(document.activeElement) < 0) { e.preventDefault(); menuPress(root); } } }
 });
 window.addEventListener('keyup', (e) => { down.delete(e.code); });
 window.addEventListener('blur', () => { down.clear(); mouse.left = mouse.right = false; });
@@ -161,7 +163,7 @@ cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('mousedown', (e) => {
   PT.input('mouse');
   A.unlock(); if (mode !== 'play') { return; }
-  if (!locked && cv.requestPointerLock && !reduceLockPref()) { try { cv.requestPointerLock(); } catch (err) { /* refused */ } }
+  if (!locked && cv.requestPointerLock && !reduceLockPref()) { try { const r = cv.requestPointerLock(); if (r && r.catch) { r.catch(() => { /* refused: dragging still works */ }); } } catch (err) { /* refused */ } }
   if (e.button === 0) { mouse.left = true; mouse.click = true; } if (e.button === 2) { mouse.right = true; }
 });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) { mouse.left = false; } if (e.button === 2) { mouse.right = false; } });
@@ -174,53 +176,93 @@ cv.addEventListener('touchstart', (e) => { A.unlock(); for (const tp of e.change
 cv.addEventListener('touchmove', (e) => { for (const tp of e.changedTouches) { if (touch.move && tp.identifier === touch.move.id) { touch.move.x = tp.clientX; touch.move.y = tp.clientY; } if (touch.look && tp.identifier === touch.look.id) { mouse.dx += (tp.clientX - touch.look.x) * 1.4; mouse.dy += (tp.clientY - touch.look.y) * 1.4; touch.look.x = tp.clientX; touch.look.y = tp.clientY; } } }, { passive: true });
 cv.addEventListener('touchend', (e) => { for (const tp of e.changedTouches) { if (touch.move && tp.identifier === touch.move.id) { touch.move = null; } if (touch.look && tp.identifier === touch.look.id) { if (performance.now() - touch.look.t < 220) { mouse.click = true; } touch.look = null; } } });
 // touch buttons: shown once the screen is touched. Jump, interact (hold for restore and crank), the train camera.
-const tpad = { jump: false, use: false, useHeld: false, aim: false, shoot: false, used: false };
+const tpad = { jump: false, use: false, useHeld: false, aim: false, shoot: false, tab: false, hint: false, used: false };
 const tbtn = (id, label, on, off) => { const b = el('button', { type: 'button', class: 'tbtn tb-' + id, 'data-testid': 'touch-' + id, text: label }); b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); A.unlock(); on(); b.classList.add('down'); }, { passive: false }); b.addEventListener('touchend', (e) => { e.preventDefault(); if (off) { off(); } b.classList.remove('down'); }, { passive: false }); return b; };
 const touchUI = el('div', { class: 'touchui', hidden: '', 'data-testid': 'touchui' }, [
   tbtn('jump', '⤒', () => { tpad.jump = true; tpad.jumpHeld = true; }, () => { tpad.jumpHeld = false; }),
   tbtn('use', 'E', () => { tpad.use = true; tpad.useHeld = true; }, () => { tpad.useHeld = false; }),
   tbtn('aim', '◉', () => { tpad.aim = !tpad.aim; }),
   tbtn('shoot', '●', () => { tpad.shoot = true; }),
+  tbtn('tab', '⇄', () => { tpad.tab = true; }),
+  tbtn('hint', '?', () => { tpad.hint = true; }),
   tbtn('pause', 'II', () => onEscape())
 ]);
 app.appendChild(touchUI);
 cv.addEventListener('touchstart', () => { PT.input('touch'); if (!tpad.used) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); } }, { passive: true });
+// ---- gamepad: polled once per frame; an "edge" is a button that is down now and was up last frame -------------
+// Standard mapping: left stick move, right stick look, A (0) jump / continue / pick, X (2) interact (hold), B (1) back /
+// skip a seen line, Y (3) switch era, LB/RB/L3 (4/5/10) sprint, LT (6) raise camera, RT (7) shutter, Back (8) hint,
+// Start (9) pause, D-pad (12-15) move through choices and menus.
 function gamepad() { const pads = navigator.getGamepads ? navigator.getGamepads() : []; return [...pads].find((p) => p && p.connected) || null; }
-const padPrev = {};
+let padPrevB = [];
+function pollPad() {
+  const gp = gamepad(); const cur = gp ? gp.buttons.map((b) => !!(b && (b.pressed || b.value > 0.5))) : [];
+  const prev = padPrevB; padPrevB = cur; if (gp) { PT.input('gamepad'); }
+  // radial dead zone: the stick direction is kept, only the small circle in the middle is ignored
+  const stick = (a, b) => { if (!gp) { return [0, 0]; } const x = gp.axes[a] || 0, y = gp.axes[b] || 0, m = Math.hypot(x, y); if (m < 0.18) { return [0, 0]; } const k = Math.min(1, (m - 0.18) / 0.82) / m; return [x * k, y * k]; };
+  return { gp, btn: (i) => !!cur[i], edge: (i) => !!cur[i] && !prev[i], left: stick(0, 1), right: stick(2, 3) };
+}
+let pad = pollPad();
+
+// ---- menus without a pointer: D-pad / arrow keys move the focus, A / Enter press, B / Esc go back ---------------
+function menuRoot() { if (rt.confirm) { return ui.overlay.querySelector('.confirm'); } if (!ui.panel.hidden) { return ui.panel; } if (!ui.overlay.hidden) { return ui.overlay; } return null; }
+function focusables(root) { return [...root.querySelectorAll('button, select, input[type=range]')].filter((e) => !e.disabled && !e.closest('[hidden]') && e.getClientRects().length > 0); }
+function menuMove(root, d) {
+  const list = focusables(root); if (!list.length) { return; }
+  let i = list.indexOf(document.activeElement); i = i < 0 ? (d > 0 ? 0 : list.length - 1) : (i + d + list.length) % list.length; list[i].focus();
+}
+function menuPress(root) {
+  const list = focusables(root); let f = list.indexOf(document.activeElement) >= 0 ? document.activeElement : null;
+  if (!f) { f = root.querySelector('.btn.primary') || list[0]; if (f) { f.focus(); } }
+  if (f && f.tagName === 'BUTTON') { f.click(); }
+}
+function menuAdjust(d) { const f = document.activeElement; if (f && f.type === 'range') { f.value = String(+f.value + d * (+f.step || 5)); f.dispatchEvent(new Event('input')); return true; } return false; }
+function menuBack() {
+  if (rebinding) { rebinding = null; renderSettings(); return; }
+  if (rt.confirm) { rt.confirm(false); return; }
+  if (mode === 'pause' || mode === 'panel') { closePanel(); }
+}
+// called every frame when the game is not being played (title, pause, settings, panels, credits, ratings)
+function menuPad() {
+  const root = menuRoot(); if (!root || !pad.gp) { return; }
+  if (pad.edge(12) || pad.edge(14)) { if (!(pad.edge(14) && menuAdjust(-1))) { menuMove(root, -1); } }
+  if (pad.edge(13) || pad.edge(15)) { if (!(pad.edge(15) && menuAdjust(1))) { menuMove(root, 1); } }
+  if (pad.edge(0) || pad.edge(2)) { menuPress(root); }
+  if (pad.edge(1) || (pad.edge(9) && (mode === 'pause' || mode === 'panel'))) { menuBack(); }
+}
+
 function collectInput(dt) {
-  const s = Gm.snapshot(g); const k = (a) => down.has(keys[a]), p = (a) => pressed.has(keys[a]);
+  const s = Gm.snapshot(g); const k = (a) => down.has(keys[a]), p = (a) => pressed.has(keys[a]); const P = pad;
   let mx = (k('right') || down.has('ArrowRight') ? 1 : 0) - (k('left') || down.has('ArrowLeft') ? 1 : 0), mz = (k('forward') || down.has('ArrowUp') ? 1 : 0) - (k('back') || down.has('ArrowDown') ? 1 : 0);
   let stickSprint = false; if (touch.move) { const tx = (touch.move.x - touch.move.x0) / 60, tz = -(touch.move.y - touch.move.y0) / 60; mx += Math.max(-1, Math.min(1, tx)); mz += Math.max(-1, Math.min(1, tz)); stickSprint = Math.hypot(tx, tz) > 1.6; }   // push the stick far to sprint
-  const gp = gamepad(); if (gp) { PT.input('gamepad'); } const btn = (i) => !!(gp && gp.buttons[i] && gp.buttons[i].pressed); const edge = (i) => { const v = btn(i), was = padPrev[i]; padPrev[i] = v; return v && !was; };
-  if (gp) { const ax = (i) => (Math.abs(gp.axes[i] || 0) > 0.18 ? gp.axes[i] : 0); mx += ax(0); mz -= ax(1); mouse.dx += ax(2) * 900 * dt; mouse.dy += ax(3) * 600 * dt; }
-  const padAct = !!(gp && (edge(0) || edge(2)));
+  if (P.gp) { mx += P.left[0]; mz -= P.left[1]; mouse.dx += P.right[0] * 900 * dt; mouse.dy += P.right[1] * 600 * dt; }
+  const ch = s.choice || (s.dialog && !Array.isArray(s.dialog.line) ? s.dialog.line : null);
+  const padAct = P.edge(0) || P.edge(2);
   const advanceNow = p('use') || pressed.has('Space') || pressed.has('Enter') || mouse.click || tpad.use || tpad.jump || padAct;
   const input = {
     mx: Math.max(-1, Math.min(1, mx)), mz: Math.max(-1, Math.min(1, mz)), yaw: cam.yaw,
-    jump: p('jump') || tpad.jump || (gp && btn(0) && !s.dialog && padPrev.j !== true), jumpHeld: k('jump') || btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || btn(10) || btn(5) || stickSprint,
-    use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || (gp && btn(2) && !padPrev.u), useHeld: k('use') || btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
-    tab: p('tab') || (gp && edge(3)), hint: p('hint'),
-    aim: mouse.right || k('aim') || btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || btn(6))) || (p('use') && (mouse.right || k('aim'))) || (gp && btn(7) && !padPrev.s) || (tpad.shoot && tpad.aim),
-    aimDX: mouse.dx, aimDY: mouse.dy, advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen), choose: rt.choose
+    jump: p('jump') || tpad.jump || (P.edge(0) && !s.dialog && !ch), jumpHeld: k('jump') || P.btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || P.btn(4) || P.btn(5) || P.btn(10) || stickSprint,
+    use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || P.edge(2), useHeld: k('use') || P.btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
+    tab: p('tab') || P.edge(3) || tpad.tab, hint: p('hint') || P.edge(8) || tpad.hint,
+    aim: mouse.right || k('aim') || P.btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || P.btn(6))) || (p('use') && (mouse.right || k('aim'))) || P.edge(7) || (tpad.shoot && tpad.aim),
+    aimDX: mouse.dx, aimDY: mouse.dy, advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen) || !!(P.edge(1) && s.dialog && s.dialog.seen), choose: rt.choose
   };
-  if (gp) {
-    // choices: D-pad moves the highlight, A picks it
-    const ch = s.choice || (s.dialog && !Array.isArray(s.dialog.line) ? s.dialog.line : null);
-    if (ch) {
-      const n = ch.options.length; rt.padChoice = Math.max(0, Math.min(n - 1, rt.padChoice || 0));
-      if (edge(13) || edge(15)) { rt.padChoice = (rt.padChoice + 1) % n; } if (edge(12) || edge(14)) { rt.padChoice = (rt.padChoice + n - 1) % n; }
-      if (padAct) { input.choose = rt.padChoice; input.advance = false; input.jump = false; rt.padChoice = 0; }
-      [...ui.choice.querySelectorAll('.copt')].forEach((b, i) => b.classList.toggle('focus', i === rt.padChoice));
-    }
-    padPrev.j = btn(0); padPrev.u = btn(2); padPrev.s = btn(7); if (edge(9)) { onEscape(); } if (edge(1) && s.dialog && s.dialog.seen) { input.skip = true; }
+  // choices with a pad: D-pad moves the highlight, A or X picks it
+  if (ch && P.gp) {
+    const n = ch.options.length; rt.padChoice = Math.max(0, Math.min(n - 1, rt.padChoice || 0));
+    if (P.edge(13) || P.edge(15)) { rt.padChoice = (rt.padChoice + 1) % n; } if (P.edge(12) || P.edge(14)) { rt.padChoice = (rt.padChoice + n - 1) % n; }
+    if (padAct) { input.choose = rt.padChoice; input.advance = false; rt.padChoice = 0; }
   }
+  if (!ch) { rt.padChoice = 0; }
+  [...ui.choice.querySelectorAll('.copt')].forEach((b, i) => b.classList.toggle('focus', !!(P.gp && ch) && i === rt.padChoice));
+  if (P.edge(9) && mode === 'play') { if (document.pointerLockElement) { document.exitPointerLock(); } openPause(); }   // Start always pauses (B skips a seen line)
   // the camera follows the mouse unless the camera is in someone's hands
   if (s.scene !== 'train' && !s.shot) { cam.yaw -= mouse.dx * 0.0028; cam.pitch = Math.max(0.05, Math.min(1.0, cam.pitch + mouse.dy * 0.0022)); }
   rt.inputSeen = Math.abs(input.mx) + Math.abs(input.mz) > 0.1 || input.use || input.useHeld || input.jump || input.tab || input.aim || input.advance || Math.abs(mouse.dx) + Math.abs(mouse.dy) > 2 || input.choose !== null && input.choose !== undefined;
   if (input.hint) { PT.hintKey(); } if (input.skip) { PT.skipped(); }
   if (s.scene !== 'train' && tpad.aim) { tpad.aim = false; }
-  touchUI.classList.toggle('train', s.scene === 'train');
-  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = false;
+  touchUI.classList.toggle('train', s.scene === 'train'); touchUI.classList.toggle('era', s.scene === 'town' && !!s.tab);
+  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = tpad.tab = tpad.hint = false;
   return input;
 }
 
@@ -561,6 +603,7 @@ function showCredits() {
     el('div', { class: 'h2', text: T('ui.album') }), album, el('p', { class: 'unsent', text: T('end.unsent') }), el('p', { class: 'small', text: T('end.fiction') }), el('p', { class: 'small', text: T('end.poem') }),
     el('div', { class: 'row' }, [PT.active() ? el('button', { type: 'button', class: 'btn', text: T('pt.download'), 'data-testid': 'pt-download-end', onclick: () => PT.download() }) : null, el('button', { type: 'button', class: 'btn primary', text: T('ui.keepExploring'), 'data-testid': 'keep-exploring', onclick: () => { ui.overlay.hidden = true; mode = 'play'; } }), el('button', { type: 'button', class: 'btn', text: T('ui.backTitle'), onclick: () => { ui.overlay.hidden = true; showTitle(); } })])
   ]));
+  const ke = ui.overlay.querySelector('[data-testid="keep-exploring"]'); if (ke) { ke.focus(); }
 }
 function showProvenance() {
   const p = rt.sourceProv; if (!p) { return; }
@@ -572,10 +615,11 @@ function showProvenance() {
 }
 ui.source.addEventListener('click', showProvenance);
 ui.era.addEventListener('click', () => { if (mode === 'play') { rt.forceTab = true; } });
-function closePanel() { ui.panel.hidden = true; mode = 'play'; }
+function closePanel() { ui.panel.hidden = true; mode = 'play'; if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); } }
 
 // ---- menus ----------------------------------------------------------------------------------------------------
 function onEscape() {
+  if (rt.confirm) { rt.confirm(false); return; }
   if (mode === 'panel') { closePanel(); return; }
   if (mode === 'pause') { closePanel(); return; }
   if (mode !== 'play' || !g) { return; }
@@ -584,12 +628,13 @@ function onEscape() {
   openPause();
 }
 function openPause() {
-  padPrev.m9 = padPrev.m1 = true;   // the Start press that opened the menu must be released before it can close it
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = ''; down.clear();
   const b = (text, id, fn) => el('button', { type: 'button', class: 'mbtn', text, 'data-testid': id, onclick: fn });
   ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), PT.active() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
+  const r = ui.panel.querySelector('[data-testid="resume"]'); if (r) { r.focus(); }
 }
 function renderSettings() {
+  const keepFocus = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.testid : null;
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = '';
   const ap = A.getPrefs(); const row = (label, kids) => el('div', { class: 'srow' }, [el('span', { class: 'sl', text: label }), el('span', { class: 'sv' }, kids)]);
   const btn = (text, id, fn) => el('button', { type: 'button', class: 'sbtn', text, 'data-testid': id, onclick: fn });
@@ -605,6 +650,7 @@ function renderSettings() {
     row(T('ui.language'), [btn(T('ui.lang'), 'lang', () => { setP('lang', prefs.lang === 'zh' ? 'en' : 'zh'); applyLang(); })]),
     row(T('ui.keys'), [kb, btn(T('ui.resetKeys'), 'reset-keys', () => { Object.assign(keys, DEFAULT_KEYS); write(KEYS_KEY, keys); renderSettings(); })]),
     el('button', { type: 'button', class: 'btn', text: T('ui.resume'), 'data-testid': 'resume', onclick: closePanel }));
+  const f = (keepFocus && ui.panel.querySelector(`[data-testid="${keepFocus}"]`)) || ui.panel.querySelector('button'); if (f) { f.focus(); }
 }
 function safeSpot() { const lay = LAYOUTS[sceneWorldId(Gm.snapshot(g).scene)]; if (lay && g.rt.body && lay.spawn) { const sp = lay.spawn; Object.assign(g.rt.body, { x: sp.x, z: sp.z, y: 0, vx: 0, vz: 0, vy: 0, grounded: true }); } closePanel(); }
 function applyLang() { document.documentElement.lang = prefs.lang === 'zh' ? 'zh-CN' : 'en'; document.title = T('ui.title') + ' — ' + T('ui.subtitle'); ui.subs.removeAttribute('data-sig'); ui.prompt.removeAttribute('data-sig'); ui.choice.removeAttribute('data-sig'); }
@@ -619,13 +665,23 @@ function showTitle() {
   const saved = readSave();
   ui.overlay.className = 'overlay title'; ui.overlay.hidden = false; ui.overlay.textContent = '';
   const row = el('div', { class: 'row' });
-  if (saved) { row.append(el('button', { class: 'btn primary', type: 'button', text: T('ui.continue'), 'data-testid': 'continue', onclick: () => begin(saved) }), el('button', { class: 'btn', type: 'button', text: T('ui.newGame'), 'data-testid': 'new-game', onclick: () => { if (window.confirm(T('ui.confirmNew'))) { begin(null); } } })); }
+  if (saved) { row.append(el('button', { class: 'btn primary', type: 'button', text: T('ui.continue'), 'data-testid': 'continue', onclick: () => begin(saved) }), el('button', { class: 'btn', type: 'button', text: T('ui.newGame'), 'data-testid': 'new-game', onclick: () => askConfirm(T('ui.confirmNew'), (yes) => { if (yes) { begin(null); } }) })); }
   else { row.append(el('button', { class: 'btn primary', type: 'button', text: T('ui.start'), 'data-testid': 'start', onclick: () => begin(null) })); }
   rt.testerField = PT.active() ? el('input', { type: 'text', class: 'ptid', maxlength: '40', placeholder: T('pt.tester'), 'data-testid': 'pt-tester' }) : null;
   ui.overlay.append(el('div', { class: 'titlebox', 'data-testid': 'title' }, [el('h1', { text: T('ui.title') }), el('div', { class: 'sub', text: T('ui.subtitle') }), el('div', { class: 'tag', text: T('ui.tagline') }), PT.active() ? el('div', { class: 'note pt', text: T('pt.mode') }) : null, rt.testerField, row, el('div', { class: 'note', text: T('ui.saveNote') }), el('div', { class: 'note', text: T('ui.fixture') })]),
     el('button', { class: 'btn ghost langbtn', type: 'button', text: T('ui.lang'), 'data-testid': 'lang', onclick: () => { prefs.lang = prefs.lang === 'zh' ? 'en' : 'zh'; write(PREF_KEY, prefs); showTitle(); } }));
+  const pb = ui.overlay.querySelector('.btn.primary'); if (pb) { pb.focus(); }
+}
+function askConfirm(text, then) {
+  const box = el('div', { class: 'confirm', role: 'alertdialog', 'data-testid': 'confirm' });
+  const before = document.activeElement;
+  const done = (yes) => { rt.confirm = null; box.remove(); if (before && before.focus) { before.focus(); } then(yes); };
+  const no = el('button', { type: 'button', class: 'btn primary', text: T('ui.no'), 'data-testid': 'confirm-no', onclick: () => done(false) });
+  box.append(el('p', { text }), el('div', { class: 'row' }, [no, el('button', { type: 'button', class: 'btn', text: T('ui.yes'), 'data-testid': 'confirm-yes', onclick: () => done(true) })]));
+  ui.overlay.append(box); rt.confirm = done; no.focus();
 }
 function begin(saved) {
+  if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); }
   A.unlock(); ui.overlay.hidden = true; if (PT.active()) { PT.setTester(rt.testerField && rt.testerField.value); }
   if (!saved) { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
   g = Gm.createGame(ar, saved || null); Object.values(worlds).forEach((w) => { void w; });
@@ -671,14 +727,14 @@ function tick(now) {
   // fps from the real frame time, not the capped simulation step
   fpsAcc += rawMs / 1000; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
   if (!g || !world) { return; }
+  pad = pollPad();
   if (mode === 'play') {
     let input = collectInput(dt); if (rt.forceTab) { input.tab = true; rt.forceTab = false; }
     if (testHook && testHook.input) { input = testHook.input(input) || input; }
     const evs = Gm.tick(g, dt, input); evs.forEach(handle); if (testHook && testHook.events) { testHook.events(evs); }
   } else {
     pressed.clear(); mouse.dx = mouse.dy = 0; mouse.click = false;
-    // a gamepad can close the pause menu (Start or B); menus themselves need a pointer
-    const gp = gamepad(); if (gp && (mode === 'pause' || mode === 'panel')) { const b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed); const e9 = b(9) && !padPrev.m9, e1 = b(1) && !padPrev.m1; padPrev.m9 = b(9); padPrev.m1 = b(1); if (e9 || e1) { closePanel(); } }
+    menuPad();
   }
   syncCast(dt);
   world.update(dt, rt.t, reduce());

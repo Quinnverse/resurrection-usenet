@@ -38,6 +38,10 @@
     .ptnote { width:100%; margin:8px 0; border-radius:6px; background:rgba(0,0,0,.3); color:var(--ink); border:1px solid rgba(255,246,234,.4); font:inherit; padding:6px; }
     .sbtn.on { background:var(--gold); color:#111; } .note.pt { color:var(--gold); }
     .copt.focus { outline:2px solid var(--gold); outline-offset:2px; }
+    .touchui .tb-tab { display:none; } .touchui.era .tb-tab { display:block; }
+    .touchui .tb-hint { position:fixed; top:max(52px, env(safe-area-inset-top)); left:max(66px, calc(env(safe-area-inset-left) + 52px)); width:44px; height:44px; font-size:.9rem; }
+    .btn:focus, .mbtn:focus, .sbtn:focus, .kbtn:focus, .copt:focus { outline:2px solid var(--gold); outline-offset:3px; }
+    .confirm { position:fixed; z-index:30; left:50%; top:50%; transform:translate(-50%, -50%); background:rgba(14,10,22,.96); border:1px solid rgba(255,246,234,.4); border-radius:10px; padding:18px 22px; max-width:min(440px, 90vw); }
     /* almost no HUD: a chapter marker that fades, a prompt only in reach, subtitles, and choices when asked */
     .chapter { position:absolute; z-index:6; top:max(18px, env(safe-area-inset-top)); left:max(22px, env(safe-area-inset-left)); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); text-shadow:var(--shadow); opacity:0; transition:opacity 1.2s; pointer-events:none; }
     .chapter.on { opacity:.95; }

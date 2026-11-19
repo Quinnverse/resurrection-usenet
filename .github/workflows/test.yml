@@ -126,13 +126,53 @@ jobs:
           retention-days: 30
 
       - name: Run V5 browser tests
-        run: npx playwright test e2e/v5.spec.js
+        run: npx playwright test e2e/v5.spec.js --grep-invert "device: "
 
       - name: Upload V5 screenshots and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: resurrection-v5-evidence
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  browser-v5-devices:
+    name: V5 whole game on one input device (${{ matrix.device }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [kbm, pad, touch]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dev dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Device path in the Node shell (fast check)
+        run: node tools/v5-shell-run.mjs --quiet --device ${{ matrix.device }}
+
+      - name: Whole game in Chromium with only this device
+        run: npx playwright test e2e/v5.spec.js --grep "device: ${{ matrix.device }}"
+
+      - name: Upload screenshots, video and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resurrection-v5-device-${{ matrix.device }}
           path: |
             test-results/
             playwright-report/

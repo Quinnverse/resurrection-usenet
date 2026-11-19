@@ -8,6 +8,7 @@
 //   node tools/v5-shell-run.mjs --continue <save.json> [--lang zh]      title -> Continue -> 4 s of play
 //   node tools/v5-shell-run.mjs --shots <dir>                           also write software-rasterised previews of what
 //                                                                       the shell's camera sees (tools/p4-preview.mjs)
+//   node tools/v5-shell-run.mjs --device pad|kbm|touch                 the whole game through one input device's code path
 //   node tools/v5-shell-run.mjs --tech                                  the tech demo page and its 3-minute walkthrough
 import { register } from 'node:module';
 import fs from 'node:fs';
@@ -16,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.resolve(here, '..');
 const args = process.argv.slice(2); const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? (args[i + 1] || true) : null; };
-const TECH = args.includes('--tech'); const SHOTS = opt('--shots');
+const TECH = args.includes('--tech'); const DEVICE = opt('--device'); const SHOTS = opt('--shots');
 const LANG = opt('--lang') || 'en', ALT = args.includes('--alt'), QUIET = args.includes('--quiet'), CONT = opt('--continue');
 const SHIM = pathToFileURL(path.join(here, 'v5-three-shim.mjs')).href;
 
@@ -28,6 +29,7 @@ register('data:text/javascript,' + encodeURIComponent(hooks));
 
 // ---- virtual clock ---------------------------------------------------------------------------------------------
 let now = 1000; const timers = []; let timerId = 0; let rafCb = null;
+const realSetTimeout = globalThis.setTimeout.bind(globalThis);
 globalThis.setTimeout = (fn, ms) => { const id = ++timerId; timers.push({ id, at: now + (ms || 0), fn }); return id; };
 globalThis.clearTimeout = (id) => { const i = timers.findIndex((x) => x.id === id); if (i >= 0) { timers.splice(i, 1); } };
 globalThis.requestAnimationFrame = (cb) => { rafCb = cb; return 1; };
@@ -60,8 +62,25 @@ class El {
   toDataURL() { return 'data:image/jpeg;base64,AAAA'; }
   requestPointerLock() {}
   scrollIntoView() {}
+  querySelectorAll(sel) { const c = sel.split(/\s+/).pop().replace(/^\./, ''); const out = []; const walk = (n) => n.children.forEach((ch) => { if (ch.cls && ch.cls().includes(c)) { out.push(ch); } walk(ch); }); walk(this); return out; }
+  closest(sel) { let n = this; while (n) { if (sel === '[hidden]' && n.hidden) { return n; } n = n.parent; } return null; }
+  getClientRects() { return this.isShown() ? [{}] : []; }
+  getBoundingClientRect() { return { x: 100, y: 100, width: 40, height: 40 }; }
+  dispatchEvent(ev) { this.dispatch(ev.type, ev); return true; }
+  click() { this.dispatch('click'); }
+  focus() { globalThis.document.activeElement = this; }
+  blur() { if (globalThis.document.activeElement === this) { globalThis.document.activeElement = null; } }
+  get dataset() { const d = {}; Object.entries(this.attrs).forEach(([k, v]) => { if (k.startsWith('data-')) { d[k.slice(5).replace(/-([a-z])/g, (m, c) => c.toUpperCase())] = v; } }); return d; }
 }
 globalThis.Node = El;
+// enough of querySelector for the input drivers: [data-testid="x"], optionally followed by " .class"
+function qsa(sel) {
+  const m = /^\[data-testid="([^"]+)"\](?:\s+\.(\S+))?(?:\s+(\S+))?$/.exec(sel); if (!m) { return []; }
+  const base = all.filter((e) => e.attrs['data-testid'] === m[1]); if (!m[2] && !m[3]) { return base; }
+  return base.flatMap((b) => b.querySelectorAll('.' + (m[2] || m[3])));
+}
+class FakeEvent { constructor(type, init) { Object.assign(this, init || {}); this.type = type; } }
+Object.assign(globalThis, { KeyboardEvent: FakeEvent, MouseEvent: FakeEvent, TouchEvent: FakeEvent, Event: FakeEvent, Touch: class { constructor(init) { Object.assign(this, init); } } });
 const byTestId = (id) => all.find((e) => e.attrs['data-testid'] === id && e.isShown());
 const appEl = new El('div'), stageEl = new El('div'); appEl.isRoot = true;
 const store = new Map();
@@ -69,9 +88,11 @@ const winListeners = {};
 globalThis.window = globalThis;
 Object.assign(globalThis, {
   innerWidth: 1280, innerHeight: 720, devicePixelRatio: 1,
-  addEventListener: (k, fn) => { (winListeners[k] = winListeners[k] || []).push(fn); }, matchMedia: () => ({ matches: false }), confirm: () => true,
+  addEventListener: (k, fn) => { (winListeners[k] = winListeners[k] || []).push(fn); },
+  dispatchEvent: (ev) => { (winListeners[ev.type] || []).forEach((f) => f(Object.assign({ target: globalThis, preventDefault() {}, stopPropagation() {} }, ev))); return true; },
+  getComputedStyle: (e) => ({ display: (e.style && e.style.display) || 'block', visibility: 'visible' }), matchMedia: () => ({ matches: false }), confirm: () => true,
   localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) },
-  document: { getElementById: (id) => (id === 'app' ? appEl : id === 'stage' ? stageEl : idMap.get(id) || null), createElement: (t) => new El(t), createTextNode: (t) => { const n = new El('#text'); n._text = String(t); return n; }, addEventListener() {}, documentElement: { lang: 'en' }, title: '', pointerLockElement: null, exitPointerLock() {} },
+  document: { querySelector: (sel) => qsa(sel)[0] || null, querySelectorAll: (sel) => qsa(sel), getElementById: (id) => (id === 'app' ? appEl : id === 'stage' ? stageEl : idMap.get(id) || null), createElement: (t) => new El(t), createTextNode: (t) => { const n = new El('#text'); n._text = String(t); return n; }, addEventListener() {}, documentElement: { lang: 'en' }, title: '', pointerLockElement: null, exitPointerLock() {} },
   fetch: async (url) => { const f = path.join(root, 'frontend', String(url).replace(/^\//, '')); if (!fs.existsSync(f)) { return { ok: false, status: 404 }; } const txt = fs.readFileSync(f, 'utf8'); return { ok: true, status: 200, text: async () => txt }; }
 });
 Object.defineProperty(globalThis, 'navigator', { value: { language: LANG === 'zh' ? 'zh-CN' : 'en-US', getGamepads: () => [] }, configurable: true });
@@ -79,7 +100,7 @@ const errors = []; const origErr = console.error; console.error = (...a) => { er
 
 // ---- test hook -------------------------------------------------------------------------------------------------
 const hook = { game: null, next: null, last: [] };
-hook.input = () => hook.next; hook.events = (evs) => { hook.last = evs; };
+hook.input = (orig) => (hook.devices ? orig : hook.next); hook.events = (evs) => { hook.last = evs; };
 globalThis.__V5_TEST__ = hook;
 store.set('v5.prefs.v1', JSON.stringify({ lang: LANG, quality: 'medium' }));
 if (CONT) { store.set('v5.save.v1', fs.readFileSync(CONT, 'utf8')); }
@@ -162,7 +183,14 @@ try {
     click('start'); frameOnce({});
     const { playThrough } = await import('../test/v5-bot.mjs');
     const choices = ALT ? { train: 0, parting: 1, finish: 0, closer: 1, defend: 1, offer: 1, letter: 1 } : { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter: 0 };
-    const bot = await playThrough(hook.game, { step: frameOnce, choices });
+    let step = frameOnce;
+    if (DEVICE) {
+      if (DEVICE === 'pad') { const pad = { id: 'sim', connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) }; globalThis.__pad = pad; navigator.getGamepads = () => [pad]; }
+      const D = await import('../test/v5-devices.mjs'); hook.devices = true;
+      step = D.DRIVERS[DEVICE]({ frame: async () => frameOnce(undefined), realTimeout: realSetTimeout });
+      report.device = DEVICE;
+    }
+    const bot = await playThrough(hook.game, { step, choices });
     waitFor(() => byTestId('credits'), 30, 'credits roll');
     const credits = byTestId('credits').textContent; const album = byTestId('album');
     const want = [tr(LANG, 'end.elena'), tr(LANG, 'end.june'), tr(LANG, 'end.unsent')];

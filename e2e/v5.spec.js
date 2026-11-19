@@ -35,7 +35,8 @@ const imp = (f) => import(pathToFileURL(path.join(__dirname, '..', f)).href);
 function initHook() {
   const real = { raf: window.requestAnimationFrame.bind(window), st: window.setTimeout.bind(window), ct: window.clearTimeout.bind(window) };
   const h = { virtual: false, next: {}, last: [], now: 0, timers: [], raf: null, id: 1e6, realTimeout: real.st };
-  h.input = (orig) => (h.virtual ? h.next : orig);
+  // devices: the game reads its own input (keyboard, mouse, touch, pad) and the hook only counts frames
+  h.input = (orig) => (h.virtual && !h.devices ? h.next : orig);
   h.events = (evs) => { h.last = evs; };
   window.requestAnimationFrame = (cb) => { if (h.virtual) { h.raf = cb; return 1; } return real.raf(cb); };
   window.setTimeout = (fn, ms) => { if (!h.virtual) { return real.st(fn, ms); } const id = ++h.id; h.timers.push({ id, at: h.now + (ms || 0), fn }); return id; };
@@ -48,11 +49,22 @@ function initHook() {
     const cb = h.raf; h.raf = null; if (cb) { cb(h.now); }
   };
   // one virtual frame, then give the browser a moment to paint (and the test runner a chance to take screenshots)
+  h.unvirtualize = () => { h.virtual = false; h.devices = false; const cb = h.raf; h.raf = null; if (cb) { real.raf(cb); } };
+  h.frame = async () => { h.last = []; h.advance(); await new Promise((r) => real.st(r, 0)); return h.last; };
   h.step = async (input) => { h.next = input || {}; h.last = []; h.advance(); await new Promise((r) => real.st(r, 0)); return h.last; };
   window.__V5_TEST__ = h;
 }
 // The bot module, served to the page with its imports pointed at the game's own URLs (same module instances).
+// A standard-mapping gamepad object (a simulation in the page, not hardware).
+function installPad() {
+  const pad = { id: 'simulated standard gamepad', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
+  window.__pad = pad; navigator.getGamepads = () => [pad, null, null, null];
+  window.__press = (i, on) => { pad.buttons[i].pressed = on; pad.buttons[i].value = on ? 1 : 0; pad.timestamp += 1; };
+}
+const padTap = async (page, i) => { await page.evaluate((b) => window.__press(b, true), i); await page.waitForTimeout(700); await page.evaluate((b) => window.__press(b, false), i); await page.waitForTimeout(500); };
 async function serveBot(page) {
+  const dev = fs.readFileSync(path.join(__dirname, '..', 'test', 'v5-devices.mjs'), 'utf8');
+  await page.route('**/v5-test/devices.mjs', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: dev }));
   const src = fs.readFileSync(path.join(__dirname, '..', 'test', 'v5-bot.mjs'), 'utf8').split("'../frontend/v5/core/").join("'/v5/core/");
   await page.route('**/v5-test/bot.mjs', (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body: src }));
 }
@@ -264,30 +276,105 @@ test.describe('V5 — The Summer We Never Finished', () => {
     expect(w.issues).toEqual([]); await ctx.close();
   });
 
-  test('gamepad (simulated standard pad, not hardware): stick moves, A acts, Start pauses', async ({ page }) => {
-    const w = watch(page);
-    await page.addInitScript(() => {
-      const pad = { id: 'simulated standard gamepad', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
-      window.__pad = pad; navigator.getGamepads = () => [pad, null, null, null];
-      window.__press = (i, on) => { pad.buttons[i].pressed = on; pad.buttons[i].value = on ? 1 : 0; pad.timestamp += 1; };
-    });
-    const { saves } = await savesByBeat();
-    await continueFrom(page, saves['1.town']); await page.waitForTimeout(1500);
-    const a = await snap(page);
-    await page.evaluate(() => { window.__pad.axes[1] = -1; }); await page.waitForTimeout(1500); await page.evaluate(() => { window.__pad.axes[1] = 0; });
-    await page.waitForTimeout(300); const b = await snap(page); const moved = Math.hypot(b.x - a.x, b.z - a.z);
-    // buttons are read once per frame; hold each press for 700 ms so a slow software-rendered frame cannot miss it
-    await page.evaluate(() => window.__press(0, true)); await page.waitForTimeout(700); await page.evaluate(() => window.__press(0, false)); await page.waitForTimeout(500);
-    const afterA = await snap(page);
-    await page.evaluate(() => window.__press(9, true)); await page.waitForTimeout(700); await page.evaluate(() => window.__press(9, false)); await page.waitForTimeout(500);
-    const paused = (await snap(page)).mode;
-    await page.evaluate(() => window.__press(1, true)); await page.waitForTimeout(700); await page.evaluate(() => window.__press(1, false)); await page.waitForTimeout(500);
-    const resumed = (await snap(page)).mode;
-    console.log('V5_PAD_RESUME ' + resumed);
-    console.log('V5_PAD ' + JSON.stringify({ moved, jumpOrAdvance: afterA.log.slice(-10), paused, fps: afterA.fps }));
-    expect(moved).toBeGreaterThan(0.3); expect(afterA.log).toContain('body'); expect(paused).toBe('pause'); expect(resumed).toBe('play');
+  // ---- each input device on its own: menus, pause and resume, save and continue ----------------------------------
+  test('gamepad only: title, new-game confirm, pause, settings, resume, save and continue', async ({ page }, testInfo) => {
+    const w = watch(page); await page.addInitScript(installPad);
+    await page.addInitScript(() => { localStorage.setItem('v5.prefs.v1', JSON.stringify({ lang: 'en', quality: 'low' })); });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 });
+    await padTap(page, 0);                                                                  // A: Start
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play');
+    const a = await snap(page); await page.evaluate(() => { window.__pad.axes[1] = -1; }); await page.waitForTimeout(2000); await page.evaluate(() => { window.__pad.axes[1] = 0; }); await page.waitForTimeout(300);
+    const b = await snap(page); expect(Math.hypot(b.x - a.x, b.z - a.z)).toBeGreaterThan(0.3);
+    await padTap(page, 9); expect((await snap(page)).mode).toBe('pause');                 // Start: pause
+    await padTap(page, 13); await padTap(page, 0);                                          // D-pad down to Settings, A
+    await expect(page.getByTestId('sound')).toBeVisible();
+    const subs0 = await page.getByTestId('subs').textContent();
+    for (let k = 0; k < 12 && !(await page.evaluate(() => document.activeElement && document.activeElement.dataset.testid === 'subs')); k++) { await padTap(page, 13); }
+    await padTap(page, 0); expect(await page.getByTestId('subs').textContent()).not.toBe(subs0);   // A toggled subtitle size
+    await attach(testInfo, 'pad-settings', await shot(page));
+    await padTap(page, 1); expect((await snap(page)).mode).toBe('play');                   // B: back to the game
+    await padTap(page, 9); await padTap(page, 9); expect((await snap(page)).mode).toBe('play');   // Start twice: pause, resume
+    const beat = (await snap(page)).beat; await page.waitForTimeout(6000);                 // autosave runs every 5 s
+    await page.reload(); await expect(page.getByTestId('continue')).toBeVisible({ timeout: 30000 });
+    await padTap(page, 13); await padTap(page, 0);                                          // D-pad to New game, A: asks first
+    await expect(page.getByTestId('confirm')).toBeVisible(); await attach(testInfo, 'pad-confirm', await shot(page));
+    await padTap(page, 0); await expect(page.getByTestId('confirm')).toBeHidden();         // A on Cancel (focused)
+    await padTap(page, 12); await padTap(page, 0);                                          // back up to Continue, A
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play');
+    expect((await snap(page)).beat).toBe(beat);
+    console.log('V5_PAD_MENUS ok ' + beat);
     expect(w.issues).toEqual([]);
   });
+
+  test('keyboard only: title with Enter, arrows in menus, Esc pause and resume, choices with number keys', async ({ page }, testInfo) => {
+    const w = watch(page); const { saves } = await savesByBeat();
+    await page.addInitScript(() => { localStorage.setItem('v5.prefs.v1', JSON.stringify({ lang: 'en', quality: 'low' })); });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 });
+    await page.keyboard.press('Enter'); await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play');
+    await page.keyboard.press('Escape'); expect((await snap(page)).mode).toBe('pause');
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');   // Resume is focused; down to Settings
+    await expect(page.getByTestId('sound')).toBeVisible();
+    await page.keyboard.press('Escape'); expect((await snap(page)).mode).toBe('play');
+    // a dialogue choice with the number keys (chapter 5, the parting words)
+    const sv = JSON.parse(JSON.stringify(saves['5.depart'])); Object.assign(sv.flags, { c5arrive: true, suitcase: true, walked: true }); sv.pos = { station: { x: -26.3, z: -0.5, y: 0, yaw: -Math.PI / 2 } };
+    await continueFrom(page, sv); await page.waitForTimeout(1500);
+    const s0 = await snap(page); expect(s0.prompt && s0.prompt.id).toBe('june');
+    await page.keyboard.press('KeyE');
+    for (let k = 0; k < 40 && !(await snap(page)).dialog?.line?.choice; k++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(350); }
+    await attach(testInfo, 'kbd-choice', await shot(page));
+    await page.keyboard.press('Digit2'); await page.waitForTimeout(500);
+    expect((await snap(page)).choices.parting).toBe('c5.choice.miss');
+    expect(w.issues).toEqual([]);
+  });
+
+  // ---- the whole game with ONE device, no injected game input ----------------------------------------------------
+  for (const dev of ['kbm', 'pad', 'touch']) {
+    test(`the whole game with only ${dev === 'kbm' ? 'keyboard and mouse' : dev === 'pad' ? 'a gamepad' : 'touch'} (device: ${dev})`, async ({ browser }, testInfo) => {
+      test.setTimeout(85 * 60 * 1000);
+      const ctx = await browser.newContext(dev === 'touch' ? { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1, recordVideo: { dir: testInfo.outputPath('video'), size: { width: 844, height: 390 } } } : { viewport: { width: 960, height: 540 }, recordVideo: { dir: testInfo.outputPath('video'), size: { width: 960, height: 540 } } });
+      const page = await ctx.newPage(); const w = watch(page); const lang = dev === 'pad' ? 'zh' : 'en';
+      if (dev === 'pad') { await page.addInitScript(installPad); }
+      await page.addInitScript(initHook);
+      await page.addInitScript((l) => { localStorage.setItem('v5.prefs.v1', JSON.stringify({ lang: l, quality: 'low' })); }, lang);
+      await serveBot(page);
+      await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 });
+      // start the game with the device itself, in real time
+      if (dev === 'pad') { await padTap(page, 0); } else if (dev === 'kbm') { await page.keyboard.press('Enter'); } else { await page.getByTestId('start').tap(); }
+      await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play');
+      // pause and resume with the device, in real time
+      if (dev === 'pad') { await padTap(page, 9); expect((await snap(page)).mode).toBe('pause'); await padTap(page, 1); }
+      else if (dev === 'kbm') { await page.keyboard.press('Escape'); expect((await snap(page)).mode).toBe('pause'); await page.keyboard.press('Escape'); }
+      else { await page.touchscreen.tap(150, 250); await page.getByTestId('touch-pause').tap(); expect((await snap(page)).mode).toBe('pause'); await page.getByTestId('resume').tap(); }
+      expect((await snap(page)).mode).toBe('play');
+      const t0 = Date.now();
+      const playing = page.evaluate(async ([d, choices]) => {
+        const { playThrough } = await import('/v5-test/bot.mjs'); const D = await import('/v5-test/devices.mjs');
+        const h = window.__V5_TEST__; await h.virtualize(); h.devices = true;
+        const step = D.DRIVERS[d](h);
+        const bot = await playThrough(h.game, { step, choices });
+        for (let i = 0; i < 900 && !document.querySelector('[data-testid="credits"]'); i++) { await h.frame(); }
+        const credits = document.querySelector('[data-testid="credits"]'); const snapEnd = window.V5Debug.snapshot();
+        h.unvirtualize();   // back to real time: the credits are left with the device, as a player would
+        return { t: bot.t, beats: bot.beats, stuck: bot.stuck, credits: credits ? credits.textContent : null, snap: snapEnd };
+      }, [dev, dev === 'pad' ? { train: 0, parting: 1, finish: 0, closer: 1, defend: 1, offer: 1, letter: 1 } : { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter: 0 }]);
+      let done = false, out = null, err = null; playing.then((r) => { out = r; done = true; }, (e) => { err = e; done = true; });
+      let lastBeat = null, n = 0;
+      while (!done) { await page.waitForTimeout(2000); if (done) { break; } const s = await snap(page).catch(() => null); if (s && s.beat !== lastBeat) { lastBeat = s.beat; n += 1; await attach(testInfo, `${dev}-${String(n).padStart(2, '0')}-${s.beat}`, await shot(page)); } }
+      if (err) { await attach(testInfo, `${dev}-failure`, await shot(page)); await ctx.close(); throw err; }
+      await attach(testInfo, `${dev}-credits`, await shot(page));
+      // leave the credits with the device too
+      if (dev === 'pad') { await padTap(page, 0); } else if (dev === 'kbm') { await page.keyboard.press('Enter'); } else { await page.getByTestId('keep-exploring').tap(); }
+      await page.waitForTimeout(800); const after = await snap(page);
+      console.log(`V5_DEVICE ${dev} ok game=${out.t.toFixed(0)}s wall=${((Date.now() - t0) / 1000).toFixed(0)}s inputs=${JSON.stringify(out.snap.log.slice(-3))} afterCredits=${after.mode}`);
+      for (let c = 1; c <= 7; c++) { expect(out.beats.some((x) => x.startsWith(c + '.')), 'chapter ' + c).toBe(true); }
+      expect(out.credits).toContain('June — Art & Story');
+      expect(out.stuck).toEqual([]);
+      expect(after.mode).toBe('play');
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem('v5.save.v1')).beat)).toBe('end');
+      expect(w.issues).toEqual([]); expect(w.failed).toEqual([]);
+      await ctx.close();
+    });
+  }
 
   // ---- audio: every arrangement and effect produces sound without clipping (signal only, nobody is listening) ----
   test('audio page: every theme and effect plays, measured output level, no clipping', async ({ page }, testInfo) => {

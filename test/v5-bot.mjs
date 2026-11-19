@@ -60,19 +60,23 @@ export function makeBot(g, opts) {
   };
   bot.promptIs = (id) => (s) => s.prompt && s.prompt.id === id;
   bot.use = async (id) => { const s = bot.snap(); if (!s.prompt || s.prompt.id !== id) { throw new Error(`no prompt ${id} at beat ${s.beat} (${s.x.toFixed(2)},${s.z.toFixed(2)}): ${JSON.stringify(s.prompt)}`); } await bot.tick({ use: true }); };
-  bot.hold = async (id, secs) => { for (let i = 0; i < secs / DT; i++) { const s = bot.snap(); if (!s.prompt || s.prompt.id !== id) { return; } await bot.tick({ useHeld: true, use: i === 0 }); } };
+  bot.hold = async (id, secs) => { for (let i = 0; i < 15 && Math.hypot(g.rt.body.vx, g.rt.body.vz) > 0.05 && bot.snap().prompt && bot.snap().prompt.id === id; i++) { await bot.tick({}); }   // stop walking first
+    for (let i = 0; i < secs / DT; i++) { const s = bot.snap(); if (!s.prompt || s.prompt.id !== id) { return; } await bot.tick({ useHeld: true, use: i === 0 }); } };
   bot.go = async (id, x, z) => { if (!(await bot.walkTo(x, z, bot.promptIs(id)))) { const s = bot.snap(); throw new Error(`could not reach ${id} at beat ${s.beat} from (${s.x.toFixed(2)},${s.z.toFixed(2)}) prompt=${JSON.stringify(s.prompt)}`); } };
   bot.goUse = async (id, x, z) => { await bot.go(id, x, z); await bot.use(id); await bot.talk(); };
   // like until, but also stops when `alt` holds
   bot.untilOr = async (fn, secs, input, alt) => bot.until((s) => fn(s) || (alt && alt(s)), secs, input);
   bot.until = async (fn, secs, input) => { for (let i = 0; i < (secs || 60) / DT; i++) { const s = bot.snap(); if (fn(s)) { return s; } if (s.dialog || s.choice) { await bot.talk(); continue; } await bot.tick(typeof input === 'function' ? input(s) : input); } throw new Error('timed out at beat ' + bot.snap().beat + ' ' + JSON.stringify({ prompt: bot.snap().prompt, x: bot.snap().x, z: bot.snap().z })); };
   // point the train camera at a world position (carriage coordinates) and take the picture
+  // turn the camera until it is on target (a stick turns at a limited speed), then shoot
   bot.shootAt = async (posFn) => {
     const seat = LAYOUTS.train.seat;
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < 60; k++) {
       const p = posFn(g.rt.photoT + DT); const dx = p.x - seat.x, dy = p.y - seat.y, dz = p.z - seat.z;
-      const yaw = Math.atan2(-dx, -dz), pitch = Math.atan2(-dy, Math.hypot(dx, dz));
-      await bot.tick({ aim: true, aimDX: -wrap(yaw - g.rt.aimYaw) / 0.004, aimDY: (pitch - g.rt.aimPitch) / 0.003 });
+      const yaw = Math.atan2(-dx, -dz), pitch = Math.max(-0.5, Math.min(0.6, Math.atan2(-dy, Math.hypot(dx, dz))));
+      const ey = wrap(yaw - g.rt.aimYaw), ep = pitch - g.rt.aimPitch;
+      if (k >= 2 && Math.abs(ey) < 0.012 && Math.abs(ep) < 0.012) { break; }
+      await bot.tick({ aim: true, aimDX: -ey / 0.004, aimDY: ep / 0.003 });
     }
     await bot.tick({ aim: true, shoot: true });
   };
@@ -213,7 +217,7 @@ export async function playThrough(g, opts) {
   await bot.until((s) => s.beat === '6.cottage'); await bot.talk();
   await bot.goUse('boxA', -2.9, -0.4); await bot.goUse('drop', 1.2, 1.8);
   await bot.goUse('boxB', 2.6, -1.2); await bot.goUse('drop', 1.2, 1.8);
-  if (opt) { await bot.goUse('letter', 1.3, 1.1); await bot.goUse('gamebox', 2.1, 1.4); }
+  if (opt) { await bot.goUse('letter', 1.3, 1.1); await bot.goUse('gamebox', 2.05, 1.75); }
   await bot.until((s) => s.june && s.june.state !== 'TRANSITION', 20);
   await bot.go('june', g.rt.june.x - 0.6, g.rt.june.z + 1.1); await bot.use('june'); await bot.talk();
   // the beach in 2004: keep beside her; she stops to talk

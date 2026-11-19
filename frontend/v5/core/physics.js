@@ -80,6 +80,10 @@ export function stepBody(b, input, dt, w, extra) {
     if (ok(b.x + sx, b.z + sz)) { b.x += sx; b.z += sz; continue; }
     if (ok(b.x + sx, b.z)) { b.x += sx; b.vz *= 0.5; continue; }
     if (ok(b.x, b.z + sz)) { b.z += sz; b.vx *= 0.5; continue; }
+    // blocked straight on: glide along the edge or the wall at an angle, slower, instead of stopping dead
+    let slid = false;
+    for (const a of [0.6, -0.6, 1.1, -1.1]) { const c = Math.cos(a), sn = Math.sin(a), k = c * 0.8; const rx = (sx * c - sz * sn) * k, rz = (sx * sn + sz * c) * k; if (ok(b.x + rx, b.z + rz)) { b.x += rx; b.z += rz; slid = true; break; } }
+    if (slid) { continue; }
     b.vx *= 0.3; b.vz *= 0.3; if (mag > 0.3) { ev.push('blocked'); } break;
   }
   // vertical
@@ -117,7 +121,7 @@ function grid(w, key, y, margin) {
   if (gridCache.has(k)) { return gridCache.get(k); }
   const b = w.bounds, s = b.step || 0.25;
   const nx = Math.floor((b.x1 - b.x0) / s) + 1, nz = Math.floor((b.z1 - b.z0) / s) + 1, free = new Uint8Array(nx * nz), hy = new Float32Array(nx * nz);
-  for (let j = 0; j < nz; j++) { for (let i = 0; i < nx; i++) { const x = b.x0 + i * s, z = b.z0 + j * s; const g = groundAt(w, x, z, 99); if (g && !blocked(w, x, z, g.y, R + margin)) { free[j * nx + i] = 1; hy[j * nx + i] = g.y; } } }
+  for (let j = 0; j < nz; j++) { for (let i = 0; i < nx; i++) { const x = b.x0 + i * s, z = b.z0 + j * s; const g = groundAt(w, x, z, 99); const e = margin > 0.2 ? margin : 0; const edgeOk = !g || !e || [[e, 0], [-e, 0], [0, e], [0, -e]].every(([ox, oz]) => { const q = groundAt(w, x + ox, z + oz, 99); return q && Math.abs(q.y - g.y) < 0.4; }); if (g && edgeOk && !blocked(w, x, z, g.y, R + margin)) { free[j * nx + i] = 1; hy[j * nx + i] = g.y; } } }
   const out = { b, s, nx, nz, free, hy };
   if (gridCache.size > 30) { gridCache.delete(gridCache.keys().next().value); }
   gridCache.set(k, out); return out;
@@ -133,7 +137,8 @@ export function clearLine(w, ax, az, bx, bz, y, r) {
 }
 export function findPath(w, key, from, to, opts) {
   const o = opts || {};
-  for (const margin of [0.12, 0.03]) {
+  // first try a path that keeps 0.35 m from floor edges and solids (easier to follow with digital keys), then tighter
+  for (const margin of [0.35, 0.12, 0.03]) {
     const g = grid(w, key, from.y || 0, margin);
     const cell = (x, z, maxR) => { const ci = Math.round((x - g.b.x0) / g.s), cj = Math.round((z - g.b.z0) / g.s), Rr = Math.ceil(maxR / g.s); let best = -1, bd = Infinity; for (let dj = -Rr; dj <= Rr; dj++) { for (let di = -Rr; di <= Rr; di++) { const i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= g.nx || j >= g.nz || !g.free[j * g.nx + i]) { continue; } const d = di * di + dj * dj; if (d < bd) { bd = d; best = j * g.nx + i; } } } return best; };
     const start = cell(from.x, from.z, 1.0), goal = cell(to.x, to.z, o.reach || 2.0); if (start < 0 || goal < 0) { continue; }
@@ -141,6 +146,8 @@ export function findPath(w, key, from, to, opts) {
     const raw = [[from.x, from.z]].concat(cells.map((c) => [g.b.x0 + (c % g.nx) * g.s, g.b.z0 + Math.floor(c / g.nx) * g.s]));
     const out = [raw[0]]; let i = 0;
     while (i < raw.length - 1) { let j = raw.length - 1; while (j > i + 1 && !clearLine(w, raw[i][0], raw[i][1], raw[j][0], raw[j][1], from.y || 0, R + margin * 0.5)) { j -= 1; } out.push(raw[j]); i = j; }
+    // a wide path ends where the wide grid ends; finish at the target itself when a straight line gets there
+    if (margin > 0.2) { const l = out[out.length - 1]; if (Math.hypot(l[0] - to.x, l[1] - to.z) > 0.3) { if (!clearLine(w, l[0], l[1], to.x, to.z, from.y || 0)) { continue; } out.push([to.x, to.z]); } }
     return out;
   }
   return null;

@@ -304,7 +304,7 @@ const SETUP = {
   '5.depart': (g) => {
     const tr = LAYOUTS.station.train;
     g.rt.train = { x: -2, v: 0, moving: false, departing: false };
-    const at = g.s.flags.walked ? STATION_WALK[STATION_WALK.length - 1] : g.s.flags.suitcase ? [-3.2, 1.2] : [-4.3, -0.9];
+    const at = g.s.flags.walked ? STATION_WALK[STATION_WALK.length - 1] : g.s.flags.suitcase ? [-3.2, 1.2] : [-3.5, -0.5];
     g.rt.june = Co.newCompanion(at[0], at[1], -Math.PI / 2); Co.wait(g.rt.june, null, 'smile');
     if (g.s.flags.suitcase && !g.s.flags.walked) { startPlatformWalk(g); }
     g.rt.trainZ = tr.z;
@@ -329,7 +329,7 @@ const SETUP = {
     g.rt.theo = Co.newCompanion(1.2, -11.6, Math.PI); Co.invite(g.rt.theo, null, 'smile'); irisSetup(g);
     if (g.s.edition.iris_revived) { g.rt.iris.gone = true; g.rt.theo.x = 14.2; g.rt.theo.z = 15.6; Co.wait(g.rt.theo); }
     if (g.s.edition.seasons && !g.s.flags.beamPier) { g.rt.seasonRun = { t: 20 }; g.rt.snowTalk = true; g.rt.season = 'winter'; g.rt.beam = { a: 2.4, target: 'pier', holdT: 0, ready: true }; g.rt.seated = true; g.rt.shot = g.rt.baseShot = 'town-beam'; }
-    if (g.s.flags.beamPier) { g.rt.seasonRun = { t: 20 }; g.rt.snowTalk = true; g.rt.season = 'winter'; g.rt.theo.x = 0.6; g.rt.theo.z = 12.6; }
+    if (g.s.flags.beamPier) { g.rt.seasonRun = { t: 20 }; g.rt.snowTalk = true; g.rt.season = 'winter'; g.rt.theo.x = 2.7; g.rt.theo.z = 12.25; }
     if (g.s.edition.pier_walk) { Co.lead(g.rt.theo, [[0.2, 16.0], [0.1, 20.0], [0.2, 24.0]], { ahead: 2.5, waitR: 6, speed: 1.3 }); g.rt.theoPier = true; }
   },
   end: (g) => { g.rt.theo = Co.newCompanion(14.2, 15.6, Math.PI); Co.wait(g.rt.theo); irisSetup(g); if (g.rt.iris) { g.rt.iris.gone = true; } g.rt.season = 'winter'; }
@@ -360,7 +360,7 @@ function points(g) {
     ['photo', 'keepbox', 'drawing', 'shelf', 'window', 'lamp'].forEach((id) => at(id, { verb: id === 'lamp' ? 'verb.toggle' : (id === 'keepbox' && beat === '1.study' && !s.flags.disk ? 'verb.open' : 'verb.look'), optional: !(id === 'keepbox' && s.flags.needDisk && !s.flags.disk) }));
   } else if (sc === 'town') {
     const th = rt.theo;
-    if (th && !rt.theoPier) { const across = th.z > 11.6 && rt.body.z < 8.4; add('theo', th.x, th.z, across ? 4.9 : 1.9, { verb: 'verb.talk', moving: true, priority: beat === '1.town' && !seen(g, 'c1.theo1') ? 4 : 0 }); }
+    if (th && !rt.theoPier && !(s.flags.beamPier && !s.edition.pier_walk)) { const across = th.z > 11.6 && rt.body.z < 8.4; add('theo', th.x, th.z, across ? 4.9 : 1.9, { verb: 'verb.talk', moving: true, priority: beat === '1.town' && !seen(g, 'c1.theo1') ? 4 : 0 }); }
     if (beat === '1.town' && !s.restored.bridge && s.era === 2004) { at('gap', { verb: 'verb.restore', hold: true }); }
     if (beat === '1.pier' && s.era === 1998) { at('pierEnd', { verb: 'verb.touch' }); }
     if (beat === '1.carve' && !s.flags.carved) { const q = p('pierEnd'); add('post', q.x, q.z, 1.4, { verb: 'verb.carve', hold: true }); }
@@ -372,15 +372,15 @@ function points(g) {
         else { at('credits', s.flags.read98 ? { verb: 'verb.restoreCredit', hold: true } : { verb: 'verb.read' }); }
       } else if (!s.edition.iris_revived && ir && !ir.leaving && s.era === 2004) { const q = p('bakery'); add('iris', q.x, q.z, q.r, { verb: s.flags.irisMet ? 'verb.revive' : 'verb.talk' }); }
       else if (ir && ir.leaving && ir.atDock && !ir.boarded) { at('rope', { verb: 'verb.untie', hold: true }); }
-      else if (s.edition.iris_revived && (!ir || ir.gone) && !s.restored.lamp && s.era === 2004) { const q = p('lighthouse'); add('lampRestore', q.x, q.z, q.r, { verb: 'verb.restoreLamp', hold: true }); }
-      else if (s.edition.iris_revived && (!ir || ir.gone) && s.restored.lamp && !s.edition.seasons && s.era === 2004) { const q = p('lighthouse'); add('seasons', q.x, q.z, q.r, { verb: 'verb.recompose', hold: true }); }
-      else if (s.flags.beamPier && !s.edition.pier_walk && s.era === 2004 && !rt.beam) { add('newPier', 0, 13.9, 1.6, { verb: 'verb.build', hold: true }); }
+      else if (s.edition.iris_revived && (!ir || ir.gone) && !s.restored.lamp && s.era === 2004) { const q = p('lighthouse'); add('lampRestore', q.x, q.z, q.r, { verb: 'verb.restoreLamp', hold: true, priority: 1 }); }
+      else if (s.edition.iris_revived && (!ir || ir.gone) && s.restored.lamp && !s.edition.seasons && s.era === 2004) { const q = p('lighthouse'); add('seasons', q.x, q.z, q.r, { verb: 'verb.recompose', hold: true, priority: 1 }); }
+      else if (s.flags.beamPier && !s.edition.pier_walk && s.era === 2004 && !rt.beam) { add('newPier', 0, 13.9, 1.6, { verb: 'verb.build', hold: true, priority: 1 }); }
     }
     at('notice', { verb: 'verb.read', optional: true });
   } else if (sc === 'station') {
     if (beat === '1.chase' && rt.train && !rt.train.caught) { const d = { x: rt.train.x, z: lay.train.doorZ }; add('hand', d.x, d.z - 0.6, lay.train.catchR, { verb: 'verb.hand', moving: true }); }
     if (beat === '5.depart' && !s.flags.c5talk) {
-      if (!s.flags.suitcase && rt.carry !== 'suitcase') { at('suitcase', { verb: 'verb.carry' }); }
+      if (!s.flags.suitcase && rt.carry !== 'suitcase') { at('suitcase', { verb: 'verb.carry', priority: 1 }); }   // the suitcase wins over June standing next to it
       if (rt.carry === 'suitcase') { at('door', { verb: 'verb.put' }); }
       at('kiosk', { verb: 'verb.buy', optional: true });
       if (!s.flags.snap98 && rt.june) { at('snap', { verb: 'verb.photo', optional: true }); }
@@ -766,7 +766,7 @@ const TICK = {
         const bm = rt.beam; if (active) { bm.a -= (input.mx || 0) * 1.1 * dt; }
         const ta = Toys.beamTo(LIGHTHOUSE, PIER_END); bm.targetA = ta;
         const gap = Math.min(Toys.angleGap(bm.a, ta), Toys.angleGap(bm.a + Math.PI, ta)); bm.onTarget = gap < 0.1; bm.holdT = bm.onTarget ? bm.holdT + dt : 0;
-        if (bm.holdT > 0.8 && !bm.done) { bm.done = true; rt.ev.push({ type: 'found', what: 'pier' }); dialog(g, 'c7.beamPier', () => { s.flags.beamPier = true; g.rt.beam = null; g.rt.seated = false; g.rt.shot = g.rt.baseShot = null; g.rt.ev.push({ type: 'save' }); }); }
+        if (bm.holdT > 0.8 && !bm.done) { bm.done = true; rt.ev.push({ type: 'found', what: 'pier' }); dialog(g, 'c7.beamPier', () => { s.flags.beamPier = true; g.rt.beam = null; g.rt.seated = false; g.rt.shot = g.rt.baseShot = null; g.rt.ev.push({ type: 'save' }); Co.transition(g.rt.theo, [[12.6, 14.4], [9.0, 13.2], [4.0, 12.6], [2.7, 12.25]], 1.6); }); /* Theo goes ahead to the pier foot and waits there */ }
       }
     }
     if (rt.theoPier && rt.theo && rt.theo.state === 'WAIT' && rt.theo.z > 23 && rt.body.z > 22.6 && !rt.dialog && !rt.finalSaid) { rt.finalSaid = true; dialog(g, 'c7.final', () => { g.rt.ev.push({ type: 'credits-roll' }); enterBeat(g, 'end'); }); }
