@@ -193,7 +193,8 @@ function collectInput(dt) {
   let stickSprint = false; if (touch.move) { const tx = (touch.move.x - touch.move.x0) / 60, tz = -(touch.move.y - touch.move.y0) / 60; mx += Math.max(-1, Math.min(1, tx)); mz += Math.max(-1, Math.min(1, tz)); stickSprint = Math.hypot(tx, tz) > 1.6; }   // push the stick far to sprint
   const gp = gamepad(); if (gp) { PT.input('gamepad'); } const btn = (i) => !!(gp && gp.buttons[i] && gp.buttons[i].pressed); const edge = (i) => { const v = btn(i), was = padPrev[i]; padPrev[i] = v; return v && !was; };
   if (gp) { const ax = (i) => (Math.abs(gp.axes[i] || 0) > 0.18 ? gp.axes[i] : 0); mx += ax(0); mz -= ax(1); mouse.dx += ax(2) * 900 * dt; mouse.dy += ax(3) * 600 * dt; }
-  const advanceNow = p('use') || pressed.has('Space') || pressed.has('Enter') || mouse.click || tpad.use || tpad.jump || (gp && (edge(0) || edge(2)));
+  const padAct = !!(gp && (edge(0) || edge(2)));
+  const advanceNow = p('use') || pressed.has('Space') || pressed.has('Enter') || mouse.click || tpad.use || tpad.jump || padAct;
   const input = {
     mx: Math.max(-1, Math.min(1, mx)), mz: Math.max(-1, Math.min(1, mz)), yaw: cam.yaw,
     jump: p('jump') || tpad.jump || (gp && btn(0) && !s.dialog && padPrev.j !== true), jumpHeld: k('jump') || btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || btn(10) || btn(5) || stickSprint,
@@ -202,7 +203,17 @@ function collectInput(dt) {
     aim: mouse.right || k('aim') || btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || btn(6))) || (p('use') && (mouse.right || k('aim'))) || (gp && btn(7) && !padPrev.s) || (tpad.shoot && tpad.aim),
     aimDX: mouse.dx, aimDY: mouse.dy, advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen), choose: rt.choose
   };
-  if (gp) { padPrev.j = btn(0); padPrev.u = btn(2); padPrev.s = btn(7); if (edge(9)) { onEscape(); } if (edge(1) && s.dialog && s.dialog.seen) { input.skip = true; } }
+  if (gp) {
+    // choices: D-pad moves the highlight, A picks it
+    const ch = s.choice || (s.dialog && !Array.isArray(s.dialog.line) ? s.dialog.line : null);
+    if (ch) {
+      const n = ch.options.length; rt.padChoice = Math.max(0, Math.min(n - 1, rt.padChoice || 0));
+      if (edge(13) || edge(15)) { rt.padChoice = (rt.padChoice + 1) % n; } if (edge(12) || edge(14)) { rt.padChoice = (rt.padChoice + n - 1) % n; }
+      if (padAct) { input.choose = rt.padChoice; input.advance = false; input.jump = false; rt.padChoice = 0; }
+      [...ui.choice.querySelectorAll('.copt')].forEach((b, i) => b.classList.toggle('focus', i === rt.padChoice));
+    }
+    padPrev.j = btn(0); padPrev.u = btn(2); padPrev.s = btn(7); if (edge(9)) { onEscape(); } if (edge(1) && s.dialog && s.dialog.seen) { input.skip = true; }
+  }
   // the camera follows the mouse unless the camera is in someone's hands
   if (s.scene !== 'train' && !s.shot) { cam.yaw -= mouse.dx * 0.0028; cam.pitch = Math.max(0.05, Math.min(1.0, cam.pitch + mouse.dy * 0.0022)); }
   rt.inputSeen = Math.abs(input.mx) + Math.abs(input.mz) > 0.1 || input.use || input.useHeld || input.jump || input.tab || input.aim || input.advance || Math.abs(mouse.dx) + Math.abs(mouse.dy) > 2 || input.choose !== null && input.choose !== undefined;
@@ -277,12 +288,31 @@ function onBeat(ev) {
   if (ev.beat === '1.town') { tip(T('ui.next'), 0); }
 }
 
+// ---- acting on key lines: the faces of the speaker and the listener while a line is on screen ----------------------
+// [speaker's face, listener's face]. Lines not listed keep the companion state machine's expression.
+const LINE_EXPR = {
+  'c1.june.thought': ['hurt', 'quiet'], 'c1.elena.when': ['smile', 'shy'], 'c1.june.remember': ['tease', 'smile'],
+  'c2.june.view': ['tease', 'shy'], 'c2.elena.sincere': ['shy', 'surprise'], 'c2.june.sincere': ['shy', 'shy'], 'c2.june.youreTheView': ['shy', 'surprise'], 'c2.june.coldHand': ['shy', 'shy'], 'c2.june.wishBack': ['tease', 'shy'],
+  'c3.june.dontListen': ['tease', 'neutral'], 'c3.elena.wantTo': ['shy', 'surprise'],
+  'c4.june.studioDream': ['grin', 'smile'], 'c4.june.notForYou': ['quiet', 'shy'], 'c4.june.poem': ['quiet', 'quiet'], 'c4.elena.almost': ['shy', 'quiet'], 'c4.june.know': ['smile', 'shy'], 'c4.elena.dots': ['quiet', 'smile'],
+  'c5.june.chose': ['quiet', 'hurt'], 'c5.elena.stay': ['hurt', 'hurt'], 'c5.june.cantStay': ['hurt', 'hurt'], 'c5.june.missMe': ['smile', 'hurt'], 'c5.june.dontStay': ['quiet', 'hurt'], 'c5.elena.years': ['quiet', 'quiet'], 'c5.elena.stayed': ['hurt', 'quiet'],
+  'c6.elena.remember': ['quiet', 'quiet'], 'c6.june.remember': ['hurt', 'hurt'], 'c6.elena.studio': ['hurt', 'angry'], 'c6.june.asked': ['angry', 'hurt'], 'c6.june.answered': ['hurt', 'hurt'], 'c6.elena.admit': ['hurt', 'quiet'],
+  'c6.june.loss': ['angry', 'hurt'], 'c6.june.work': ['hurt', 'hurt'], 'c6.june.letterSay': ['hurt', 'hurt'], 'c6.elena.miss': ['hurt', 'quiet'], 'c6.june.iKnow': ['hurt', 'hurt'], 'c6.june.kept': ['quiet', 'hurt'], 'c6.elena.sorry': ['hurt', 'quiet'], 'c6.june.notToday': ['quiet', 'hurt'], 'c6.june.careful': ['quiet', 'hurt'],
+  'c7.mara.unsent': ['quiet'], 'c7.mara.notMine': ['quiet'], 'c7.theo.snow': ['surprise'], 'c7.mara.summerEnd': ['smile'], 'c7.theo.end': ['smile'], 'c7.mara.final': ['smile']
+};
+function lineExpr(who) {
+  const s = g ? Gm.snapshot(g) : null; const ln = s && s.dialog && Array.isArray(s.dialog.line) ? s.dialog.line : null; if (!ln || ln[0] === 'pause') { return null; }
+  const e = LINE_EXPR[ln[1]]; if (!e) { return null; }
+  return ln[0] === who ? e[0] : (e[1] || null);
+}
+
 // ---- camera director ------------------------------------------------------------------------------------------
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(); const ray = new THREE.Raycaster();
 function headOf(p) { return p ? new THREE.Vector3(p.position.x, (p.position.y || 0) + 1.55, p.position.z) : null; }
 // A close-up in front of p. If someone else's head would be in the way (or the camera inside them), swing around p.
 function closeUp(p, facing, side, dist) {
   const h = headOf(p); const others = Object.values(cast).filter((q) => q !== p && q.visible && q.parent).map(headOf);
+  if (others.some((o) => o.distanceTo(h) < 1.4)) { dist = (dist || 1.5) * 1.35; side = (side || 0.35) * 1.6; }   // someone right beside them: a looser close-up, so their head is not half the frame
   for (const swing of [0, 0.5, -0.5, 0.9, -0.9, 1.3, -1.3]) {
     const a = facing + swing; const f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)); const r = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
     const pos = h.clone().addScaledVector(f, dist || 1.5).addScaledVector(r, side || 0.35).add(new THREE.Vector3(0, -0.05, 0));
@@ -321,7 +351,8 @@ function updateCamera(snap) {
     else { camera.fov += (55 - camera.fov) * 0.2; want = shotFor(s.shot, s) || { pos: new THREE.Vector3(seat.x - 0.75, 1.85, seat.z + 1.15), look: new THREE.Vector3(0.5, 1.15, -0.6) }; }
   } else if (s.scene === 'porch') {
     const seat = LAYOUTS.porch.seat; camera.fov += (50 - camera.fov) * 0.2;
-    if (s.shot === 'june' || s.shot === 'twoshot') { const jn = person(juneId()); const h = new THREE.Vector3(jn.position.x, jn.position.y + 1.2, jn.position.z); want = { pos: new THREE.Vector3(seat.x - 0.3, seat.y + 0.05, seat.z - 0.9), look: h }; }
+    if (s.shot === 'twoshot') { want = { pos: new THREE.Vector3(seat.x + 0.45, seat.y + 0.35, seat.z - 2.6), look: new THREE.Vector3(seat.x + 0.4, seat.y - 0.25, seat.z + 0.2) }; }
+    else if (s.shot === 'june' || s.shot === 'elena') { const jn = person(juneId()); const h = new THREE.Vector3(jn.position.x, jn.position.y + 1.2, jn.position.z); want = { pos: new THREE.Vector3(seat.x - 0.3, seat.y + 0.05, seat.z - 0.9), look: h }; }
     else { const yaw = g.rt.aimYaw, pitch = g.rt.aimPitch; const pos = new THREE.Vector3(seat.x, seat.y, seat.z); const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)); want = { pos, look: pos.clone().add(dir) }; }
   } else if (s.scene === 'ride' && g.rt.ride) {
     const r = g.rt.ride; const p = Toys.ridePose(r, r.s, r.d); const ahead = Toys.ridePose(r, r.s + 6, r.d * 0.5); const f = new THREE.Vector3(Math.sin(p.heading), 0, Math.cos(p.heading));
@@ -362,7 +393,8 @@ function syncCast(dt) {
     me.position.set(p.x, 0.25, p.z); me.rotation.set(0, p.heading, -r.lean); animate(me, rt.t, rt.rideP = (rt.rideP || 0) + r.v * 0.016 * 2.2, 0, 'bike', reduce());
     const jn = person(juneId()); jn.visible = true; if (jn.parent !== world.scene) { world.scene.add(jn); } jn.position.set(j.x, 0.25, j.z); jn.rotation.y = j.heading; animate(jn, rt.t, rt.rideJ = (rt.rideJ || 0) + r.june.v * 0.016 * 2.2, 0, r.june.noHands ? 'nohands' : 'bike', reduce()); setExpression(jn, r.june.mode === 'overtake' || r.june.noHands ? 'grin' : (r.stop ? 'tease' : 'smile'));
   } else if (s.scene === 'porch') {
-    me.visible = false;
+    // first person on the bench, except in the two-shot
+    const seat = LAYOUTS.porch.seat; me.visible = s.shot === 'twoshot'; me.position.set(seat.x, -4.95, seat.z); me.rotation.y = Math.PI; animate(me, rt.t, 0, 0, 'sit', reduce());
   } else {
     me.position.set(b.x, b.y, b.z); me.rotation.set(0, b.facing, 0);
     // in conversation she turns to whoever she is talking to, so close-ups see faces, not the back of a head
@@ -383,8 +415,8 @@ function syncCast(dt) {
     if (s.scene === 'porch') { const pj = LAYOUTS.porch.june; jn.position.set(pj.x, -4.95, pj.z); jn.rotation.y = Math.PI; }
     else if (s.scene === 'train') { const js = LAYOUTS.train.june; jn.position.set(js.x, 0.05, js.z); jn.rotation.y = s.dialog || s.june.anim === 'camera' || s.june.anim === 'pose' || s.june.anim === 'hideface' ? 0 : (Toys.juneMoodAt(g.rt.photoT || 0) === 'window' ? Math.PI / 2 : 0); }
     else { jn.position.set(j.x, j.y || 0, j.z); jn.rotation.y = j.facing; }
-    const m = s.scene === 'porch' ? (s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] === 'june' ? 'hum' : 'sit') : s.scene === 'train' ? (['camera', 'pose', 'hideface', 'sleep', 'sketch'].includes(s.june.anim) ? s.june.anim : (Toys.juneMoodAt(g.rt.photoT || 0) === 'tease' ? 'camera' : 'sit')) : s.june.anim;
-    animate(jn, rt.t, j.phase || 0, j.speed || 0, m, reduce()); setExpression(jn, s.june.expr);
+    const m = s.scene === 'porch' ? (s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] === 'june' ? 'hum' : 'sit') : (s.scene === 'train' && s.dialog && s.june.state !== 'REACT') ? (s.june.anim === 'sleep' ? 'sleep' : 'sit') : s.scene === 'train' ? (['camera', 'pose', 'hideface', 'sleep', 'sketch'].includes(s.june.anim) ? s.june.anim : (Toys.juneMoodAt(g.rt.photoT || 0) === 'tease' ? 'camera' : 'sit')) : s.june.anim;
+    animate(jn, rt.t, j.phase || 0, j.speed || 0, m, reduce()); setExpression(jn, lineExpr('june') || s.june.expr);
     showProp(jn, 'camera', m === 'camera'); showProp(jn, 'suitcase', s.beat === '5.depart' && !!g.rt.boarding); showProp(jn, 'sketch', m === 'sketch'); showProp(jn, 'box', !!g.rt.juneCarry && s.june.state === 'TRANSITION');
     if (s.scene === 'train' && (m === 'sit' || m === 'camera')) { jn.position.y = 0.05; }
   }
@@ -394,6 +426,7 @@ function syncCast(dt) {
     animate(world.iris, rt.t, rt.t * 3, ir.walking ? 1.4 : 0, ir.walking ? 'walk' : (s.era === 2004 && !ir.leaving ? 'hold' : 'idle'), reduce());
     if (ir.boarded) { world.canalBoat.position.x = -5.8 + ir.boatX; }
   }
+  setExpression(me, lineExpr(s.player === 'mara' ? 'mara' : 'elena') || 'neutral');
   // eyes: whoever is speaking is looked at; otherwise June watches Elena when she is close, and Elena watches June
   {
     const head = (p) => (p && p.visible ? new THREE.Vector3(p.position.x, p.position.y + 1.55, p.position.z) : null);
@@ -551,6 +584,7 @@ function onEscape() {
   openPause();
 }
 function openPause() {
+  padPrev.m9 = padPrev.m1 = true;   // the Start press that opened the menu must be released before it can close it
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = ''; down.clear();
   const b = (text, id, fn) => el('button', { type: 'button', class: 'mbtn', text, 'data-testid': id, onclick: fn });
   ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), PT.active() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
@@ -634,13 +668,18 @@ function frame(now) {
 function tick(now) {
   const rawMs = last ? now - last : 16; perfSample(rawMs);
   const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now; rt.t += dt; rt.frames += 1;
-  fpsAcc += dt; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
+  // fps from the real frame time, not the capped simulation step
+  fpsAcc += rawMs / 1000; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
   if (!g || !world) { return; }
   if (mode === 'play') {
     let input = collectInput(dt); if (rt.forceTab) { input.tab = true; rt.forceTab = false; }
     if (testHook && testHook.input) { input = testHook.input(input) || input; }
     const evs = Gm.tick(g, dt, input); evs.forEach(handle); if (testHook && testHook.events) { testHook.events(evs); }
-  } else { pressed.clear(); mouse.dx = mouse.dy = 0; mouse.click = false; }
+  } else {
+    pressed.clear(); mouse.dx = mouse.dy = 0; mouse.click = false;
+    // a gamepad can close the pause menu (Start or B); menus themselves need a pointer
+    const gp = gamepad(); if (gp && (mode === 'pause' || mode === 'panel')) { const b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed); const e9 = b(9) && !padPrev.m9, e1 = b(1) && !padPrev.m1; padPrev.m9 = b(9); padPrev.m1 = b(1); if (e9 || e1) { closePanel(); } }
+  }
   syncCast(dt);
   world.update(dt, rt.t, reduce());
   updateCamera(false);

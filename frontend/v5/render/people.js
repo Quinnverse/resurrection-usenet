@@ -141,7 +141,7 @@ export function animate(p, t, phase, speed, mode, reduce) {
   if (u.chest && !moving) { u.chest.scale.set(1 + Math.sin(t * 1.7) * 0.012 * w, 1, 1 + Math.sin(t * 1.7) * 0.02 * w); }
   if (t > u.blinkAt + 0.13) { u.blinkAt = t + 2.2 + ((Math.sin(t * 12.9898) * 43758.5453) % 1 + 1) % 1 * 3.2; }
   const shut = t > u.blinkAt && t < u.blinkAt + 0.13 && mode !== 'sleep';
-  [u.eyeL, u.eyeR].forEach((e) => { if (e && e.userData && e.userData.lid) { e.userData.lid.visible = shut || mode === 'sleep' || u.expr === 'quiet'; e.userData.lid.rotation.x = mode === 'sleep' || shut ? 0.6 : -0.45; } });
+  [u.eyeL, u.eyeR].forEach((e) => { if (e && e.userData && e.userData.lid) { const rest = { neutral: -0.3, quiet: 0.12, hurt: 0.05, shy: 0.0, tease: -0.1, angry: -0.05 }[u.expr]; e.userData.lid.visible = shut || mode === 'sleep' || rest !== undefined; e.userData.lid.rotation.x = mode === 'sleep' || shut ? 0.6 : (rest === undefined ? -0.45 : rest); } });
   if (u.lookAt && !['sleep', 'hideface', 'turnaway', 'camera'].includes(mode)) {
     p.updateMatrixWorld(); const local = p.worldToLocal(u.lookAt.clone());
     const yaw = Math.max(-0.75, Math.min(0.75, Math.atan2(local.x, local.z))); const pitch = Math.max(-0.35, Math.min(0.35, -Math.atan2(local.y - 1.55, Math.hypot(local.x, local.z))));

@@ -37,6 +37,7 @@
     .ptid { display:block; margin:10px auto; padding:6px 10px; width:220px; border-radius:6px; border:1px solid rgba(255,246,234,.5); background:rgba(0,0,0,.3); color:var(--ink); font:inherit; text-align:center; }
     .ptnote { width:100%; margin:8px 0; border-radius:6px; background:rgba(0,0,0,.3); color:var(--ink); border:1px solid rgba(255,246,234,.4); font:inherit; padding:6px; }
     .sbtn.on { background:var(--gold); color:#111; } .note.pt { color:var(--gold); }
+    .copt.focus { outline:2px solid var(--gold); outline-offset:2px; }
     /* almost no HUD: a chapter marker that fades, a prompt only in reach, subtitles, and choices when asked */
     .chapter { position:absolute; z-index:6; top:max(18px, env(safe-area-inset-top)); left:max(22px, env(safe-area-inset-left)); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); text-shadow:var(--shadow); opacity:0; transition:opacity 1.2s; pointer-events:none; }
     .chapter.on { opacity:.95; }

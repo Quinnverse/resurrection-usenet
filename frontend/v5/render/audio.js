@@ -21,7 +21,7 @@ function context() {
   } catch (e) { ctx = null; }
   return ctx;
 }
-function apply() { if (!ctx) { return; } const n = ctx.currentTime; master.gain.setTargetAtTime(prefs.muted ? 0 : 1, n, 0.05); musicBus.gain.setTargetAtTime(prefs.music * 0.55, n, 0.1); sfxBus.gain.setTargetAtTime(prefs.sfx, n, 0.05); ambBus.gain.setTargetAtTime(prefs.sfx * 0.8, n, 0.3); }
+function apply() { if (!ctx) { return; } const n = ctx.currentTime; master.gain.setTargetAtTime(prefs.muted ? 0 : 2, n, 0.05); /* +6 dB: measured peaks were about -20 dBFS at 1 */ musicBus.gain.setTargetAtTime(prefs.music * 0.55, n, 0.1); sfxBus.gain.setTargetAtTime(prefs.sfx, n, 0.05); ambBus.gain.setTargetAtTime(prefs.sfx * 0.8, n, 0.3); }
 const N = (m) => 440 * Math.pow(2, (m - 69) / 12);
 function noise(sec, seed) { const k = sec + ':' + seed; if (noiseBuf[k]) { return noiseBuf[k]; } const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0); let s = seed || 7; for (let i = 0; i < n; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; d[i] = (s / 0x7fffffff) * 2 - 1; } noiseBuf[k] = b; return b; }
 function env(g, at, a, peak, dur) { g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + a); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); }

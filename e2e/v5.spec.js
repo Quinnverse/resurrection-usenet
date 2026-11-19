@@ -204,6 +204,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
         expect(saved).toBe('end');
         if (playtest) {
           const pt = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.playtest.v1')));
+          console.log('V5_PLAYTEST_JSON ' + JSON.stringify(pt));
           await testInfo.attach('playtest-log-bot-sample.json', { body: JSON.stringify(pt, null, 2), contentType: 'application/json' });
           console.log('V5_PLAYTEST_SAMPLE ' + JSON.stringify({ tester: pt.tester, finished: pt.finished, chapters: Object.fromEntries(Object.entries(pt.chapters).map(([k, v]) => [k, Math.round(v.ms / 1000)])), ratings: Object.keys(pt.ratings), inputs: pt.inputs, gpu: pt.device && pt.device.gpu }));
           expect(pt.tester).toBe('ci-bot'); expect(pt.finished).toBe(true);
@@ -251,11 +252,14 @@ test.describe('V5 — The Summer We Never Finished', () => {
     await attach(testInfo, 'touch-ui', await shot(page));
     // hold the interact button at the gap to restore the bridge
     let s = await snap(page);
-    const ub = await page.getByTestId('touch-use').boundingBox(); await touch('touchStart', [[ub.x + ub.width / 2, ub.y + ub.height / 2]]); await page.waitForTimeout(5500); await touch('touchEnd', []);
+    // the hold takes 4 s of game time; on a software GPU at a few fps that is longer in real time, so hold until done (max 40 s)
+    const ub = await page.getByTestId('touch-use').boundingBox(); await touch('touchStart', [[ub.x + ub.width / 2, ub.y + ub.height / 2]]);
+    const holdT0 = Date.now(); while (Date.now() - holdT0 < 40000 && (await snap(page)).bridge < 0.99) { await page.waitForTimeout(300); }
+    const holdSecs = (Date.now() - holdT0) / 1000; await touch('touchEnd', []);
     s = await snap(page);
     const pb = await page.getByTestId('touch-pause').boundingBox(); await touch('touchStart', [[pb.x + pb.width / 2, pb.y + pb.height / 2]]); await touch('touchEnd', []); await page.waitForTimeout(300);
     const paused = (await snap(page)).mode;
-    console.log('V5_TOUCH ' + JSON.stringify({ moved, jumped, bridge: s.bridge, restored: s.restored, prompt: s.prompt && s.prompt.id, paused }));
+    console.log('V5_TOUCH ' + JSON.stringify({ moved, jumped, holdSecs, fps: s.fps, bridge: s.bridge, restored: s.restored, prompt: s.prompt && s.prompt.id, paused }));
     expect(moved).toBeGreaterThan(0.2); expect(jumped).toBe(true); expect(s.bridge).toBeGreaterThan(0.9); expect(paused).toBe('pause');
     expect(w.issues).toEqual([]); await ctx.close();
   });
@@ -272,12 +276,16 @@ test.describe('V5 — The Summer We Never Finished', () => {
     const a = await snap(page);
     await page.evaluate(() => { window.__pad.axes[1] = -1; }); await page.waitForTimeout(1500); await page.evaluate(() => { window.__pad.axes[1] = 0; });
     await page.waitForTimeout(300); const b = await snap(page); const moved = Math.hypot(b.x - a.x, b.z - a.z);
-    await page.evaluate(() => window.__press(0, true)); await page.waitForTimeout(150); await page.evaluate(() => window.__press(0, false)); await page.waitForTimeout(300);
+    // buttons are read once per frame; hold each press for 700 ms so a slow software-rendered frame cannot miss it
+    await page.evaluate(() => window.__press(0, true)); await page.waitForTimeout(700); await page.evaluate(() => window.__press(0, false)); await page.waitForTimeout(500);
     const afterA = await snap(page);
-    await page.evaluate(() => window.__press(9, true)); await page.waitForTimeout(150); await page.evaluate(() => window.__press(9, false)); await page.waitForTimeout(300);
+    await page.evaluate(() => window.__press(9, true)); await page.waitForTimeout(700); await page.evaluate(() => window.__press(9, false)); await page.waitForTimeout(500);
     const paused = (await snap(page)).mode;
-    console.log('V5_PAD ' + JSON.stringify({ moved, jumpOrAdvance: afterA.log.slice(-10), paused }));
-    expect(moved).toBeGreaterThan(0.3); expect(paused).toBe('pause');
+    await page.evaluate(() => window.__press(1, true)); await page.waitForTimeout(700); await page.evaluate(() => window.__press(1, false)); await page.waitForTimeout(500);
+    const resumed = (await snap(page)).mode;
+    console.log('V5_PAD_RESUME ' + resumed);
+    console.log('V5_PAD ' + JSON.stringify({ moved, jumpOrAdvance: afterA.log.slice(-10), paused, fps: afterA.fps }));
+    expect(moved).toBeGreaterThan(0.3); expect(afterA.log).toContain('body'); expect(paused).toBe('pause'); expect(resumed).toBe('play');
     expect(w.issues).toEqual([]);
   });
 

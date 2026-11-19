@@ -13,6 +13,9 @@ melody comes from the fixture file `tune.ll`, which is original.
 npm start                     # or: node combined-server/server.js   (port 3000; PORT=... to change)
 open http://127.0.0.1:3000/v5/        the game
 open http://127.0.0.1:3000/v5/tech    the 3-minute tech demo (docs/V5-DEMO-SCRIPT.md)
+open http://127.0.0.1:3000/v5/audio   the audio listening check (docs/V5-AUDIO-CHECKLIST.md)
+open http://127.0.0.1:3000/v5/?playtest=1   the game with the playtest recorder (docs/playtest/README.md)
+node tools/v5-playtest-pack.mjs        build dist/resurrection-v5-playtest.zip for test machines
 ```
 
 Tests (Node 22, no dependencies):
@@ -51,7 +54,9 @@ Regenerate the fixture archive with `node tools/v5-make-archive.mjs`.
 | Stars on the porch (ch. 4) | move the mouse; rest the middle of the view on a star | right stick |
 | Hold still for June's sketch (ch. 2) | do nothing | do nothing |
 
-Touch: the left half of the screen moves, the right half turns the camera, and a tap acts.
+Touch (experimental): the left half of the screen is a stick (push it far to sprint), the right half turns the camera,
+a tap continues dialogue, and on-screen buttons give jump, interact (hold for restore and crank), the train camera and
+shutter, and pause. Gamepad support is also experimental (see docs/V5-RELEASE-NOTES.md). F3 shows a frame-time overlay.
 Every keyboard binding can be changed in Pause → Settings → Keys (stored in `localStorage` `v5.keys.v1`).
 Settings also hold volume (music, effects), quality (low/medium/high, with an automatic drop when frames fall below
 24 fps), reduced motion, subtitle size and language (EN / 简体中文).
