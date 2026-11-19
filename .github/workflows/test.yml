@@ -126,7 +126,8 @@ jobs:
           retention-days: 30
 
       - name: Run V5 browser tests
-        run: npx playwright test e2e/v5.spec.js --grep-invert "device: "
+        run: |
+          npx playwright test e2e/v5.spec.js --grep-invert "device: "
 
       - name: Upload V5 screenshots and report
         if: always()
@@ -166,7 +167,8 @@ jobs:
         run: node tools/v5-shell-run.mjs --quiet --device ${{ matrix.device }}
 
       - name: Whole game in Chromium with only this device
-        run: npx playwright test e2e/v5.spec.js --grep "device: ${{ matrix.device }}"
+        run: |
+          npx playwright test e2e/v5.spec.js --grep "device: ${{ matrix.device }}"
 
       - name: Upload screenshots, video and report
         if: always()
