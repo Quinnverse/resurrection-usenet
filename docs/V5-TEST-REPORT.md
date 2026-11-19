@@ -1,120 +1,124 @@
 # Resurrection V5 — acceptance report
 
-Branch `feature/resurrection-v5-complete`, local commits only. Nothing was pushed, merged, deployed or submitted.
-Date: 2026-11-18.
+Branch `feature/resurrection-v5-complete`, pushed to GitHub. Nothing was merged, deployed, published or submitted.
+Final CI run: https://github.com/Quinnverse/resurrection-usenet/actions/runs/44466876584 (commit 701a5b6).
 
 Status words:
-- **COMPLETE**: built, and checked by an automated test that exercises it.
+- **COMPLETE**: built, and checked by an automated test that exercises it in the place it matters.
 - **PARTIAL**: built, but part of the requirement is missing or below target.
-- **NOT TESTED**: built, but nothing has checked it where it matters (a browser, a person, a speaker).
+- **NOT TESTED**: built, but nothing has checked it where it matters (a person, a speaker, a real GPU).
 - **BLOCKED**: could not be done in this environment.
 
-## What was actually run
+**Overall: PARTIAL.** Every automated check passes, including the whole game in real Chromium in both languages.
+The game is not marked COMPLETE because nobody has played it (no blind playtest, no measured play time), the
+estimated first-play time is at or just below the 35–45 minute target, and nobody has listened to the audio.
+
+## What was run
 
 | Check | Result |
 |---|---|
-| `npm test` (all suites, includes `test/v5-core.test.mjs`, 32 V5 tests) | 229 / 229 pass |
-| Headless playthrough on the game core, both choice sets, plus the variant archive | all seven chapters, credits reached, 0 stuck moments, about 260 s of game time |
-| `npm run test:v5-shell`: the real browser shell `main.js`, all render modules, HUD and saves, run in Node with a fake DOM and a stand-in for WebGL, the bot playing through the shell's own frame loop | EN and ZH (other choices) complete. 0 shell exceptions, 0 non-finite cameras, 0 missing translations, 0 frames with the player off screen in the follow camera, 0 prompts not shown. Credits contain both role lines and the unsent-letter line. 4 photos with thumbnails in the album. Save at `end` reloads. |
-| Continue from the save written at each of the 15 beats (EN and ZH runs, 30 loads) | every load returns to the same beat and plays 4 s without error |
-| Tech page walkthrough in the same harness | loads; Restore makes the 2004 path exist; variant refuses the restore and leaves a 14-plank 1998 bridge with no path; walkthrough reaches each section at 0:00 / 0:25 / 0:55 / 1:20 / 1:45 / 2:20 / 2:45 |
-| Server routes `/`, `/p3/`, `/p4/`, `/p5/`, `/v5/`, `/v5/tech`, `/v5/data/*`; `..` traversal | all 200; traversal 403/404; CSP `script-src 'self'` served |
-| Software previews of 59 frames from the shell's own camera | `docs/v5-evidence/software-preview/` (approximate renderer, not a browser) |
-| `e2e/v5.spec.js` in Chromium | **NOT RUN**: no browser in the sandbox; CI not triggered because pushing V5 was not authorised |
-| Human blind playtest | **NOT DONE** |
+| `npm test` (all suites; 32 V5 tests) | 229 / 229 pass, locally and in CI |
+| `npm run test:v5-shell` (the real `main.js` and every render module in Node, fake DOM, bot plays the whole game through the shell's frame loop; EN with one set of choices, ZH with the other; tech page walkthrough) | pass locally and in CI: 0 shell errors, 0 missing translations, player never off screen in the follow camera, 10 album pictures with images, save at `end` reloads |
+| **Real Chromium E2E** (`e2e/v5.spec.js`, SwiftShader WebGL, CI job "Browser end-to-end, V5 full game") | **9 / 9 pass** in run 44466876584 |
+| – title, real keyboard walking, pause, settings, language switch | pass |
+| – every one of the 20 beats loaded from its save through Continue (EN, plus ZH for 3 beats), real key and mouse input, screenshots, fps, heap, audio level, failed requests | pass: no console errors, no failed loads |
+| – Tab on the pier in the real page | pass |
+| – **the whole game, all seven chapters, EN** (bot inside the page, real shell/DOM/CSS/WebGL, recorded on video) | pass: credits with both role lines, 10 photos all with images, save = `end`, 0 stuck moments |
+| – **the whole game, all seven chapters, ZH, other choices** | pass, same checks |
+| – tech demo: Restore makes the 2004 canal crossable; the variant input is refused and leaves the 14-plank 1998 bridge | pass |
+| – regression `/`, `/p3/`, `/p4/` | pass |
+| Other CI jobs: npm test, container smoke, the main browser suite | pass |
+| CI job "Browser end-to-end, P5 slice" | **fails**, and failed the same way before V5 work began (run on `design/resurrection-v5` f69fa3b and the last run on `p5-narrative-gameplay`). Not changed by V5. |
+| Continue from every saved beat (Node shell, 2 × 20 saves) | all return to the same beat |
+| Human blind playtest | **not done** (plan: `docs/V5-PLAYTEST-PLAN.md`) |
 
-Bugs found and fixed by the shell harness and the previews: events raised when a dialogue ended (the archive rebuild
-screen, the memory card, carrying the window, fades) were pushed into a stale list and never reached the shell; the
-camera swung across the map after each beat and respawn instead of cutting; close-ups showed the back of Elena's head
-because she did not turn to the person she was talking to; in the train's first-person aim, Elena's own body filled the
-photo; June faced the window while talking.
+Evidence: `docs/v5-evidence/browser/` (72 real WebGL screenshots, perf and resource data). Full videos of both
+playthroughs are in the run's artifact `resurrection-v5-evidence` (14-day retention). Software previews from earlier
+work are in `docs/v5-evidence/software-preview/` and are labelled as such.
+
+## Performance (CI, SwiftShader)
+
+| Measure | Value | Note |
+|---|---|---|
+| Frame rate | 10–12 fps on every beat | SwiftShader renders on the CPU of a 2-core runner. This says nothing about real GPUs. The 30 fps target is **NOT TESTED** on real hardware. Automatic quality drop below 24 fps is implemented. |
+| JS heap | 11–36 MB per beat | no growth across beats |
+| Page load | 23 requests, 1.13 MB (Three.js is 676 KB of it), slowest request under 25 ms | local server |
+| Failed requests, console errors | 0 | all tests |
+
+## Play time
+
+| | Value | Status |
+|---|---|---|
+| Automated playthrough (bot, virtual time) | 547 s (EN), 544 s (ZH) | measured; not human time |
+| **Estimated first play** (`tools/v5-estimate.mjs`: reading time per line plus the bot's play time × 1.6–2.8) | **EN 28–37 min, middle 33 min; ZH 27–35 min, middle 31 min** | ESTIMATE, not measured |
+| Per chapter (EN middle estimate) | 1: 4.2 · 2: 4.1 · 3: 5.8 · 4: 4.6 · 5: 3.4 · 6: 4.1 · 7: 6.4 min | ESTIMATE |
+| 35–45 min target | the estimate reaches it only at the slow end | **PARTIAL / NOT TESTED** |
+
+The length comes from activities, not waiting: no movement was slowed, no wait was lengthened, and every cutscene
+already seen can be skipped. The model ignores optional exploration (looking at things, talking to Iris, the study,
+the soda machine in 2004), so a curious player will take longer than it says. Only a playtest can settle this.
 
 ## Requirements
 
-### Story (seven chapters)
+### Story
 
 | Item | Status | Notes |
 |---|---|---|
-| Ch1 study → town → Theo → bridge restore → pier with 1998/2004 → memory → train chase; June's three lines | COMPLETE | Lines exact in ZH; played by the bot through the shell |
-| Ch2 train photos, "你就是风景", photos kept in the save and shown in the final album | COMPLETE | Thumbnails are captured from the canvas in a browser; in Node only a placeholder image exists |
-| Ch3 ride, window built and placed, lamp, cliff; "你可以不听我的呀。/ 可是我想听你的。"; the window is identical in 1998 and 2004 | COMPLETE | Window bytes checked equal across eras by a test |
-| Ch4 duet from the archive melody, "再弹一次", 感我此言良久立 with credit to 白居易《琵琶行》 | COMPLETE | Credit in the subtitle and in the end credits. No copyrighted songs are used or named in the game |
-| Ch5 parting at the station, "你可以想我。/ 但不要把自己留在这里。", years-later, alone on the bench | COMPLETE | |
-| Ch6 2004 cottage, the five exchanges and "路上小心。", no reconciliation | COMPLETE | Lines match the narrative bible exactly |
-| Ch7 present: restore June's credit, Iris's own ending, 1998/2004 unchanged, CREATED seasons, Theo/Mara snow lines, credits "Elena — Programming & Music / June — Art & Story", letters stay unsent | COMPLETE | ZH credits keep the English credit line with a Chinese gloss |
-| Length 35–45 min | **PARTIAL** | Not measured with people. The script has 92 dialogue lines (about 3,300 English characters). Estimate: 14–18 min for a first play (reading time plus about 2–3× the bot's movement time). This is well below the target. Reaching it needs more written content: optional conversations, more of the archive readable in the study and the town, and longer chapters 3 and 6. |
+| Ch1 study → disk → town → Theo → bridge restore → pier with Tab → carving "E + J" with June (1998) → train chase; June's three lines exact | COMPLETE | |
+| Ch2 photo dares, June's sketch of Elena, the tunnel, June asleep; "你就是风景"; playful/sincere | COMPLETE | June starts the dares and draws; she is not only photographed |
+| Ch3 ride (ribbon gates, slipped chain, bell, no-hands), window, lens on the pulley, lamp, steering the beam to find June and the cottage, glide or stairs; "你可以不听我的呀。/ 可是我想听你的。" | COMPLETE | |
+| Ch4 June's portfolio and her own ambition (animated films, the studio), drawing a boat, tuning, duet twice, sitting closer or not, the porch constellation, "再弹一次", 感我此言良久立 (白居易《琵琶行》 credited) | COMPLETE | No copyrighted songs used or named |
+| Ch5 suitcase, soda machine, last photo, walk to the end of the platform, the news (June chose it herself), "你可以想我。/ 但不要把自己留在这里。", running beside the train; 2004: the same machine, camera and door give no answer | COMPLETE | |
+| Ch6 2004: packing June's boxes (her twelve picture books, her Lisbon residency), the 1999 studio letter (the job she lost), the beach walk with the conversation; defend/admit and fix/forgive change words, not outcome; all required lines exact; "路上小心。"; no reconciliation | COMPLETE | Elena's responsibility stated in both branches ("The publisher asked." / "You answered.") |
+| Ch7 drafts stay unsent (read one or close the folder); read the 1998 sign then restore the names; free Iris from her loop and untie her boat; restore the lamp (RESTORED) then the seasons (CREATED); Theo/Mara snow lines; the last light on the old pier; new pale planks (CREATED, present edition only); credits "Elena — Programming & Music / June — Art & Story" | COMPLETE | 1998 and 2004 snapshots are unchanged (tested) |
+| Full bilingual script | COMPLETE | `docs/V5-SCRIPT.md` (generated from the game's data) |
 
-### Systems and controls
-
-| Item | Status | Notes |
-|---|---|---|
-| June FSM INVITE → LEAD → WAIT → PLAY → COOPERATE → REACT → TRANSITION | COMPLETE | core/companion.js; used in every chapter June is in |
-| Restore / Revive / Rewind / Recompose | COMPLETE | See docs/V5-IMPLEMENTATION.md |
-| Photo, bicycle, window building, music | COMPLETE (logic) / NOT TESTED (feel) | |
-| WASD, mouse camera, Space jump, Shift sprint, E interact, Tab era switch, click actions, Esc pause | COMPLETE (logic) / NOT TESTED in a browser | The harness drives the game through the shell's input hook, not real key events. The browser spec has real key tests but has not run |
-| Key remapping | NOT TESTED | Implemented in settings and stored |
-| Gamepad | NOT TESTED | Standard mapping implemented; no pad available |
-| Touch | NOT TESTED | |
-| Skippable seen cutscenes; unseen cannot be skipped | COMPLETE | Core test |
-| Autosave and Continue | COMPLETE | 30 continue loads in the harness; browser reload in the spec NOT RUN |
-| Transparent HUD, no task cards, hints in character voice | COMPLETE (logic) / NOT TESTED visually | |
-
-### USENET technology
+### Gameplay and controls
 
 | Item | Status | Notes |
 |---|---|---|
-| rnews spool and mbox parsing, folded headers, Message-ID, References, cancels per source, conflicts, missing parents | COMPLETE | |
-| uuencode and MIME base64 attachments, type and size limits, CRC-32, SHA-256 | COMPLETE | Checksums tested against standard vectors |
-| Manifests → scene graph → collision; provenance in the save, re-checked on load | COMPLETE | |
-| Different input gives a different world (variant fixture) | COMPLETE | Game and tech page |
-| All data labelled fictional | COMPLETE | Every record has `X-Fixture`; checked by a test |
+| A distinct activity in every chapter | COMPLETE | see `docs/V5-IMPLEMENTATION.md` |
+| June FSM INVITE → LEAD → WAIT → PLAY → COOPERATE → REACT → TRANSITION | COMPLETE | LEAD now used on the platform and the beach |
+| Restore / Revive / Rewind / Recompose | COMPLETE | |
+| Keyboard and mouse | COMPLETE in Chromium (real key events for walking, Esc, Tab, settings); the full playthrough feeds input through the shell's test hook |
+| Key remapping, gamepad, touch | NOT TESTED | implemented |
+| Feel of movement, camera, bike, beam, pen, tuning | NOT TESTED | needs people |
+| Saves and Continue | COMPLETE | every beat in Chromium |
 
-### Art, audio, presentation
+### Art and audio
 
 | Item | Status | Notes |
 |---|---|---|
-| 3D scenes: study, town (1998, 2004, present with seasons), station (three times of day), carriage, coast road and lighthouse, cottage (1998, 2004) | COMPLETE (built) / NOT TESTED (real look) | Only seen through the software previewer |
-| Characters: Mara, Elena 17/23, June 17/23, Theo, Iris, with expressions and poses | COMPLETE (built) / NOT TESTED (real look) | Low-poly, procedural. Close-ups look simple; no facial animation beyond expression swaps |
-| Original music and sound | NOT TESTED | Procedural Web Audio from `tune.ll`. Never heard: the sandbox has no audio output. Quality unknown |
-| EN / 简体中文 | COMPLETE | Key parity tested; ZH lines checked against the bible |
-| 30 fps, browsers, 320–1920 px layouts | NOT TESTED | |
-| Recording / browser screenshots | BLOCKED | No browser. Software previews instead, labelled as such |
+| Scenes render in WebGL: study, town (1998, 2004, present, winter), station (three times), carriage (tunnel, cape lighthouse, kite), coast (day, dusk, night with stars, 2004), cottage (1998, 2004) | COMPLETE | real screenshots |
+| Characters: smooth heads, eyes with irises and highlights, blinking, breathing, looking at the speaker, expressions, poses for every activity | PARTIAL | Clearly better than the first browser screenshots, still a simple low-poly style: no rigged faces, simple bodies, sometimes stiff close-ups |
+| Unified art style, recognisable places, visible 1998/2004/present difference | PARTIAL | consistent and readable in the screenshots; not judged by anyone outside development |
+| The first snow | PARTIAL | snow, white ground, roof caps and the winter theme are there; the effect is modest |
+| Audio plays | COMPLETE (signal only) | In Chromium the AudioContext runs on every beat with output level RMS 0.003–0.019 and the expected theme per beat |
+| Audio sounds good | **NOT TESTED** | nobody has listened; the sandbox and CI have no speakers |
+| EN / 简体中文 | COMPLETE | both full playthroughs in the browser |
 
-### Delivery
+## Known issues
 
-| Item | Status |
-|---|---|
-| Source, assets (procedural), script (core/i18n.js, core/game.js DIALOGS), audio (render/audio.js), archive and pipeline | COMPLETE |
-| Tests: core, shell harness, browser spec | COMPLETE / COMPLETE / written, NOT RUN |
-| Run instructions, controls, architecture | COMPLETE: docs/V5-IMPLEMENTATION.md |
-| 3-minute demo script and page | COMPLETE: docs/V5-DEMO-SCRIPT.md, `/v5/tech` |
-| Real browser E2E | BLOCKED (no browser; push not authorised) |
-| Human blind playtest | NOT DONE: nobody has played V5. Whether it is fun, readable or moving is unverified |
+1. No human has played V5: fun, clarity, pacing and emotional effect are unverified.
+2. Estimated time is 28–37 min (EN), around or below the 35–45 target; unmeasured.
+3. Audio quality unheard.
+4. Characters are stylised and simple; close-ups do not carry much facial acting.
+5. 30 fps on real hardware not measured (CI uses a software GPU).
+6. Gamepad, touch and key remapping not exercised.
+7. The P5 browser job keeps failing; it was already failing before V5 and V5 does not touch P5.
 
-## Commits on the branch (after `origin/design/resurrection-v5` f69fa3b)
+## Release preparation checklist (not started; needs the owner)
 
-- `58e2361` P5: over-the-shoulder anomaly shot (cherry-pick, P5 only)
-- `559ab2f` V5 core: archive, parser, pipeline, physics, June, toys, seven-chapter simulation, EN/ZH, bot, tests
-- `f8ef92c` V5 shell: Three.js scenes, cast, audio, main.js, routes, tech demo, Node shell harness, event fix
-- `b3b5af9` V5: browser spec (not run), browser-v5 CI job, previews, camera and facing fixes
-- the docs commit that adds this file
+- [ ] Blind playtest with 5–8 players (`docs/V5-PLAYTEST-PLAN.md`); measure time per chapter.
+- [ ] Listen to every theme and effect on speakers and headphones; adjust levels.
+- [ ] Check 30 fps on a low-end laptop GPU and a phone; tune quality presets.
+- [ ] Test gamepad, touch and remapping by hand.
+- [ ] Decide what to do about the failing P5 browser job.
+- [ ] Review the credits, the poem attribution and the fixture labels.
+- [ ] Merge, deploy and any submission: only with the owner's approval.
 
-## Files added or changed
+## Commits (after `origin/design/resurrection-v5` f69fa3b)
 
-```
-.github/workflows/test.yml          new browser-v5 job (shell harness + e2e/v5.spec.js); main browser job skips V5
-.gitignore                          test-results/, playwright-report/
-combined-server/server.js           /v5, /v5/tech, /v5/* routes
-package.json                        test includes v5-core; new test:v5-shell
-playwright.config.js                E2E_SKIP_V5
-e2e/v5.spec.js                      browser acceptance (not run)
-frontend/v5/index.html, main.js, tech.html, tech.js, package.json
-frontend/v5/core/   usenet.js archive.js layout.js physics.js companion.js toys.js game.js i18n.js
-frontend/v5/render/ kit.js study.js town.js scenes.js people.js people-p4.js audio.js
-frontend/v5/data/   skylark-backup.spool mirror.oldnet.example.spool groups.archive.example.mbox
-                    variant-missing-plank.spool edition-present.txt drafts-unsent.txt README.txt
-test/v5-bot.mjs, test/v5-core.test.mjs
-tools/v5-make-archive.mjs, v5-playthrough.mjs, v5-shell-run.mjs, v5-three-shim.mjs
-docs/V5-IMPLEMENTATION.md, V5-DEMO-SCRIPT.md, V5-TEST-REPORT.md, v5-evidence/software-preview/
-frontend/p5/js/main.js, world-town.js   (the cherry-picked P5 camera tweak only)
-```
+See `git log f69fa3b..feature/resurrection-v5-complete`. Main steps: 559ab2f core; f8ef92c shell; b3b5af9 browser spec;
+9569711 chapter expansion; 79c0061 characters; 5152f8b `[hidden]` fix; 58d28d3 finale; 26fce89 visual fixes from real
+screenshots; f565a4d faces and close-ups; 701a5b6 debug snapshot fix; then this report.

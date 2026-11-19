@@ -24,7 +24,7 @@ node tools/v5-estimate.mjs [--lang zh]                   # first-play time ESTIM
 node tools/v5-export-script.mjs > docs/V5-SCRIPT.md     # the full bilingual script
 node tools/v5-playthrough.mjs [--variant] [--no-glide]   # headless playthrough timeline
 node tools/v5-shell-run.mjs --shots <dir>                # same as test:v5-shell + software previews
-npx playwright test e2e/v5.spec.js                       # real Chromium. Written, NOT RUN (see the test report)
+npx playwright test e2e/v5.spec.js                       # real Chromium (passes in CI, see docs/V5-TEST-REPORT.md)
 ```
 
 Regenerate the fixture archive with `node tools/v5-make-archive.mjs`.
