@@ -106,7 +106,7 @@ Other screenshots: `docs/v5-evidence/browser/` (earlier run 44466876584, 72 fram
 |---|---|
 | Whether people can play, understand and finish the game; fun, clarity, emotional effect | no blind playtest |
 | Real first-play time | estimate only |
-| Audio quality and the balance of music, effects and voice-over-text pacing | nobody has listened; checklist in `docs/V5-AUDIO-CHECKLIST.md`, page `/v5/audio` |
+| Audio quality and the balance of music and effects | nobody has listened; checklist in `docs/V5-AUDIO-CHECKLIST.md`, page `/v5/audio` |
 | 30 fps and memory on real GPUs, low-end laptops, phones | CI has a software GPU only |
 | A real gamepad (other brands, non-standard mapping, vibration) | only a simulated standard pad |
 | A real phone or tablet (portrait, small screens, multi-touch feel) | only an emulated touch screen |
