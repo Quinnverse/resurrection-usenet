@@ -196,7 +196,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
         while (!done) {
           await page.waitForTimeout(200); if (done) { break; }
           const req = await page.evaluate(() => window.__V5_TEST__.shotReq || null).catch(() => null);
-          if (req) { await page.waitForTimeout(350); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
+          if (req) { await page.waitForTimeout(350); await page.waitForFunction(() => { const el = document.querySelector('.subs'); return !el || !el.classList.contains('on') || parseFloat(getComputedStyle(el).opacity) > 0.98; }, null, { timeout: 3000 }).catch(() => {}); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
           if (Date.now() - lastShot < 1500) { continue; }
           const s = await snap(page).catch(() => null); if (!s) { continue; }
           if (s.beat !== lastBeat || Date.now() - lastShot > 20000) { lastBeat = s.beat; lastShot = Date.now(); n += 1; await attach(testInfo, `${run.lang}-${String(n).padStart(3, '0')}-${s.beat}`, await shot(page)); }

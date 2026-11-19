@@ -65,6 +65,9 @@ function getWorld(id) {
   if (worlds[id]) { return worlds[id]; }
   const lowShadow = prefs.quality === 'low' ? 512 : prefs.quality === 'medium' ? 1024 : 1536;
   const w = id === 'study' ? buildStudy({ shadow: lowShadow }) : id === 'town' ? buildTown({ shadow: lowShadow, low: prefs.quality === 'low' }) : id === 'station' ? buildStation({ shadow: lowShadow }) : id === 'train' ? buildCarriage({ shadow: lowShadow }) : id === 'cottage' ? buildCottage({ shadow: lowShadow }) : buildCoast({ shadow: lowShadow });
+  // a soft warm light near the camera, on only in dialogue close-ups, so a face against the sky or a lamp is still
+  // readable. Added once per world (intensity 0 otherwise) so turning it on never changes the light count.
+  const face = new THREE.PointLight(0xffe4cc, 0, 3.2, 2); face.name = 'faceFill'; w.scene.add(face); w.faceFill = face;
   worlds[id] = w; return w;
 }
 const sceneWorldId = (sc) => (sc === 'ride' || sc === 'porch' ? 'coast' : sc);
@@ -425,6 +428,12 @@ function updateCamera(snap) {
   const k = snap || reduce() ? 1 : (s.shot ? 0.12 : 0.18);
   cam.pos.lerp(want.pos, k); cam.look.lerp(want.look, snap ? 1 : 0.22); if (snap) { cam.pos.copy(want.pos); cam.look.copy(want.look); }
   camera.position.copy(cam.pos); camera.lookAt(cam.look);
+  const fill = world && world.faceFill;
+  if (fill) {
+    const onFace = s.shot === 'june' || s.shot === 'elena' || s.shot === 'mara' || s.shot === 'theo';
+    fill.intensity += ((onFace ? 1.4 : 0) - fill.intensity) * (snap ? 1 : 0.2);
+    fill.position.copy(cam.pos).lerp(cam.look, 0.25).add(tmp2.set(0, 0.25, 0));
+  }
 }
 
 // ---- drawing the characters from the game state ---------------------------------------------------------------
