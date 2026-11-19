@@ -188,6 +188,8 @@ const touchUI = el('div', { class: 'touchui', hidden: '', 'data-testid': 'touchu
   tbtn('pause', 'II', () => onEscape())
 ]);
 app.appendChild(touchUI);
+// on a touch screen (coarse pointer) the buttons are there from the start; elsewhere they appear on the first touch
+if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); }
 cv.addEventListener('touchstart', () => { PT.input('touch'); if (!tpad.used) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); } }, { passive: true });
 // ---- gamepad: polled once per frame; an "edge" is a button that is down now and was up last frame -------------
 // Standard mapping: left stick move, right stick look, A (0) jump / continue / pick, X (2) interact (hold), B (1) back /

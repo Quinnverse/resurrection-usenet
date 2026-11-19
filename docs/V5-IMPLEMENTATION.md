@@ -39,14 +39,16 @@ Regenerate the fixture archive with `node tools/v5-make-archive.mjs`.
 | Move | WASD or arrow keys | left stick |
 | Camera | mouse (pointer lock after the first click), or drag | right stick |
 | Jump / glide (coast ledge, hold) | Space | A |
-| Sprint | Shift | LB or L3 |
+| Sprint | Shift | LB, RB or L3 |
 | Interact, advance dialogue | E, or left click | X (advance also A) |
 | Hold to restore or crank | hold E or hold the left button | hold X |
 | Switch 1998 ⇄ 2004 (town, after Theo explains it) | Tab, or click the era label | Y |
 | Camera on the train: aim / take photo | right mouse or Q held, then click or E | LT held, RT |
-| Choices | 1 / 2 / 3, or click | — |
+| Choices | 1 / 2 / 3, or click | D-pad, then A |
 | Hint in a character's voice | H | — |
 | Pause, or skip a dialogue already seen | Esc | Start (pause), B (skip seen dialogue) |
+| Menus (title, pause, settings, credits, confirm) | arrows, Enter, Esc, or the mouse | D-pad, A, B / Start |
+| Hint | H | Back |
 | Bicycle | W pedal, A/D steer, Shift sprint, E bell | left stick, LB, X |
 | Lighthouse beam (ch. 3 and the end) | A / D turn it | left stick |
 | Drawing the boat (ch. 4) | move the mouse (or WASD) | right stick |

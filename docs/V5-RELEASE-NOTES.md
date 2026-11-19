@@ -9,25 +9,37 @@ A narrative 3D browser game in seven chapters, English and Simplified Chinese, a
 1998 and the daughter who rebuilds it from a fictional USENET archive. All posts, people and places are fictional.
 All music and sound are original and generated in the browser.
 
-## Supported
+## Input devices
 
-| | Support | How it was checked |
-|---|---|---|
-| Desktop Chromium (Chrome, Edge) with keyboard and mouse | **supported** | automated Chromium runs, every chapter, both languages |
-| Firefox, Safari | expected to work, **not tested** | no automated or manual run |
-| Key remapping (Esc → Settings → Keys) | **supported** | automated: a rebound key moves, the old key no longer does, reset restores |
-| Gamepad (standard mapping) | **experimental** | only a simulated pad in Chromium (stick moves, Start pauses); never tried on a real controller |
-| Touch screens | **experimental** | emulated touch events in desktop Chromium (stick, jump, hold-to-use, pause); never tried on a real phone or tablet; train camera on touch uses two buttons and has not been tried by anyone |
-| Low-end GPUs, phones, 30 fps target | **not tested** | only measured on a software GPU (SwiftShader) in CI at 10–12 fps; an automatic quality drop exists |
+Each device was checked by playing the whole game with that device alone (no other input, no injected game input):
+a scripted player drives the device and the game reads it through its normal input code. The status below says what
+that does and does not prove.
+
+| Device | Status | What was checked | Not checked |
+|---|---|---|---|
+| Keyboard and mouse | **supported** | whole game in Chromium through synthetic key and mouse events; title (Enter), menus (arrows, Enter, Esc), number keys for choices; real Playwright key presses for walking, pause, settings, language and remapping | real players; Firefox, Safari |
+| Key remapping | **supported** | a rebound key moves, the old one stops, reset restores | – |
+| Gamepad (standard mapping) | **experimental** | whole game in Chromium with a simulated pad object: move, look, jump, interact and hold, era switch, train camera, choices (D-pad + A), skip (B), hint (Back), pause and resume (Start/B), title, settings, new-game confirm and Continue | any real controller; non-standard mappings; vibration |
+| Touch | **experimental** | whole game in Chromium in an emulated 844×390 touch screen through synthetic touch events on the canvas and the on-screen buttons; title and pause/resume with Playwright taps | any real phone or tablet; portrait; multi-touch feel; small screens |
+| Low-end GPUs, phones, 30 fps target | **not tested** | only a software GPU (SwiftShader) in CI, 10–12 fps | real hardware |
+
+One optional screen still needs a pointer: the "source" chip at the top right (the provenance panel). It is never
+required to finish the game.
 
 ## Controls
 
-Keyboard and mouse: WASD move, mouse look, Space jump (hold to glide from the windy ledge), Shift sprint, E or left
-click interact and continue, hold E for restore/crank/pulley/carving/planks, Tab 1998 ⇄ 2004 in the town, right mouse
-or Q to raise the train camera and click to shoot, H hint, Esc pause or skip a dialogue seen before, F3 frame-time
-overlay. Gamepad: left stick move, right stick look, A jump/continue, X interact (hold), Y switch era, LT/RT camera,
-Start pause, B skip seen dialogue. Touch: left half stick (push far to sprint), right half look, tap to continue,
-on-screen jump, interact (hold), camera and shutter on the train, pause.
+Keyboard and mouse: WASD move, mouse look (or drag with a button held), Space jump (hold to glide from the windy
+ledge), Shift sprint, E or left click interact and continue, hold E for restore / crank / pulley / carving / planks,
+Tab 1998 ⇄ 2004 in the town, right mouse or Q raises the train camera and click shoots, 1 2 3 choose, H hint,
+Esc pause or skip a seen line, arrows / Enter / Esc in menus, F3 frame-time overlay.
+
+Gamepad: left stick move, right stick look and aim, A jump / continue / pick, X interact (hold), B back or skip a seen
+line, Y era switch, LB / RB / L3 sprint, LT raise camera, RT shutter, Back hint, Start pause, D-pad moves through
+choices and menus.
+
+Touch: left half is a stick (push far to sprint), right half turns the camera, on-screen buttons: jump, E (tap to
+continue, hold to restore), ⇄ era switch in the town, ? hint, II pause (or skip a seen line), and on the train the
+camera and the shutter. Choices and menus are tapped.
 
 ## Extra pages
 

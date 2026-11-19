@@ -288,9 +288,9 @@ test.describe('V5 — The Summer We Never Finished', () => {
     await padTap(page, 9); expect((await snap(page)).mode).toBe('pause');                 // Start: pause
     await padTap(page, 13); await padTap(page, 0);                                          // D-pad down to Settings, A
     await expect(page.getByTestId('sound')).toBeVisible();
-    const subs0 = await page.getByTestId('subs').textContent();
+    const subsBtn = page.getByTestId('panel').getByTestId('subs'); const subs0 = await subsBtn.textContent();
     for (let k = 0; k < 12 && !(await page.evaluate(() => document.activeElement && document.activeElement.dataset.testid === 'subs')); k++) { await padTap(page, 13); }
-    await padTap(page, 0); expect(await page.getByTestId('subs').textContent()).not.toBe(subs0);   // A toggled subtitle size
+    await padTap(page, 0); expect(await subsBtn.textContent()).not.toBe(subs0);   // A toggled subtitle size
     await attach(testInfo, 'pad-settings', await shot(page));
     await padTap(page, 1); expect((await snap(page)).mode).toBe('play');                   // B: back to the game
     await padTap(page, 9); await padTap(page, 9); expect((await snap(page)).mode).toBe('play');   // Start twice: pause, resume
@@ -344,7 +344,10 @@ test.describe('V5 — The Summer We Never Finished', () => {
       // pause and resume with the device, in real time
       if (dev === 'pad') { await padTap(page, 9); expect((await snap(page)).mode).toBe('pause'); await padTap(page, 1); }
       else if (dev === 'kbm') { await page.keyboard.press('Escape'); expect((await snap(page)).mode).toBe('pause'); await page.keyboard.press('Escape'); }
-      else { await page.touchscreen.tap(150, 250); await page.getByTestId('touch-pause').tap(); expect((await snap(page)).mode).toBe('pause'); await page.getByTestId('resume').tap(); }
+      else {
+        try { await expect(page.getByTestId('touch-pause')).toBeVisible({ timeout: 15000 }); await page.getByTestId('touch-pause').tap({ timeout: 15000 }); expect((await snap(page)).mode).toBe('pause'); await page.getByTestId('resume').tap({ timeout: 15000 }); }
+        catch (e) { await attach(testInfo, 'touch-pause-failure', await shot(page)); throw e; }
+      }
       expect((await snap(page)).mode).toBe('play');
       const t0 = Date.now();
       const playing = page.evaluate(async ([d, choices]) => {
@@ -363,7 +366,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
       if (err) { await attach(testInfo, `${dev}-failure`, await shot(page)); await ctx.close(); throw err; }
       await attach(testInfo, `${dev}-credits`, await shot(page));
       // leave the credits with the device too
-      if (dev === 'pad') { await padTap(page, 0); } else if (dev === 'kbm') { await page.keyboard.press('Enter'); } else { await page.getByTestId('keep-exploring').tap(); }
+      if (dev === 'pad') { await page.evaluate(() => { window.__pad.buttons.forEach((b) => { b.pressed = false; b.value = 0; }); window.__pad.axes.fill(0); }); await page.waitForTimeout(400); await padTap(page, 0); } else if (dev === 'kbm') { await page.keyboard.press('Enter'); } else { await page.getByTestId('keep-exploring').tap(); }
       await page.waitForTimeout(800); const after = await snap(page);
       console.log(`V5_DEVICE ${dev} ok game=${out.t.toFixed(0)}s wall=${((Date.now() - t0) / 1000).toFixed(0)}s inputs=${JSON.stringify(out.snap.log.slice(-3))} afterCredits=${after.mode}`);
       for (let c = 1; c <= 7; c++) { expect(out.beats.some((x) => x.startsWith(c + '.')), 'chapter ' + c).toBe(true); }
