@@ -14,3 +14,6 @@ with the real HUD and CSS. They are not software-rasterised previews.
 The frame rate (10–12 fps) reflects SwiftShader on a 2-core CI runner, not a real GPU. The full videos of both
 playthroughs (about 20 minutes each) are in the run's artifact `resurrection-v5-evidence` (kept 14 days):
 https://github.com/Quinnverse/resurrection-usenet/actions/runs/44466876584
+
+Newer evidence: `../key-lines/` (key lines of chapters 2, 4, 6, 7, run 44567880188) and `../devices/` (gamepad, touch
+and menu frames, run 44528076000). The acceptance report `docs/V5-TEST-REPORT.md` cites run 44567880188.

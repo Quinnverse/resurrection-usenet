@@ -11,10 +11,13 @@ P5 branch (58e2361), and the baseline without that tweak fails identically.
 | 44356545033 | 1c6cb0b | `p5-narrative-gameplay` (last pushed P5 commit) | 5 fail / 5 pass |
 | 44359489831 | f69fa3b | `design/resurrection-v5` (V5 branch point, no V5 code) | 5 fail / 5 pass |
 | 44473033172 | 992e055 | `feature/resurrection-v5-complete` | 5 fail / 5 pass |
+| 44528076000 | e48dfe7 | `feature/resurrection-v5-complete` (after the input rewrite) | 5 fail / 5 pass |
+| 44560809755 | a9a3358 | `feature/resurrection-v5-complete` | 5 fail / 5 pass |
+| 44567880188 | e40b4ca | `feature/resurrection-v5-complete` (final run of this round) | 5 fail / 5 pass |
 
-The same tests fail in all three, with the same first error lines:
+The same tests fail in all of them, with the same first error lines:
 
-| # | P5 test | Error (identical in all three runs) |
+| # | P5 test | Error (identical in every run) |
 |---|---|---|
 | 1 | English full playthrough | `expect(received).toBeGreaterThanOrEqual(expected)`, `tutorial` stayed at 1 after the mouse-drag step (e2e/p5.spec.js:177) |
 | 2 | Simplified Chinese chapter | `locator.click: Test timeout of 600000ms exceeded` |
