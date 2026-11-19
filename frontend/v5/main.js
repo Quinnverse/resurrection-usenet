@@ -600,7 +600,7 @@ function tick(now) {
 }
 
 // Read-only view for automated browser tests. It cannot change anything.
-window.V5Debug = { snapshot() { const s = g ? Gm.snapshot(g) : null; return Object.assign({ mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }, s || {}); } };
+window.V5Debug = { snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
 
 // ---- start ------------------------------------------------------------------------------------------------------
 async function loadArchive() {
