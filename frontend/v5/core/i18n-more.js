@@ -152,10 +152,14 @@ export const EN_MORE = {
   'c7.theo.edition': 'There’s a 2026 now, isn’t there? Your edition. Could it have a plank or two?',
   'c7.mara.planks': 'New planks. Pale wood, so nobody mistakes them for June’s. Labelled: made in 2026.', 'c7.theo.walk': 'Walk me out?',
   'c7.theo.end': 'The end of the pier. Snow on it. I never imagined snow on it.',
-  'hint.7.town.2': 'Then Iris at the bakery. Her boat is at the little dock. Later: the pier foot, hold E for new planks.'
+  'hint.7.town.2': 'Then Iris at the bakery. Her boat is at the little dock. Later: the pier foot, hold E for new planks.',
+  'pt.mode': 'Playtest mode: this browser records times and where you got stuck. Nothing is sent anywhere.', 'pt.tester': 'Tester ID (filled in by the facilitator)', 'pt.download': 'Download playtest log', 'pt.title': 'End of chapter {n}', 'pt.why': 'Go with your first impression, or skip. This does not change the game.',
+  'pt.fun': 'Fun', 'pt.moved': 'Moving', 'pt.note': 'One sentence on how it felt (optional)', 'pt.skip': 'Skip', 'pt.continue': 'Continue'
 };
 
 export const ZH_MORE = {
+  'pt.mode': '试玩记录模式：本机会记录用时和卡关位置，不会上传。', 'pt.tester': '测试编号（由主持人填写）', 'pt.download': '下载试玩记录', 'pt.title': '第 {n} 章结束', 'pt.why': '凭第一感觉打分即可，也可以跳过。不会影响游戏。',
+  'pt.fun': '好玩', 'pt.moved': '触动', 'pt.note': '一句话感受（可选）', 'pt.skip': '跳过', 'pt.continue': '继续',
   'ui.tune': 'E · 指针到中间时按', 'ui.beam': 'A / D · 转动光束', 'ui.ride': 'W 踩踏板 · A D 转向 · Shift 冲刺 · E 按铃', 'ui.carry': '正在搬',
   'verb.open': '打开', 'verb.untie': '解开绳子', 'verb.carry': '搬起', 'verb.put': '放下', 'verb.buy': '买汽水', 'verb.photo': '拍照', 'verb.call': '喊一声',
   'verb.fixChain': '修链条', 'verb.pull': '拉绳子', 'verb.tune': '调音',

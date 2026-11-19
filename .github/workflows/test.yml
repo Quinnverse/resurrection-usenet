@@ -115,6 +115,16 @@ jobs:
       - name: V5 shell harness (Node, no browser)
         run: npm run test:v5-shell
 
+      - name: Build the V5 playtest package
+        run: node tools/v5-playtest-pack.mjs
+
+      - name: Upload the V5 playtest package
+        uses: actions/upload-artifact@v4
+        with:
+          name: resurrection-v5-playtest-package
+          path: dist/resurrection-v5-playtest.zip
+          retention-days: 30
+
       - name: Run V5 browser tests
         run: npx playwright test e2e/v5.spec.js
 

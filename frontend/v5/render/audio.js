@@ -135,4 +135,9 @@ export function setPref(k, v) { prefs[k] = v; save(); apply(); }
 export const heardList = () => Array.from(heard);
 // Output level for automated checks (RMS of what reaches the speakers, 0..1) and the context state. This shows that
 // sound is produced; it says nothing about whether it sounds good.
-export function level() { if (!analyser) { return { state: ctx ? ctx.state : 'none', rms: 0 }; } const b = new Float32Array(analyser.fftSize); analyser.getFloatTimeDomainData(b); let s = 0; for (let i = 0; i < b.length; i++) { s += b[i] * b[i]; } return { state: ctx.state, rms: Math.sqrt(s / b.length) }; }
+export function level() { if (!analyser) { return { state: ctx ? ctx.state : 'none', rms: 0, peak: 0 }; } const b = new Float32Array(analyser.fftSize); analyser.getFloatTimeDomainData(b); let s = 0, pk = 0; for (let i = 0; i < b.length; i++) { s += b[i] * b[i]; pk = Math.max(pk, Math.abs(b[i])); } return { state: ctx.state, rms: Math.sqrt(s / b.length), peak: pk }; }
+// for the listening page (audio.html)
+export const themes = () => Object.keys(ARR);
+export const effects = () => Object.keys(FX);
+export function stopMusic() { theme = null; }
+export const currentTheme = () => theme;

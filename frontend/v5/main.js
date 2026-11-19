@@ -11,6 +11,7 @@ import { buildTown } from './render/town.js';
 import { buildStation, buildCarriage, buildCoast, buildCottage } from './render/scenes.js';
 import { makeCast, makeTheo, animate, setExpression, showProp } from './render/people.js';
 import * as A from './render/audio.js';
+import * as PT from './playtest.js';
 
 // Automated runs only (tools/v5-shell-run.mjs, e2e/v5.spec.js): a harness that defines window.__V5_TEST__ before this
 // module loads may replace the input of each frame and receives the game's events. When it is absent (every real
@@ -141,10 +142,11 @@ function windowMesh(data, finish) {
 
 // ---- input ---------------------------------------------------------------------------------------------------
 const down = new Set(), pressed = new Set(); let mouse = { dx: 0, dy: 0, left: false, right: false, click: false }; let locked = false;
-const isTyping = (e) => e.target && e.target.tagName === 'INPUT';
+const isTyping = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
 let rebinding = null;
 window.addEventListener('keydown', (e) => {
   if (isTyping(e)) { return; }
+  PT.input('keyboard'); if (e.code === 'F3') { e.preventDefault(); perfHud.hidden = !perfHud.hidden; return; }
   A.unlock();
   if (rebinding) { e.preventDefault(); keys[rebinding] = e.code; write(KEYS_KEY, keys); rebinding = null; renderSettings(); return; }
   if (e.code === 'Escape') { e.preventDefault(); onEscape(); return; }
@@ -157,6 +159,7 @@ window.addEventListener('blur', () => { down.clear(); mouse.left = mouse.right =
 const cv = renderer.domElement;
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('mousedown', (e) => {
+  PT.input('mouse');
   A.unlock(); if (mode !== 'play') { return; }
   if (!locked && cv.requestPointerLock && !reduceLockPref()) { try { cv.requestPointerLock(); } catch (err) { /* refused */ } }
   if (e.button === 0) { mouse.left = true; mouse.click = true; } if (e.button === 2) { mouse.right = true; }
@@ -170,32 +173,49 @@ const touch = { move: null, look: null };
 cv.addEventListener('touchstart', (e) => { A.unlock(); for (const tp of e.changedTouches) { if (tp.clientX < window.innerWidth / 2 && !touch.move) { touch.move = { id: tp.identifier, x0: tp.clientX, y0: tp.clientY, x: tp.clientX, y: tp.clientY }; } else if (!touch.look) { touch.look = { id: tp.identifier, x: tp.clientX, y: tp.clientY, t: performance.now() }; } } }, { passive: true });
 cv.addEventListener('touchmove', (e) => { for (const tp of e.changedTouches) { if (touch.move && tp.identifier === touch.move.id) { touch.move.x = tp.clientX; touch.move.y = tp.clientY; } if (touch.look && tp.identifier === touch.look.id) { mouse.dx += (tp.clientX - touch.look.x) * 1.4; mouse.dy += (tp.clientY - touch.look.y) * 1.4; touch.look.x = tp.clientX; touch.look.y = tp.clientY; } } }, { passive: true });
 cv.addEventListener('touchend', (e) => { for (const tp of e.changedTouches) { if (touch.move && tp.identifier === touch.move.id) { touch.move = null; } if (touch.look && tp.identifier === touch.look.id) { if (performance.now() - touch.look.t < 220) { mouse.click = true; } touch.look = null; } } });
+// touch buttons: shown once the screen is touched. Jump, interact (hold for restore and crank), the train camera.
+const tpad = { jump: false, use: false, useHeld: false, aim: false, shoot: false, used: false };
+const tbtn = (id, label, on, off) => { const b = el('button', { type: 'button', class: 'tbtn tb-' + id, 'data-testid': 'touch-' + id, text: label }); b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); A.unlock(); on(); b.classList.add('down'); }, { passive: false }); b.addEventListener('touchend', (e) => { e.preventDefault(); if (off) { off(); } b.classList.remove('down'); }, { passive: false }); return b; };
+const touchUI = el('div', { class: 'touchui', hidden: '', 'data-testid': 'touchui' }, [
+  tbtn('jump', '⤒', () => { tpad.jump = true; tpad.jumpHeld = true; }, () => { tpad.jumpHeld = false; }),
+  tbtn('use', 'E', () => { tpad.use = true; tpad.useHeld = true; }, () => { tpad.useHeld = false; }),
+  tbtn('aim', '◉', () => { tpad.aim = !tpad.aim; }),
+  tbtn('shoot', '●', () => { tpad.shoot = true; }),
+  tbtn('pause', 'II', () => onEscape())
+]);
+app.appendChild(touchUI);
+cv.addEventListener('touchstart', () => { PT.input('touch'); if (!tpad.used) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); } }, { passive: true });
 function gamepad() { const pads = navigator.getGamepads ? navigator.getGamepads() : []; return [...pads].find((p) => p && p.connected) || null; }
 const padPrev = {};
 function collectInput(dt) {
   const s = Gm.snapshot(g); const k = (a) => down.has(keys[a]), p = (a) => pressed.has(keys[a]);
   let mx = (k('right') || down.has('ArrowRight') ? 1 : 0) - (k('left') || down.has('ArrowLeft') ? 1 : 0), mz = (k('forward') || down.has('ArrowUp') ? 1 : 0) - (k('back') || down.has('ArrowDown') ? 1 : 0);
-  if (touch.move) { mx += Math.max(-1, Math.min(1, (touch.move.x - touch.move.x0) / 60)); mz += Math.max(-1, Math.min(1, -(touch.move.y - touch.move.y0) / 60)); }
-  const gp = gamepad(); const btn = (i) => !!(gp && gp.buttons[i] && gp.buttons[i].pressed); const edge = (i) => { const v = btn(i), was = padPrev[i]; padPrev[i] = v; return v && !was; };
+  let stickSprint = false; if (touch.move) { const tx = (touch.move.x - touch.move.x0) / 60, tz = -(touch.move.y - touch.move.y0) / 60; mx += Math.max(-1, Math.min(1, tx)); mz += Math.max(-1, Math.min(1, tz)); stickSprint = Math.hypot(tx, tz) > 1.6; }   // push the stick far to sprint
+  const gp = gamepad(); if (gp) { PT.input('gamepad'); } const btn = (i) => !!(gp && gp.buttons[i] && gp.buttons[i].pressed); const edge = (i) => { const v = btn(i), was = padPrev[i]; padPrev[i] = v; return v && !was; };
   if (gp) { const ax = (i) => (Math.abs(gp.axes[i] || 0) > 0.18 ? gp.axes[i] : 0); mx += ax(0); mz -= ax(1); mouse.dx += ax(2) * 900 * dt; mouse.dy += ax(3) * 600 * dt; }
-  const advanceNow = p('use') || pressed.has('Space') || pressed.has('Enter') || mouse.click || (gp && (edge(0) || edge(2)));
+  const advanceNow = p('use') || pressed.has('Space') || pressed.has('Enter') || mouse.click || tpad.use || tpad.jump || (gp && (edge(0) || edge(2)));
   const input = {
     mx: Math.max(-1, Math.min(1, mx)), mz: Math.max(-1, Math.min(1, mz)), yaw: cam.yaw,
-    jump: p('jump') || (gp && btn(0) && !s.dialog && padPrev.j !== true), jumpHeld: k('jump') || btn(0), sprint: k('sprint') || down.has('ShiftRight') || btn(10) || btn(5),
-    use: p('use') || (mouse.click && !s.aim && s.scene !== 'train') || (gp && btn(2) && !padPrev.u), useHeld: k('use') || btn(2) || (mouse.left && !!(s.prompt && s.prompt.hold)),
+    jump: p('jump') || tpad.jump || (gp && btn(0) && !s.dialog && padPrev.j !== true), jumpHeld: k('jump') || btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || btn(10) || btn(5) || stickSprint,
+    use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || (gp && btn(2) && !padPrev.u), useHeld: k('use') || btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
     tab: p('tab') || (gp && edge(3)), hint: p('hint'),
-    aim: mouse.right || k('aim') || btn(6), shoot: (mouse.click && (mouse.right || k('aim') || btn(6))) || (p('use') && (mouse.right || k('aim'))) || (gp && btn(7) && !padPrev.s),
+    aim: mouse.right || k('aim') || btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || btn(6))) || (p('use') && (mouse.right || k('aim'))) || (gp && btn(7) && !padPrev.s) || (tpad.shoot && tpad.aim),
     aimDX: mouse.dx, aimDY: mouse.dy, advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen), choose: rt.choose
   };
   if (gp) { padPrev.j = btn(0); padPrev.u = btn(2); padPrev.s = btn(7); if (edge(9)) { onEscape(); } if (edge(1) && s.dialog && s.dialog.seen) { input.skip = true; } }
   // the camera follows the mouse unless the camera is in someone's hands
   if (s.scene !== 'train' && !s.shot) { cam.yaw -= mouse.dx * 0.0028; cam.pitch = Math.max(0.05, Math.min(1.0, cam.pitch + mouse.dy * 0.0022)); }
-  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear();
+  rt.inputSeen = Math.abs(input.mx) + Math.abs(input.mz) > 0.1 || input.use || input.useHeld || input.jump || input.tab || input.aim || input.advance || Math.abs(mouse.dx) + Math.abs(mouse.dy) > 2 || input.choose !== null && input.choose !== undefined;
+  if (input.hint) { PT.hintKey(); } if (input.skip) { PT.skipped(); }
+  if (s.scene !== 'train' && tpad.aim) { tpad.aim = false; }
+  touchUI.classList.toggle('train', s.scene === 'train');
+  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = false;
   return input;
 }
 
 // ---- events from the game -----------------------------------------------------------------------------------
 function handle(ev) {
+  PT.event(ev);
   rt.log.push(ev.type); if (rt.log.length > 60) { rt.log.shift(); }
   switch (ev.type) {
     case 'beat': onBeat(ev); break;
@@ -227,7 +247,8 @@ function handle(ev) {
     case 'lit': A.play('lit'); break;
     case 'note': A.duetNote(ev.midi, ev.dur, ev.layer, ev.cue); break;
     case 'cue-hit': A.play('blip'); break;
-    case 'duet-start': break;
+    case 'duet-start': A.stopMusic(); break;   // Elena's guitar is the only music while she plays
+    case 'duet-done': A.setTheme(themeFor(Gm.snapshot(g))); break;
     case 'choice': A.play('choice'); break;
     case 'use': if (ev.id === 'door') { A.play('door'); } break;
     case 'tunnel': if (worldId === 'train') { world.setTunnel(ev.on); } if (ev.on) { A.play('express'); } break;
@@ -251,7 +272,8 @@ function onBeat(ev) {
   const lay = LAYOUTS[sceneWorldId(ev.scene)];
   const s = Gm.snapshot(g); cam.yaw = s.yaw; cam.pitch = (lay && lay.camera && lay.camera.pitch) || 0.36; cam.dist = (lay && lay.camera && lay.camera.dist) || 4.5;
   syncCast(0); updateCamera(true); // place the cast first so the cut lands on where they are now
-  if (ev.chapter !== rt.lastChapter) { rt.lastChapter = ev.chapter; showChapter(ev.chapter); }
+  if (ev.chapter !== rt.lastChapter) { const prev = rt.lastChapter; rt.lastChapter = ev.chapter; showChapter(ev.chapter); if (PT.active() && prev && !ev.loading) { rateChapter(prev); } }
+  PT.beat(ev.beat, ev.chapter);
   if (ev.beat === '1.town') { tip(T('ui.next'), 0); }
 }
 
@@ -285,7 +307,7 @@ function shotFor(name, s) {
     case 'paper': return { pos: new THREE.Vector3(1.3, 2.05, 1.05), look: new THREE.Vector3(1.3, 0.75, 0.05) };
     case 'platform': return { pos: new THREE.Vector3(-6.2, 1.6, 0.4), look: new THREE.Vector3(-2.2, 1.2, 1.6) };
     case 'town-wide': return { pos: new THREE.Vector3(-14, 11, -16), look: new THREE.Vector3(4, 2, 8) };
-    case 'duet': if (jn) { const mid = me.position.clone().lerp(jn.position, 0.5); return { pos: mid.clone().add(new THREE.Vector3(1.6, 1.25, 1.8)), look: mid.clone().add(new THREE.Vector3(0, 0.9, 0)) }; } break;
+    case 'duet': if (jn) { const mid = me.position.clone().lerp(jn.position, 0.5); const d = jn.position.clone().sub(me.position).setY(0); const n = new THREE.Vector3(-d.z, 0, d.x).normalize(); if (n.z < 0) { n.negate(); } return { pos: mid.clone().addScaledVector(n, 2.3).add(new THREE.Vector3(0, 1.15, 0)), look: mid.clone().add(new THREE.Vector3(0, 0.85, 0)) }; } break;
     default: break;
   }
   return null;
@@ -296,7 +318,7 @@ function updateCamera(snap) {
   if (s.scene === 'train') {
     const seat = LAYOUTS.train.seat;
     if (s.aim) { const yaw = g.rt.aimYaw, pitch = g.rt.aimPitch; camera.fov += (40 - camera.fov) * 0.3; const pos = new THREE.Vector3(seat.x, seat.y, seat.z); const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)); want = { pos, look: pos.clone().add(dir) }; }
-    else { camera.fov += (55 - camera.fov) * 0.2; want = shotFor(s.shot, s) || { pos: new THREE.Vector3(seat.x - 0.35, 1.55, seat.z + 1.35), look: new THREE.Vector3(0.45, 1.05, -0.7) }; }
+    else { camera.fov += (55 - camera.fov) * 0.2; want = shotFor(s.shot, s) || { pos: new THREE.Vector3(seat.x - 0.75, 1.85, seat.z + 1.15), look: new THREE.Vector3(0.5, 1.15, -0.6) }; }
   } else if (s.scene === 'porch') {
     const seat = LAYOUTS.porch.seat; camera.fov += (50 - camera.fov) * 0.2;
     if (s.shot === 'june' || s.shot === 'twoshot') { const jn = person(juneId()); const h = new THREE.Vector3(jn.position.x, jn.position.y + 1.2, jn.position.z); want = { pos: new THREE.Vector3(seat.x - 0.3, seat.y + 0.05, seat.z - 0.9), look: h }; }
@@ -354,7 +376,7 @@ function syncCast(dt) {
     showProp(me, 'suitcase', s.carry === 'suitcase'); showProp(me, 'box', !!(s.carry && s.carry.startsWith('box')));
     if (s.carry && s.carry.startsWith('box') && !s.seated) { animate(me, rt.t, me.userData.phase || 0, Math.hypot(b.vx, b.vz), 'carry', reduce()); }
     if (s.tuning) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = 0.5; animate(me, rt.t, 0, 0, 'guitar', reduce()); }
-    if (s.beat === '4.duet' && s.seated) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = 0.5; }
+    if (s.beat === '4.duet' && s.seated) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = s.june ? Math.atan2(s.june.x - me.position.x, s.june.z - me.position.z) : 0.5; }
   }
   if (s.june && s.scene !== 'ride') {
     const jn = person(juneId()); const j = g.rt.june;
@@ -493,6 +515,8 @@ function showLetter(text) {
   ui.overlay.addEventListener('click', () => { ui.overlay.hidden = true; }, { once: true });
 }
 function showCredits() {
+  if (PT.active() && !rt.rated7) { rt.rated7 = true; rateChapter(7, showCredits); return; }
+  PT.finish();
   mode = 'credits'; A.setTheme('ending'); save(true);
   ui.overlay.className = 'overlay credits'; ui.overlay.hidden = false; ui.overlay.textContent = '';
   const album = el('div', { class: 'album', 'data-testid': 'album' });
@@ -502,7 +526,7 @@ function showCredits() {
     el('div', { class: 'end', text: T('ui.end') }), el('div', { class: 'h', text: T('end.roles') }), el('div', { class: 'role', text: T('end.elena') }), el('div', { class: 'role', text: T('end.june') }),
     el('div', { class: 'small', text: Ar.creditLine(sg.credits.slice(0, 2)).join('   ·   ') + '   (' + T('status.RESTORED') + ')' }), el('div', { class: 'mara', text: T('end.mara') }), el('div', { class: 'small', text: T('status.CREATED') }),
     el('div', { class: 'h2', text: T('ui.album') }), album, el('p', { class: 'unsent', text: T('end.unsent') }), el('p', { class: 'small', text: T('end.fiction') }), el('p', { class: 'small', text: T('end.poem') }),
-    el('div', { class: 'row' }, [el('button', { type: 'button', class: 'btn primary', text: T('ui.keepExploring'), 'data-testid': 'keep-exploring', onclick: () => { ui.overlay.hidden = true; mode = 'play'; } }), el('button', { type: 'button', class: 'btn', text: T('ui.backTitle'), onclick: () => { ui.overlay.hidden = true; showTitle(); } })])
+    el('div', { class: 'row' }, [PT.active() ? el('button', { type: 'button', class: 'btn', text: T('pt.download'), 'data-testid': 'pt-download-end', onclick: () => PT.download() }) : null, el('button', { type: 'button', class: 'btn primary', text: T('ui.keepExploring'), 'data-testid': 'keep-exploring', onclick: () => { ui.overlay.hidden = true; mode = 'play'; } }), el('button', { type: 'button', class: 'btn', text: T('ui.backTitle'), onclick: () => { ui.overlay.hidden = true; showTitle(); } })])
   ]));
 }
 function showProvenance() {
@@ -529,7 +553,7 @@ function onEscape() {
 function openPause() {
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = ''; down.clear();
   const b = (text, id, fn) => el('button', { type: 'button', class: 'mbtn', text, 'data-testid': id, onclick: fn });
-  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
+  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), PT.active() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
 }
 function renderSettings() {
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = '';
@@ -563,17 +587,43 @@ function showTitle() {
   const row = el('div', { class: 'row' });
   if (saved) { row.append(el('button', { class: 'btn primary', type: 'button', text: T('ui.continue'), 'data-testid': 'continue', onclick: () => begin(saved) }), el('button', { class: 'btn', type: 'button', text: T('ui.newGame'), 'data-testid': 'new-game', onclick: () => { if (window.confirm(T('ui.confirmNew'))) { begin(null); } } })); }
   else { row.append(el('button', { class: 'btn primary', type: 'button', text: T('ui.start'), 'data-testid': 'start', onclick: () => begin(null) })); }
-  ui.overlay.append(el('div', { class: 'titlebox', 'data-testid': 'title' }, [el('h1', { text: T('ui.title') }), el('div', { class: 'sub', text: T('ui.subtitle') }), el('div', { class: 'tag', text: T('ui.tagline') }), row, el('div', { class: 'note', text: T('ui.saveNote') }), el('div', { class: 'note', text: T('ui.fixture') })]),
+  rt.testerField = PT.active() ? el('input', { type: 'text', class: 'ptid', maxlength: '40', placeholder: T('pt.tester'), 'data-testid': 'pt-tester' }) : null;
+  ui.overlay.append(el('div', { class: 'titlebox', 'data-testid': 'title' }, [el('h1', { text: T('ui.title') }), el('div', { class: 'sub', text: T('ui.subtitle') }), el('div', { class: 'tag', text: T('ui.tagline') }), PT.active() ? el('div', { class: 'note pt', text: T('pt.mode') }) : null, rt.testerField, row, el('div', { class: 'note', text: T('ui.saveNote') }), el('div', { class: 'note', text: T('ui.fixture') })]),
     el('button', { class: 'btn ghost langbtn', type: 'button', text: T('ui.lang'), 'data-testid': 'lang', onclick: () => { prefs.lang = prefs.lang === 'zh' ? 'en' : 'zh'; write(PREF_KEY, prefs); showTitle(); } }));
 }
 function begin(saved) {
-  A.unlock(); ui.overlay.hidden = true;
+  A.unlock(); ui.overlay.hidden = true; if (PT.active()) { PT.setTester(rt.testerField && rt.testerField.value); }
   if (!saved) { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
   g = Gm.createGame(ar, saved || null); Object.values(worlds).forEach((w) => { void w; });
   worldId = null; rt.lastChapter = null; mode = 'play'; if (testHook) { testHook.game = g; }
   const tune = Ar.sceneGraph(ar, 1998).objects.find((o) => o.id === 'tune'); if (tune && tune.data) { A.setTune(tune.data); }
   onBeat({ beat: g.s.beat, chapter: Gm.chapterOf(g.s.beat), scene: g.rt.scene }); save(false);
 }
+
+// ---- playtest: chapter ratings, device info, and the F3 frame-time overlay ------------------------------------
+function rateChapter(ch, then) {
+  const back = mode; mode = 'rate'; const pick = { fun: 0, moved: 0 };
+  ui.panel.hidden = false; ui.panel.textContent = '';
+  const row = (k) => el('div', { class: 'srow' }, [el('span', { class: 'sl', text: T('pt.' + k) }), el('span', { class: 'sv' }, [1, 2, 3, 4, 5].map((n) => el('button', { type: 'button', class: 'sbtn', 'data-testid': `rate-${k}-${n}`, text: String(n), onclick: (e) => { pick[k] = n; [...e.target.parentNode.children].forEach((c) => c.classList.toggle('on', c === e.target)); } })))]);
+  const note = el('textarea', { class: 'ptnote', rows: '2', maxlength: '400', placeholder: T('pt.note') });
+  const done = () => { PT.rate(ch, pick.fun, pick.moved, note.value); ui.panel.hidden = true; mode = back === 'rate' ? 'play' : back; if (then) { then(); } };
+  ui.panel.append(el('h2', { text: T('pt.title', { n: ch }) }), el('p', { class: 'dim', text: T('pt.why') }), row('fun'), row('moved'), note,
+    el('div', { class: 'row' }, [el('button', { type: 'button', class: 'btn', 'data-testid': 'rate-skip', text: T('pt.skip'), onclick: () => { pick.fun = pick.moved = 0; done(); } }), el('button', { type: 'button', class: 'btn primary', 'data-testid': 'rate-done', text: T('pt.continue'), onclick: done })]));
+}
+function deviceInfo() {
+  let gpu = null; try { const gl = renderer.getContext(); const ext = gl.getExtension('WEBGL_debug_renderer_info'); gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e) { gpu = null; }
+  return { userAgent: navigator.userAgent, platform: navigator.platform || null, language: navigator.language, screen: window.screen ? [window.screen.width, window.screen.height] : null, viewport: [innerWidth, innerHeight], dpr: devicePixelRatio, cores: navigator.hardwareConcurrency || null, memoryGB: navigator.deviceMemory || null, gpu, webgl2: !!(renderer.capabilities && renderer.capabilities.isWebGL2), quality: prefs.quality, reducedMotion: reduce(), touchScreen: 'ontouchstart' in window };
+}
+const perfHud = el('div', { class: 'perfhud', hidden: '', 'data-testid': 'perfhud' }); app.appendChild(perfHud);
+const ft = []; let perfT = 0;
+function perfSample(ms) {
+  ft.push(ms); if (ft.length > 240) { ft.shift(); }
+  if (perfHud.hidden || (perfT += ms) < 500) { return; } perfT = 0;
+  const sorted = ft.slice().sort((a, b) => a - b); const avg = ft.reduce((a, b) => a + b, 0) / ft.length; const p95 = sorted[Math.floor(sorted.length * 0.95)] || 0;
+  const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) + ' MB' : '–';
+  perfHud.textContent = `${Math.round(1000 / avg)} fps · avg ${avg.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · worst ${Math.round(sorted[sorted.length - 1] || 0)} ms · heap ${mem} · ${prefs.quality}${autoDrop ? ' (auto-lowered)' : ''}\n${gpuName}`;
+}
+window.V5Perf = () => { const sorted = ft.slice().sort((a, b) => a - b); const avg = ft.reduce((a, b) => a + b, 0) / (ft.length || 1); return { frames: ft.length, avgMs: avg, p95Ms: sorted[Math.floor(sorted.length * 0.95)] || 0, worstMs: sorted[sorted.length - 1] || 0, gpu: gpuName || null }; };
 
 // ---- the loop ---------------------------------------------------------------------------------------------------
 let last = 0, fpsAcc = 0, fpsN = 0, slowSecs = 0;
@@ -582,6 +632,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 function tick(now) {
+  const rawMs = last ? now - last : 16; perfSample(rawMs);
   const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now; rt.t += dt; rt.frames += 1;
   fpsAcc += dt; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
   if (!g || !world) { return; }
@@ -595,6 +646,7 @@ function tick(now) {
   updateCamera(false);
   renderHud();
   if (mode === 'play' && rt.t - rt.lastSave > 5) { save(false); }
+  PT.frame(rawMs, mode === 'play', mode === 'play' ? Gm.snapshot(g) : null, !!rt.inputSeen); rt.inputSeen = false;
   renderer.render(world.scene, camera);
   if (rt.pendingShot && (rt.pendingT = (rt.pendingT || 0) + 1) > 6) { const id = rt.pendingShot; rt.pendingShot = null; rt.pendingT = 0; setThumb(id, thumbFromCanvas()); fadeBlinkWhite(); }
 }
@@ -610,4 +662,6 @@ async function loadArchive() {
 }
 ui.overlay.className = 'overlay title'; ui.overlay.hidden = false; ui.overlay.append(el('p', { class: 'loading', text: T('ui.loading') }));
 requestAnimationFrame(frame);
+let gpuName = ''; try { gpuName = deviceInfo().gpu || ''; } catch (e) { gpuName = ''; }
+try { PT.start(deviceInfo()); } catch (e) { /* no device info here */ }
 loadArchive().then(() => { showTitle(); }).catch((e) => { ui.overlay.textContent = ''; ui.overlay.append(el('p', { class: 'err', text: T('ui.loadError'), 'data-testid': 'load-error' })); console.error(e); });

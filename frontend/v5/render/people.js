@@ -51,14 +51,14 @@ export function makePerson(spec) {
   const mouths = {
     neutral: new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.02), mouthMat),
     smile: new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 3, 8, Math.PI), mouthMat),
-    grin: new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.03, 0.02), mat(0xffffff)),
+    grin: new THREE.Mesh(new THREE.CircleGeometry(0.034, 14, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: 0x7a2236 })),
     open: new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.02), mouthMat),
     frown: new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.008, 3, 8, Math.PI), mouthMat)
   };
   mouths.smile.rotation.z = Math.PI; mouths.smile.position.y = -0.04; mouths.frown.position.y = -0.07; mouths.neutral.position.y = -0.055; mouths.grin.position.y = -0.055; mouths.open.position.y = -0.055;
   Object.values(mouths).forEach((m) => { m.visible = false; face.add(m); }); mouths.neutral.visible = true;
   const blushMat = new THREE.MeshBasicMaterial({ color: 0xf29a8c, transparent: true, opacity: 0.0 });
-  const blushL = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.03), blushMat), blushR = blushL.clone(); blushL.position.set(-0.1, -0.03, 0.0); blushR.position.set(0.1, -0.03, 0.0); face.add(blushL, blushR);
+  const blushL = new THREE.Mesh(new THREE.CircleGeometry(0.028, 14), blushMat), blushR = blushL.clone(); blushL.scale.y = blushR.scale.y = 0.6; blushL.position.set(-0.1, -0.03, 0.0); blushR.position.set(0.1, -0.03, 0.0); face.add(blushL, blushR);
   if (s.glasses) { [-0.065, 0.065].forEach((x) => { const g = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.006, 3, 10), mat(0x2a2a30)); g.position.set(x, 0.02, 0.012); face.add(g); }); }
   // hair
   const hairMat = s.hair;
@@ -101,7 +101,7 @@ export function setExpression(p, expr) {
   Object.entries(u.mouths).forEach(([k, v]) => { v.visible = k === m; });
   const brows = { neutral: [0, 0], smile: [0.1, -0.1], grin: [0.15, -0.15], shy: [-0.25, 0.25], tease: [0.3, -0.05], surprise: [0, 0, 0.02], hurt: [-0.35, 0.35], quiet: [-0.1, 0.1], angry: [0.4, -0.4] }[expr] || [0, 0];
   u.browL.rotation.z = brows[0]; u.browR.rotation.z = brows[1]; u.browL.position.y = u.browR.position.y = 0.075 + (brows[2] || 0) + (expr === 'hurt' ? -0.01 : 0);
-  u.blushMat.opacity = expr === 'shy' ? 0.85 : expr === 'grin' ? 0.3 : 0;
+  u.blushMat.opacity = expr === 'shy' ? 0.6 : expr === 'grin' ? 0.3 : 0;
   u.eyeL.scale.y = u.eyeR.scale.y = expr === 'grin' || expr === 'smile' ? 0.45 : expr === 'surprise' ? 1.3 : expr === 'quiet' || expr === 'hurt' ? 0.7 : 1;
 }
 export function showProp(p, name, on) { const pr = p.userData.props && p.userData.props[name]; if (pr) { pr.visible = !!on; } }

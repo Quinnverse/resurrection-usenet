@@ -823,6 +823,9 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/v5/tech' || pathname === '/v5/tech/') {
       return serveStaticFile(res, 'v5/tech.html');
     }
+    if (pathname === '/v5/audio' || pathname === '/v5/audio/') {
+      return serveStaticFile(res, 'v5/audio.html');
+    }
     if (pathname.startsWith('/v5/')) {
       return serveStaticFile(res, pathname.slice(1));
     }

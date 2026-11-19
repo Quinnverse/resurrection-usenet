@@ -73,6 +73,13 @@ async function continueFrom(page, save, prefs) {
   await page.getByTestId('continue').click();
 }
 
+// Lines of dialogue where the camera and the acting carry the chapter (2, 4, 5, 6, 7). A screenshot is taken on each.
+const KEY_LINES = ['c2.june.youreTheView', 'c2.june.sketchDone', 'c2.june.coldHand', 'c2.june.wokeShot', 'c2.june.woke',
+  'c4.june.portfolio', 'c4.june.notForYou', 'c4.june.boatDone', 'c4.june.scoot', 'c4.june.keep', 'c4.june.window', 'c4.june.poem', 'c4.elena.almost', 'c4.june.know',
+  'c5.june.chose', 'c5.june.dontStay', 'c5.elena.stayed',
+  'c6.june.remember', 'c6.june.answered', 'c6.june.admitted', 'c6.june.letterSay', 'c6.june.iKnow', 'c6.june.kept', 'c6.june.notToday', 'c6.june.careful',
+  'c7.mara.unsent', 'c7.mara.read98', 'c7.iris.thanks', 'c7.mara.summerEnd', 'c7.theo.end', 'c7.theo.goodnight'];
+
 test.describe('V5 — The Summer We Never Finished', () => {
   test('title, real keyboard in the study, pause and settings', async ({ page }, testInfo) => {
     const w = watch(page);
@@ -112,7 +119,8 @@ test.describe('V5 — The Summer We Never Finished', () => {
         await attach(testInfo, `beat-${beat}-${lang}-b`, await shot(page));
         const s = await snap(page);
         const mem = await page.evaluate(() => (performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null));
-        perf.push({ beat, lang, world: s.world, fps: s.fps, heapMB: mem, mode: s.mode, audio: s.audio ? { state: s.audio.state, rms: +s.audio.rms.toFixed(4) } : null, theme: (s.heard || []).filter((h) => h.startsWith('theme:')).slice(-1)[0] });
+        const fr = await page.evaluate(() => (window.V5Perf ? window.V5Perf() : null));
+        perf.push({ beat, lang, world: s.world, fps: s.fps, avgMs: fr ? +fr.avgMs.toFixed(1) : null, p95Ms: fr ? +fr.p95Ms.toFixed(1) : null, worstMs: fr ? Math.round(fr.worstMs) : null, gpu: fr ? fr.gpu : null, heapMB: mem, mode: s.mode, audio: s.audio ? { state: s.audio.state, rms: +s.audio.rms.toFixed(4) } : null, theme: (s.heard || []).filter((h) => h.startsWith('theme:')).slice(-1)[0] });
         expect(s.beat === beat || BEATS.indexOf(s.beat) > BEATS.indexOf(beat), `${beat} -> ${s.beat}`).toBe(true);
       }
     }
@@ -145,23 +153,39 @@ test.describe('V5 — The Summer We Never Finished', () => {
         await page.addInitScript(initHook);
         await page.addInitScript((lang) => { localStorage.setItem('v5.prefs.v1', JSON.stringify({ lang, quality: 'low' })); }, run.lang);
         await serveBot(page);
-        await page.goto('/v5/');
+        const playtest = run.lang === 'zh';   // the ZH run also exercises the playtest recorder (bot, not a person)
+        await page.goto(playtest ? '/v5/?playtest=1' : '/v5/');
         await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 });
+        if (playtest) { await page.getByTestId('pt-tester').fill('ci-bot'); }
         await page.getByTestId('start').click();
         const t0 = Date.now();
-        const playing = page.evaluate(async (choices) => {
+        const playing = page.evaluate(async ([choices, keys]) => {
           const { playThrough } = await import('/v5-test/bot.mjs');
           const h = window.__V5_TEST__; await h.virtualize();
-          const bot = await playThrough(h.game, { step: h.step, choices });
-          for (let i = 0; i < 900 && !document.querySelector('[data-testid="credits"]'); i++) { await h.step({}); }
+          const want = new Set(keys); let pend = null;
+          // a screenshot request on key lines of dialogue (taken by the test runner, with the HUD), and the playtest rating cards
+          const step = async (input) => {
+            const rate = document.querySelector('[data-testid="rate-done"]');
+            if (rate && !document.querySelector('[data-testid="panel"]').hidden) { document.querySelector('[data-testid="rate-fun-4"]').click(); document.querySelector('[data-testid="rate-moved-3"]').click(); rate.click(); }
+            const ev = await h.step(input); const s = window.V5Debug.snapshot();
+            const k = s.dialog && Array.isArray(s.dialog.line) ? s.dialog.line[1] : null;
+            if (k && want.has(k) && !pend) { pend = { k, n: 0 }; want.delete(k); }
+            if (pend && ++pend.n === 8) { h.shotReq = pend.k; while (h.shotReq) { await new Promise((r) => h.realTimeout(r, 40)); } pend = null; }
+            return ev;
+          };
+          const bot = await playThrough(h.game, { step, choices });
+          for (let i = 0; i < 900 && !document.querySelector('[data-testid="credits"]'); i++) { await step({}); }
           const credits = document.querySelector('[data-testid="credits"]');
           return { t: bot.t, beats: bot.beats, stuck: bot.stuck, credits: credits ? credits.textContent : null, snap: window.V5Debug.snapshot(), album: document.querySelectorAll('[data-testid="album"] img').length };
-        }, run.choices);
+        }, [run.choices, KEY_LINES]);
         // while it plays: a screenshot at every new beat and every 20 s of wall time
         let done = false, out = null, err = null; playing.then((r) => { out = r; done = true; }, (e) => { err = e; done = true; });
         let lastBeat = null, lastShot = 0, n = 0;
         while (!done) {
-          await page.waitForTimeout(1500); if (done) { break; }
+          await page.waitForTimeout(200); if (done) { break; }
+          const req = await page.evaluate(() => window.__V5_TEST__.shotReq || null).catch(() => null);
+          if (req) { await page.waitForTimeout(350); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
+          if (Date.now() - lastShot < 1500) { continue; }
           const s = await snap(page).catch(() => null); if (!s) { continue; }
           if (s.beat !== lastBeat || Date.now() - lastShot > 20000) { lastBeat = s.beat; lastShot = Date.now(); n += 1; await attach(testInfo, `${run.lang}-${String(n).padStart(3, '0')}-${s.beat}`, await shot(page)); }
         }
@@ -178,10 +202,104 @@ test.describe('V5 — The Summer We Never Finished', () => {
         expect(out.stuck).toEqual([]);
         const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.save.v1')).beat);
         expect(saved).toBe('end');
+        if (playtest) {
+          const pt = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.playtest.v1')));
+          await testInfo.attach('playtest-log-bot-sample.json', { body: JSON.stringify(pt, null, 2), contentType: 'application/json' });
+          console.log('V5_PLAYTEST_SAMPLE ' + JSON.stringify({ tester: pt.tester, finished: pt.finished, chapters: Object.fromEntries(Object.entries(pt.chapters).map(([k, v]) => [k, Math.round(v.ms / 1000)])), ratings: Object.keys(pt.ratings), inputs: pt.inputs, gpu: pt.device && pt.device.gpu }));
+          expect(pt.tester).toBe('ci-bot'); expect(pt.finished).toBe(true);
+          for (let c = 1; c <= 7; c++) { expect(pt.chapters[c] && pt.chapters[c].ms > 0, 'chapter ' + c).toBe(true); expect(pt.ratings[c], 'rating ' + c).toBeTruthy(); }
+          await expect(page.getByTestId('pt-download-end')).toBeVisible();
+        }
         expect(w.issues).toEqual([]); expect(w.failed).toEqual([]);
       });
     });
   }
+
+  // ---- controls beyond keyboard and mouse ----------------------------------------------------------------------
+  test('key remapping: a rebound key moves, the old one does not, reset restores it', async ({ page }) => {
+    const w = watch(page); const { saves } = await savesByBeat();
+    await continueFrom(page, saves['1.town']); await page.waitForTimeout(1500);
+    const walk = async (code) => { const a = await snap(page); await page.keyboard.down(code); await page.waitForTimeout(1500); await page.keyboard.up(code); await page.waitForTimeout(300); const b = await snap(page); return Math.hypot(b.x - a.x, b.z - a.z); };
+    await page.keyboard.press('Escape'); await page.getByTestId('settings').click();
+    await page.getByTestId('key-forward').click(); await page.keyboard.press('KeyI');
+    await expect(page.getByTestId('key-forward')).toContainText('I');
+    await page.getByTestId('resume').click(); await page.waitForTimeout(300);
+    const byI = await walk('KeyI'), byW = await walk('KeyW');
+    console.log('V5_REMAP ' + JSON.stringify({ byI, byW }));
+    expect(byI).toBeGreaterThan(0.3); expect(byW).toBeLessThan(0.1);
+    await page.keyboard.press('Escape'); await page.getByTestId('settings').click(); await page.getByTestId('reset-keys').click(); await page.getByTestId('resume').click();
+    expect(await walk('KeyW')).toBeGreaterThan(0.3);
+    expect(w.issues).toEqual([]);
+  });
+
+  test('touch (emulated in Chromium): stick moves, buttons jump and hold to restore, pause', async ({ browser }, testInfo) => {
+    const ctx = await browser.newContext({ hasTouch: true, viewport: { width: 1280, height: 720 } }); const page = await ctx.newPage(); const w = watch(page);
+    const { saves } = await savesByBeat(); const sv = JSON.parse(JSON.stringify(saves['1.town']));
+    sv.seen.push('c1.theo1'); sv.pos = { town: { x: 0, y: 0, z: 6.9, yaw: Math.PI } };
+    await continueFrom(page, sv); await page.waitForTimeout(1500);
+    const cdp = await ctx.newCDPSession(page);
+    const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], i) => ({ x, y, id: i + 1 })) });
+    // stick on the left half, toward the camera's forward: drag up and hold
+    const a = await snap(page);
+    await touch('touchStart', [[300, 520]]); for (let i = 1; i <= 8; i++) { await touch('touchMove', [[300, 520 - i * 10]]); await page.waitForTimeout(40); } await page.waitForTimeout(900); await touch('touchEnd', []);
+    await page.waitForTimeout(300); const b = await snap(page);
+    await expect(page.getByTestId('touchui')).toBeVisible();
+    const moved = Math.hypot(b.x - a.x, b.z - a.z);
+    // the jump button
+    const jb = await page.getByTestId('touch-jump').boundingBox(); await touch('touchStart', [[jb.x + jb.width / 2, jb.y + jb.height / 2]]); await page.waitForTimeout(120); await touch('touchEnd', []);
+    await page.waitForTimeout(250); const jumped = (await snap(page)).log.includes('body');
+    await attach(testInfo, 'touch-ui', await shot(page));
+    // hold the interact button at the gap to restore the bridge
+    let s = await snap(page);
+    const ub = await page.getByTestId('touch-use').boundingBox(); await touch('touchStart', [[ub.x + ub.width / 2, ub.y + ub.height / 2]]); await page.waitForTimeout(5500); await touch('touchEnd', []);
+    s = await snap(page);
+    const pb = await page.getByTestId('touch-pause').boundingBox(); await touch('touchStart', [[pb.x + pb.width / 2, pb.y + pb.height / 2]]); await touch('touchEnd', []); await page.waitForTimeout(300);
+    const paused = (await snap(page)).mode;
+    console.log('V5_TOUCH ' + JSON.stringify({ moved, jumped, bridge: s.bridge, restored: s.restored, prompt: s.prompt && s.prompt.id, paused }));
+    expect(moved).toBeGreaterThan(0.2); expect(jumped).toBe(true); expect(s.bridge).toBeGreaterThan(0.9); expect(paused).toBe('pause');
+    expect(w.issues).toEqual([]); await ctx.close();
+  });
+
+  test('gamepad (simulated standard pad, not hardware): stick moves, A acts, Start pauses', async ({ page }) => {
+    const w = watch(page);
+    await page.addInitScript(() => {
+      const pad = { id: 'simulated standard gamepad', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
+      window.__pad = pad; navigator.getGamepads = () => [pad, null, null, null];
+      window.__press = (i, on) => { pad.buttons[i].pressed = on; pad.buttons[i].value = on ? 1 : 0; pad.timestamp += 1; };
+    });
+    const { saves } = await savesByBeat();
+    await continueFrom(page, saves['1.town']); await page.waitForTimeout(1500);
+    const a = await snap(page);
+    await page.evaluate(() => { window.__pad.axes[1] = -1; }); await page.waitForTimeout(1500); await page.evaluate(() => { window.__pad.axes[1] = 0; });
+    await page.waitForTimeout(300); const b = await snap(page); const moved = Math.hypot(b.x - a.x, b.z - a.z);
+    await page.evaluate(() => window.__press(0, true)); await page.waitForTimeout(150); await page.evaluate(() => window.__press(0, false)); await page.waitForTimeout(300);
+    const afterA = await snap(page);
+    await page.evaluate(() => window.__press(9, true)); await page.waitForTimeout(150); await page.evaluate(() => window.__press(9, false)); await page.waitForTimeout(300);
+    const paused = (await snap(page)).mode;
+    console.log('V5_PAD ' + JSON.stringify({ moved, jumpOrAdvance: afterA.log.slice(-10), paused }));
+    expect(moved).toBeGreaterThan(0.3); expect(paused).toBe('pause');
+    expect(w.issues).toEqual([]);
+  });
+
+  // ---- audio: every arrangement and effect produces sound without clipping (signal only, nobody is listening) ----
+  test('audio page: every theme and effect plays, measured output level, no clipping', async ({ page }, testInfo) => {
+    test.setTimeout(10 * 60 * 1000);
+    const w = watch(page);
+    await page.goto('/v5/audio'); await page.waitForFunction(() => window.V5AudioReady, null, { timeout: 30000 });
+    await page.getByTestId('play-fx-blip').click();   // a user gesture for the audio context
+    const out = await page.evaluate(async () => {
+      const r = { themes: {}, effects: {} };
+      for (const t of window.V5Audio.themes()) { r.themes[t] = await window.V5Audio.theme(t, 3); }
+      for (const f of window.V5Audio.effects()) { r.effects[f] = await window.V5Audio.effect(f); }
+      return r;
+    });
+    await attach(testInfo, 'audio-page', await page.screenshot({ type: 'jpeg', quality: 70, fullPage: true }));
+    const round = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, { rms: +v.rms.toFixed(4), peak: +v.peak.toFixed(3), state: v.state }]));
+    console.log('V5_AUDIO ' + JSON.stringify({ themes: round(out.themes), effects: round(out.effects) }));
+    for (const [k, v] of Object.entries(out.themes)) { expect(v.state, k).toBe('running'); expect(v.rms, 'theme ' + k + ' silent').toBeGreaterThan(0.0005); expect(v.peak, 'theme ' + k + ' clips').toBeLessThan(0.99); }
+    for (const [k, v] of Object.entries(out.effects)) { expect(v.peak, 'effect ' + k + ' silent').toBeGreaterThan(0.001); expect(v.peak, 'effect ' + k + ' clips').toBeLessThan(0.99); }
+    expect(w.issues).toEqual([]);
+  });
 
   test('tech demo: restore changes the floor, the variant input is refused', async ({ page }, testInfo) => {
     const w = watch(page);

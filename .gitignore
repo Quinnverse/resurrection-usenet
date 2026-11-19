@@ -63,3 +63,4 @@ combined-server/data/
 test-results/
 playwright-report/
 ci-v5/
+dist/

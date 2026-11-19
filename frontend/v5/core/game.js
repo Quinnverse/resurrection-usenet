@@ -295,7 +295,8 @@ const SETUP = {
   },
   '4.duet': (g) => {
     const near = g.s.choices.closer ? -0.55 : 0;
-    g.rt.june = Co.newCompanion(LAYOUTS.cottage.juneSeat.x + near, LAYOUTS.cottage.juneSeat.z, Math.PI); Co.wait(g.rt.june, null, 'smile'); g.rt.june.anim = 'sit';
+    const js = LAYOUTS.cottage.juneSeat, gs = LAYOUTS.cottage.guitarSeat;
+    g.rt.june = Co.newCompanion(js.x + near, js.z, Math.atan2(gs.x - js.x - near, gs.z - js.z)); Co.wait(g.rt.june, null, 'smile'); g.rt.june.anim = 'sit';
     g.rt.body.x = LAYOUTS.cottage.guitarSeat.x; g.rt.body.z = LAYOUTS.cottage.guitarSeat.z; g.rt.seated = true; g.rt.baseShot = 'duet';
     g.rt.duetN = g.s.flags.duet1 ? 1 : 0;
     if (!g.s.flags.c4intro) { dialog(g, 'c4.intro', () => { g.s.flags.c4intro = true; }); }
@@ -359,7 +360,7 @@ function points(g) {
     ['photo', 'keepbox', 'drawing', 'shelf', 'window', 'lamp'].forEach((id) => at(id, { verb: id === 'lamp' ? 'verb.toggle' : (id === 'keepbox' && beat === '1.study' && !s.flags.disk ? 'verb.open' : 'verb.look'), optional: !(id === 'keepbox' && s.flags.needDisk && !s.flags.disk) }));
   } else if (sc === 'town') {
     const th = rt.theo;
-    if (th) { const across = th.z > 11.6 && rt.body.z < 8.4; add('theo', th.x, th.z, across ? 4.9 : 1.9, { verb: 'verb.talk', moving: true, priority: beat === '1.town' && !seen(g, 'c1.theo1') ? 4 : 0 }); }
+    if (th && !rt.theoPier) { const across = th.z > 11.6 && rt.body.z < 8.4; add('theo', th.x, th.z, across ? 4.9 : 1.9, { verb: 'verb.talk', moving: true, priority: beat === '1.town' && !seen(g, 'c1.theo1') ? 4 : 0 }); }
     if (beat === '1.town' && !s.restored.bridge && s.era === 2004) { at('gap', { verb: 'verb.restore', hold: true }); }
     if (beat === '1.pier' && s.era === 1998) { at('pierEnd', { verb: 'verb.touch' }); }
     if (beat === '1.carve' && !s.flags.carved) { const q = p('pierEnd'); add('post', q.x, q.z, 1.4, { verb: 'verb.carve', hold: true }); }

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resurrection V5 — after playing · 试玩后问卷</title>
+<style>
+  body { max-width:860px; margin:0 auto; padding:20px; font:15px/1.5 system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif; color:#222; }
+  h1 { font-size:1.2rem; } h2 { font-size:1rem; margin-top:22px; border-bottom:1px solid #ddd; }
+  label { display:block; margin:10px 0 4px; } textarea, input[type=text] { width:100%; font:inherit; padding:6px; box-sizing:border-box; }
+  table { border-collapse:collapse; width:100%; } td, th { border-bottom:1px solid #eee; padding:4px; text-align:center; } td:first-child { text-align:left; }
+  button { font:inherit; padding:8px 16px; margin-top:20px; }
+</style>
+</head>
+<body>
+<h1>Resurrection V5 — after playing · 试玩后问卷</h1>
+<p>Answers stay on this computer. Press “Save” at the end to download them as a file for the facilitator. 答案只保存在本机，最后点击“保存”下载文件交给主持人。</p>
+<form id="f">
+<h2>About you · 关于你</h2>
+<label>Tester id · 测试编号 <input type="text" name="tester"></label>
+<label>How often do you play 3D games? · 你多久玩一次 3D 游戏？
+  <select name="games"><option></option><option>never · 从不</option><option>sometimes · 偶尔</option><option>weekly · 每周</option><option>daily · 每天</option></select></label>
+<label>Language played · 游戏语言 <select name="lang"><option></option><option>EN</option><option>中文</option></select></label>
+<label>Device, browser, input, headphones or speakers · 设备、浏览器、输入方式、耳机或音箱 <input type="text" name="device"></label>
+<label>Did you finish? If not, where did you stop and why? · 是否玩完？ <input type="text" name="finished"></label>
+<h2>The story · 故事 (your own words · 用自己的话)</h2>
+<label>Who is June? What does she want for herself? · 琳是谁？她自己想要什么？<textarea name="q_june" rows="2"></textarea></label>
+<label>What happened between Elena and June in 2004? · 2004 年埃莱娜和琳之间发生了什么？<textarea name="q_2004" rows="2"></textarea></label>
+<label>What did Mara do at the end, and what did she not change? · 结尾玛拉做了什么？没有改变什么？<textarea name="q_end" rows="2"></textarea></label>
+<label>Why do the letters stay unsent? · 为什么那些信一直没有寄出？<textarea name="q_letters" rows="2"></textarea></label>
+<label>Which moment do you remember most? · 印象最深的一刻？<textarea name="q_moment" rows="2"></textarea></label>
+<h2>Each chapter · 每一章 (1–5)</h2>
+<table id="ch"><tr><th></th><th>Fun · 好玩</th><th>Moving · 触动</th><th>Confusing · 困惑</th><th>Too long · 太长</th><th>Too short · 太短</th></tr></table>
+<h2>Playing · 操作</h2>
+<label>Where were you stuck or unsure? · 哪里卡住或不知道该做什么？<textarea name="stuck" rows="2"></textarea></label>
+<label>Which control felt bad? · 哪个操作手感不好？<textarea name="controls" rows="2"></textarea></label>
+<label>Subtitles readable and well paced? · 字幕是否清晰、节奏合适？<input type="text" name="subs"></label>
+<h2>Sound and look · 声音和画面</h2>
+<label>Music and sound · 音乐与音效 <textarea name="audio" rows="2"></textarea></label>
+<label>Did the characters feel alive? Any scene that looked wrong? · 角色是否有生命感？哪里看起来不对？<textarea name="visual" rows="2"></textarea></label>
+<label>Stutter or slowdowns? · 有无卡顿？<input type="text" name="perf"></label>
+<h2>Overall · 总体</h2>
+<label>Overall 1–5 · 总体评分 <select name="overall"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+<label>Recommend to a friend? Why? · 会推荐给朋友吗？<textarea name="recommend" rows="2"></textarea></label>
+<label>Anything else · 其他 <textarea name="other" rows="3"></textarea></label>
+<h2>Facilitator only · 仅主持人填写</h2>
+<label>Stalls, help given (with time), things said aloud · 卡关、给出的帮助及时间、玩家说的话 <textarea name="facilitator" rows="4"></textarea></label>
+<button type="submit">Save · 保存</button>
+</form>
+<script>
+  const chs = ['1 Catch the Summer · 追上夏天', '2 You Are the View · 你就是风景', '3 Our Lighthouse · 我们的灯塔', '4 A Song Only for You · 只给你听的歌', '5 Don’t Leave Yourself Here · 不要把我留在这里', '6 You Remember, So Do I · 你还记得，我也记得', '7 Let Summer End · 让夏天结束'];
+  const t = document.getElementById('ch');
+  chs.forEach((c, i) => { const tr = document.createElement('tr'); tr.innerHTML = '<td>' + c + '</td>' + ['fun', 'moving', 'confusing', 'long', 'short'].map((k) => '<td><select name="ch' + (i + 1) + '_' + k + '"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></td>').join(''); t.appendChild(tr); });
+  document.getElementById('f').addEventListener('submit', (e) => {
+    e.preventDefault(); const d = Object.fromEntries(new FormData(e.target).entries()); d.savedAt = new Date().toISOString(); d.form = 'v5-feedback-1';
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' })); a.download = (d.tester || 'tester') + '-form.json'; document.body.appendChild(a); a.click(); a.remove();
+  });
+</script>
+</body>
+</html>
