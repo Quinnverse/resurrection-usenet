@@ -736,6 +736,12 @@ function parseBody(req) {
   });
 }
 
+// the commit this server runs from, for the V5 review pages ("unknown" when git is not available, e.g. in the container)
+const BUILD_ID = (() => {
+  if (process.env.RESURRECTION_BUILD) { return String(process.env.RESURRECTION_BUILD).replace(/[^A-Za-z0-9._-]/g, '').slice(0, 40) || 'unknown'; }
+  try { return require('child_process').execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 }).toString().trim() || 'unknown'; } catch (e) { return 'unknown'; }
+})();
+
 function sendJSON(res, status, data, extraHeaders = {}) {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...extraHeaders });
   res.end(JSON.stringify(data));
@@ -829,6 +835,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (pathname === '/v5/rc' || pathname === '/v5/rc/') {
       return serveStaticFile(res, 'v5/rc.html');
+    }
+    if (pathname === '/v5/data/build.json') {
+      return sendJSON(res, 200, { build: BUILD_ID });   // shown in the RC1 hub and in frame-time reports
     }
     if (pathname.startsWith('/v5/')) {
       return serveStaticFile(res, pathname.slice(1));
