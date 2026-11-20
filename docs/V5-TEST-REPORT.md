@@ -18,15 +18,17 @@ controller, phone or GPU has been used. Those are the release conditions; the au
 ## RC1 (release candidate 1)
 
 RC1 adds no story. It adds the means to judge the game on real hardware and with real people, and fixes what that
-preparation turned up. **It is still not releasable**: the real-device, listening and playtest items are open.
-Read `V5-RC1-ACCEPTANCE.md` (the matrix), `V5-RC1-BLOCKERS.md` (what is open and who closes it) and `V5-RC1-README.md`
-(how to start it). Automated results for RC1 are in the acceptance matrix; the sections below remain the record of the
-earlier verification round.
+preparation turned up. **RC1 AUTOMATED = PASS (V5). RC1 MANUAL = NOT TESTED. RELEASE READY = NO.**
 
-What RC1 added: the review hub with seven live key-scene previews, a frame-time test (average and 1% low FPS, stalls,
-load times, draw calls, memory where reported), single-file builds that open from disk, a local server with a phone mode,
-key remapping with conflict handling, a consent-first playtest recorder and a player folder that needs no development
-environment, and touch layout checks in portrait, landscape and after a rotation.
+- Full run: [44708590327](https://github.com/Quinnverse/resurrection-usenet/actions/runs/44708590327), commit `0983c38`: V5 main 14/14, whole game with only keyboard and mouse / a simulated gamepad / emulated touch, RC1 browser tests 6/6, npm tests, general browser tests, container smoke all pass. The P5 slice fails 5 of 10, exactly as in the baseline (`V5-P5-BASELINE.md`), and is not a V5 result. The workflow as a whole is therefore **not** all green.
+- Last code push: [44758500485](https://github.com/Quinnverse/resurrection-usenet/actions/runs/44758500485), commit `b78e03b` (start page, technical demo and feedback form as single files, CI gating): npm tests, container smoke and the RC1 browser job (7/7) pass; the long jobs were skipped because no game file changed since `0983c38`.
+- Read `V5-RC1-ACCEPTANCE.md` (the matrix), `V5-RC1-BLOCKERS.md` (what is open and who closes it) and `V5-RC1-README.md` (how to start it).
+- Nothing here claims a blind playtest, a real-GPU measurement, a listening check, a real controller or a real phone. The 27–37 minute play time is an estimate, not a measurement.
+
+What RC1 added: the start page and review hub with seven live key-scene previews, a frame-time test, single-file builds that open from
+disk (game, technical demo, music, hub, playtest, feedback), a local server with a phone mode, key remapping with conflict handling, a
+consent-first playtest recorder and a player folder that needs no development environment, and touch layout checks in portrait,
+landscape and after a rotation. The sections below remain the record of the earlier verification round (run 44567880188, commit e40b4ca).
 
 ## 1. Automated (run by machines; results from CI and the Node shell)
 

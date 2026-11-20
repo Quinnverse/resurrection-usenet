@@ -8,7 +8,7 @@ Total time: about 90 minutes for Chrome plus the checks; the full play-through i
 
 ## 0 · Before you start
 
-1. Get the package (`resurrection-v5-rc1.zip`) and unzip it, or run `npm run v5` in the repository. Open **`Resurrection-V5-RC.html`** (or `http://127.0.0.1:8090/v5/rc`).
+1. Get `release/v5-rc1/resurrection-v5-rc1.zip` from the repository and unzip it, or run `npm run v5`. Open **`Resurrection-V5-Start.html`** (or `http://127.0.0.1:8090/v5/home`), then “Device, gamepad and frame-time checks (advanced)” at the bottom: that is the review hub used below.
 2. In section 3 of the hub (“This device”) check: *WebGL 2*, the *graphics card* name is your real GPU (not “SwiftShader”, “llvmpipe” or “Basic Render”), the *display refresh* is what you expect. If it says software rendering, hardware acceleration is off: fix that first, or the numbers mean nothing.
 3. Plug in the charger and close heavy apps. Use the same window size for each browser (full screen, or the same size).
 4. Fill in this table once:

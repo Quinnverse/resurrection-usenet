@@ -43,13 +43,14 @@ camera and the shutter. Choices and menus are tapped.
 
 ## Extra pages
 
+- `/v5/home` — the start page: six doors (start, continue, technical demo, music, key scenes, feedback).
 - `/v5/rc` — the RC1 review hub: links, the key scenes, what this browser and GPU report, a gamepad monitor.
 - `/v5/?preview=<beat>` — opens one moment of the story (the train, the coast ride, the lighthouse beam, the porch at night, the duet, the 2004 beach, `snow` for the first snow) without touching your save.
 - `/v5/?bench=low,medium,high` — a frame-time tour of nine scenes with a report (average and 1% low FPS, stalls, load times, memory where the browser reports it).
 - `/v5/tech` — the 3-minute technical demo (archive → parse → manifest → restore → walkable floor).
 - `/v5/audio` — the listening check for every theme and sound effect (8 s, or looped), with a link to the scene where each is heard.
 - `/v5/?playtest=1` — the game with the playtest recorder on (see `docs/playtest/README.md`).
-- `Resurrection-V5*.html` — the same pages as single files that open from disk with no server (`npm run v5:rc`).
+- `Resurrection-V5-Start.html`, `Resurrection-V5.html`, `-Tech`, `-Audio`, `-RC`, `-Playtest` and `feedback-form.html` — the same pages as single files that open from disk with no server, no Node and no network. Built by `npm run v5:rc`; the built zips are in `release/v5-rc1/`.
 
 ## Key bindings
 

@@ -13,7 +13,9 @@ P5 branch (58e2361), and the baseline without that tweak fails identically.
 | 44473033172 | 992e055 | `feature/resurrection-v5-complete` | 5 fail / 5 pass |
 | 44528076000 | e48dfe7 | `feature/resurrection-v5-complete` (after the input rewrite) | 5 fail / 5 pass |
 | 44560809755 | a9a3358 | `feature/resurrection-v5-complete` | 5 fail / 5 pass |
-| 44567880188 | e40b4ca | `feature/resurrection-v5-complete` (final run of this round) | 5 fail / 5 pass |
+| 44567880188 | e40b4ca | `feature/resurrection-v5-complete` | 5 fail / 5 pass |
+| 44696534992 | e3be862 | `feature/resurrection-v5-complete` | 5 fail / 5 pass |
+| 44708590327 | 0983c38 | `feature/resurrection-v5-complete` (the full run for RC1) | 5 fail / 5 pass, the same 5 tests and errors |
 
 The same tests fail in all of them, with the same first error lines:
 
@@ -33,3 +35,5 @@ pier view"). Since f69fa3b fails the same way without it, the failures were alre
 
 Not done, by instruction: fixing P5. The likely cause (a mouse-drag tutorial step and long timeouts under the software
 GPU) should be looked at on the P5 branch, not in V5.
+
+Run 44758500485 (commit b78e03b) did not run the P5 job: the push changed no game file, so the long jobs were skipped (see `V5-RC1-ACCEPTANCE.md`). P5 tests were never deleted, disabled or weakened.

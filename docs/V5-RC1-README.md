@@ -12,19 +12,32 @@ phone or a real person is still to be done by you** (`V5-RC1-DEVICE-TEST.md` is 
 
 | You have | Do this |
 |---|---|
-| The RC1 zip (`resurrection-v5-rc1.zip`, from the CI artifact `resurrection-v5-rc1-package`, or `npm run v5:rc`) | Unzip, double-click **`Resurrection-V5-RC.html`**. No install, no server, no internet. |
-| The repository and Node 20+ (Mac: double-click `start-v5.command`) | `npm run v5` — starts a server on `127.0.0.1:8090` and opens the hub. |
-| A phone or tablet to test | On the computer run `npm run v5:lan` (or double-click `start-v5-phone.command`), then type one of the printed addresses on the phone, e.g. `http://192.168.1.20:8090/v5/rc`. The server is open to your Wi-Fi while it runs; stop it with Ctrl+C. |
+| The RC1 zip: `release/v5-rc1/resurrection-v5-rc1.zip` in the repository (or the CI artifact `resurrection-v5-rc1-package`, which needs a GitHub login) | Unzip it and double-click **`Resurrection-V5-Start.html`**. No install, no server, no internet. Use Chrome, Edge, Firefox or Safari on a computer. |
+| The repository and Node 20+ (Mac: double-click `start-v5.command`) | `npm run v5` — starts a server on `http://127.0.0.1:8090` and opens the start page (`/v5/home`). |
+| A phone or tablet to test | On the computer run `npm run v5:lan` (or double-click `start-v5-phone.command`), then type one of the printed addresses on the phone, e.g. `http://192.168.1.20:8090/v5/home`. The server is open to your Wi-Fi while it runs; stop it with Ctrl+C. |
+| A player with no development tools | Give them `release/v5-rc1/resurrection-v5-playtest.zip`: they open `START-HERE.html`, then `Resurrection-V5-Playtest.html`. |
 
-## What is in it
+## The start page (six doors)
+
+| Door | Opens | Notes |
+|---|---|---|
+| Start the game · 开始游戏 | `Resurrection-V5.html` (`/v5/`) | English or 中文 on the title screen |
+| Continue · 继续游戏 | the same game page | shows whether a save is visible in this browser; press Continue on the title screen |
+| Technical demo · 技术演示 | `Resurrection-V5-Tech.html` (`/v5/tech`) | the USENET archive parsed, checked and restored into a walkable floor, with a 3-minute walkthrough |
+| Music and sound · 音乐试听 | `Resurrection-V5-Audio.html` (`/v5/audio`) | every theme by chapter and place, 8 s or looped, and every effect; verdict and notes; a link to the scene where each is heard |
+| Key scenes · 场景预览 | `Resurrection-V5-RC.html#scenes` (`/v5/rc`) | the train, the coast ride, the lighthouse, the porch at night, the duet, the 2004 beach, the first snow; one click each, nothing is saved |
+| Playtest feedback · 试玩反馈 | `Resurrection-V5-Playtest.html` and `feedback-form.html` | the game with the recorder on (everything stays in the browser) and the questionnaire (saves a file, sends nothing) |
+
+Under “advanced” at the bottom of the start page is the review hub (`Resurrection-V5-RC.html`): what this browser and GPU report, a live
+gamepad monitor and the frame-time tests.
+
+## What else is in it
 
 | Page | What it is for |
 |---|---|
-| **Review hub** (`/v5/rc`, `Resurrection-V5-RC.html`) | One place with links to everything below, a report of what this browser and GPU report, and a live gamepad monitor. |
-| **Key scenes** (hub, section 2) | One click opens the real game at: the train (Elena and June), the coast ride, the lighthouse beam, the porch at night, the guitar duet, the 2004 beach, and the first snow. `?preview=<beat>` — nothing is saved and your own save is untouched. The screenshots on the cards are from a CI machine with **software rendering**; they are not what your GPU draws. |
-| **Frame-time test** (`?bench=low,medium,high`) | Plays a fixed tour of nine scenes at each quality level and gives a table: average FPS, 1% low FPS, p99 and worst frame, hitches over 100 ms, stalls over 250 ms, load time, memory (where the browser reports it), draw calls and triangles, device and GPU. Copy the table into `V5-RC1-PERF.md`. Takes about five minutes. Keep the tab in front. |
-| **Music and sound** (`/v5/audio`, `Resurrection-V5-Audio.html`) | Every music arrangement (8 s or looped) and every sound effect, a verdict and a note field, and a link to the scene where each arrangement is heard. The level numbers only show that sound is produced. They say nothing about how it sounds. |
-| **Playtest build** (`Resurrection-V5-Playtest.html`, `/v5/?playtest=1`) | The game with the recorder on. The package for players is `resurrection-v5-playtest.zip` (see `playtest/README.md`). |
+| **Review hub** (`/v5/rc`, `Resurrection-V5-RC.html`) | The key-scene cards with screenshots (software-rendered CI frames, **not** your GPU), the frame-time tests, a device and GPU report, a gamepad monitor. |
+| **Frame-time test** (`?bench=low,medium,high`) | Plays a fixed tour of nine scenes at each quality level and gives a table: average FPS, 1% low FPS, p99 and worst frame, hitches over 100 ms, stalls over 250 ms, load time, memory (where the browser reports it), draw calls and triangles, device and GPU. Copy the table into `V5-RC1-PERF.md`. About five minutes; keep the tab in front. |
+| **Playtest build** (`Resurrection-V5-Playtest.html`, `/v5/?playtest=1`) | The game with the recorder on. Facilitator guide: `playtest/README.md`. |
 
 ## Single files and where saves live
 

@@ -1,111 +1,130 @@
-# Resurrection V5 — RC1 acceptance matrix
+# Resurrection V5 — RC1 acceptance matrix (final archive)
 
 Branch `feature/resurrection-v5-complete`. Nothing has been merged, deployed, published or submitted.
-CI run for this matrix: https://github.com/Quinnverse/resurrection-usenet/actions/runs/44696534992 (commit e3be862).
 
-**Conclusion: RC1 is complete as a build and as a review kit, but it is NOT releasable yet.** Everything that a machine can
-check is checked and passes. Everything that needs a real Mac, a real GPU, a real controller or phone, a pair of ears, or
-another person has **not been done**: it was impossible in the environment where RC1 was built (a Linux sandbox with no
-screen, no GPU and no browser; CI machines draw with software rendering). Those items are listed as NOT TESTED or BLOCKED,
-never as passed. The owner’s next steps are at the end.
+## Result
 
-Status words:
+| | |
+|---|---|
+| **RC1 AUTOMATED** | **PASS** (V5). All V5 automated checks pass. The only red job in the workflow is the P5 slice, a historical baseline failure that is not a V5 result (below). The workflow as a whole is **not** all green. |
+| **RC1 MANUAL** | **NOT TESTED**. No person has played, listened or measured on real hardware. |
+| **RELEASE READY** | **NO**. Blockers B1–B6 in `V5-RC1-BLOCKERS.md` are open. |
+
+### Which commit was tested by which run
+
+| Run | Commit | What ran | Result |
+|---|---|---|---|
+| [44708590327](https://github.com/Quinnverse/resurrection-usenet/actions/runs/44708590327) — **the full run** | `0983c38` | all 9 jobs | 8 pass, P5 fails (details below) |
+| [44758500485](https://github.com/Quinnverse/resurrection-usenet/actions/runs/44758500485) — the last code push | `b78e03b` | the “did the game change?” job, npm tests, container smoke and the RC1 browser job (7 tests). The four long jobs were **skipped on purpose**: the push changed no game file | 4 pass, 4 skipped |
+| *(no CI run required)* | the commit that adds this file, the release folder and the documents | documents and release files only | the light jobs run again; no game file changes |
+
+**What “skipped” means here.** Between `0983c38` and `b78e03b` ten files changed: the workflow, the RC1 tests, the start page
+(`home.html`, `home.js`), the review hub (`rc.html`, `rc.js`) and three tools (`v5-bundle`, `v5-rc-pack`, `v5-serve`).
+`git diff 0983c38 b78e03b` touches **none** of `main.js`, `index.html`, `playtest.js`, `core/`, `render/`, `data/`, `combined-server/`,
+`e2e/v5.spec.js`, the bot, the device drivers or `package.json`. So the whole-game results from run 44708590327 stand for the game
+code in the RC1 package, and are **not** claimed for anything newer. The long jobs run again by themselves whenever a game file changes,
+on every pull request, and by hand (`workflow_dispatch`).
+
+### The full run, 44708590327 (commit `0983c38`)
+
+| Job | Result | Evidence in the log |
+|---|---|---|
+| V5 main browser job | **PASS** 14 / 14 (1.2 h) | title, every beat from its save, Tab on the pier, **whole game EN**, **whole game ZH**, key remapping, touch, gamepad menus, keyboard menus, audio signal, tech demo, regression of `/`, `/p3/`, `/p4/` |
+| Whole game with only keyboard and mouse | **PASS** | `V5_DEVICE kbm ok game=562s`, credits left with Enter, save = `end` |
+| Whole game with only a gamepad (simulated) | **PASS** | `V5_DEVICE pad ok game=537s` |
+| Whole game with only touch (emulated) | **PASS** | `V5_DEVICE touch ok game=539s` |
+| RC1 review pages and packages | **PASS** 6 / 6 | remap rules, key-scene previews, frame-time tour, hub and gamepad monitor, single files from disk, touch layout with rotation |
+| Authoritative suite (`npm test`) | **PASS** | 243 tests at that commit |
+| Browser end-to-end (general) | **PASS** | |
+| Container smoke | **PASS** | |
+| **P5 slice** | **FAIL** 5 of 10 | the same 5 tests with the same 5 errors as before any V5 work (see “P5”) |
+
+### The last code push, 44758500485 (commit `b78e03b`)
+
+| Job | Result |
+|---|---|
+| Did the game change? | `game=false` (“changed outside the light paths: none”) |
+| `npm test` | **PASS** (245 tests: the 243 plus tests for the start page links, the feedback form and the no-network promise) |
+| V5 RC1 review pages and packages | **PASS** 7 / 7, including the new start-page test (6 doors, English and Chinese, saves, technical demo restore, music page, key scenes, feedback form file download, playtest page, **no network request**). It also runs the Node shell harness: EN and ZH full game, the single-file build full game, previews, frame-time tour |
+| Container smoke | **PASS** |
+| Long browser jobs (V5 main, 3 devices, general, P5) | **skipped**, see above |
+
+### P5 (reported separately from V5)
+
+`Browser end-to-end, P5 slice` fails 5 of 10 tests (full playthrough EN, Chinese chapter, phone touch, hints and safe-spot menu,
+reduced motion and settings) with the same five error messages on the P5 branch (`1c6cb0b`), on the V5 branch point
+(`f69fa3b`, no V5 code) and on every V5 run since. Table of runs: `V5-P5-BASELINE.md`. V5 does not change P5 files. P5 tests were not
+deleted, skipped or weakened; they were not run in `b78e03b` because the push touched no P5 or game file. Repairing P5 is a separate
+maintenance task and does not gate V5 RC1.
+
+## Status words
 
 | Word | Meaning |
 |---|---|
-| **PASS (auto)** | a machine check passed in the CI run above (or the Node suite). Says nothing about a person’s experience |
-| **PASS (owner)** | the owner tested it on real hardware and wrote it down. *No row has this yet.* |
+| **AUTOMATED PASS** | a machine check passed in the runs above. Says nothing about a person’s experience |
+| **MANUAL PASS** | a person tested it on real hardware and wrote it down. **No row has this yet** |
 | **NOT TESTED** | the tool or procedure exists; nobody has run it on the real thing |
-| **BLOCKED** | could not be done in the build environment (no GUI, GPU, Mac browsers, device or person) |
+| **BLOCKED** | could not be done in the build environment (a Linux sandbox with no screen, GPU, Mac browsers, controller, phone or other person) |
 | **FAIL** | tested and broken |
 
 ## 1 · The RC1 brief
 
-### 1. Real-device verification
+### Real-device verification
 
 | Item | Status | Evidence / what exists |
 |---|---|---|
-| Chrome on the Mac: full seven chapters, FPS, memory, load time | **BLOCKED** (no Mac, no GUI) → NOT TESTED | frame-time test (`?bench=`), playtest recorder with per-chapter fps/1% low/heap, hub and procedure (`V5-RC1-DEVICE-TEST.md` §1–2). The whole game does play to the credits in Chromium on a software renderer, both languages (PASS (auto)); that is not a GPU result. |
-| Safari: start, move, interact, save, key chapters, ending | **BLOCKED** → NOT TESTED | `V5-RC1-DEVICE-TEST.md` §2. A static text search found no feature Safari lacks; CSS has fallbacks (`dvh`, prefixed blur). Not a test. |
-| Firefox (if installed) | **BLOCKED** → NOT TESTED | same procedure |
-| Performance at each quality level | tool: **PASS (auto)**; numbers: **NOT TESTED** | the frame-time test runs at low / medium / high and produces its report in Chromium (2 levels × 2 scenes in CI, and from a single file); the numbers are software-rendered and are not reported as performance |
-| Record: device, browser version, resolution, average FPS, 1% low FPS, max memory, severe stalls | tool: **PASS (auto)**; values: **NOT TESTED** | report columns and the JSON hold all of them; heap only where the browser reports it (Chrome), otherwise read the system monitor (`V5-RC1-PERF.md`) |
-| CI software-rendering numbers are not presented as GPU results | **PASS** | `V5-RC1-PERF.md` section B is labelled; the hub warns when it detects software rendering |
+| Chrome on the Mac: full seven chapters, FPS, memory, load time | **BLOCKED** → NOT TESTED | frame-time test, playtest recorder, start page, procedure `V5-RC1-DEVICE-TEST.md` §1–2. The whole game plays to the credits in Chromium with a software renderer in both languages (AUTOMATED PASS); that is not a GPU result |
+| Safari: start, move, interact, save, key chapters, ending | **BLOCKED** → NOT TESTED | procedure §2; a text search of the code found nothing Safari lacks, CSS has fallbacks. Not a test |
+| Firefox | **BLOCKED** → NOT TESTED | same |
+| Performance per quality level | tool AUTOMATED PASS; numbers NOT TESTED | the CI numbers are software-rendered (a few frames per second, about 2–15) and are not reported as performance |
+| Record: device, browser version, resolution, average FPS, 1% low FPS, max memory, severe stalls | tool AUTOMATED PASS; values NOT TESTED | `V5-RC1-PERF.md` has the definitions and empty tables |
 
-### 2. Input devices
-
-| Item | Status | Evidence |
-|---|---|---|
-| Keyboard and mouse: whole game | **PASS (auto)** with synthetic events; human feel NOT TESTED | whole game with only keyboard and mouse in Chromium (CI job kbm) |
-| Gamepad: all menus, dialogue, pause, save and the ending | **PASS (auto)** with a simulated pad; **real controller NOT TESTED** | whole game and every menu with only a simulated standard pad (CI job pad). The hub detects a real pad, shows its name and mapping, and lights the pressed buttons: PASS (auto) with the simulated pad |
-| Real connected controller | **BLOCKED** → NOT TESTED | `V5-RC1-DEVICE-TEST.md` §4 |
-| Phone over the local network: touch, portrait and landscape, performance, operation | **BLOCKED** → NOT TESTED | `npm run v5:lan` serves the pages to the local network (tested: the server only serves the game files, read-only). Emulated touch screens at 390×844, 844×390, 320×568 and 568×320 play the whole game (CI job touch) and pass layout checks: buttons and menus inside the screen, no overlap, Resume reachable, the picture and buttons re-fit after a rotation (PASS (auto)). No real phone has been used |
-| Key remapping: conflicts, saving, reset to defaults | **PASS (auto)** | swap on conflict, reserved keys refused, Esc cancels, kept after reload, damaged settings repaired, reset (Node tests and Chromium) |
-
-### 3. Sight and sound
+### Input devices
 
 | Item | Status | Evidence |
 |---|---|---|
-| Openable previews of the key scenes: Elena and June on the train, the coast ride, the lighthouse together, night music, the 2004 standoff, the first snow | **PASS (auto)** | hub section 2 (`/v5/rc`, `Resurrection-V5-RC.html`); each card opens the live scene (`?preview=`), tested for all seven scenes in Chromium including that the real save is untouched; real-browser screenshots in `docs/v5-evidence/rc1/` |
-| The owner has looked at the live scenes | **NOT TESTED** | `V5-RC1-DEVICE-TEST.md` §5 |
-| Listening entry for the original music | **PASS (auto)** | `/v5/audio`, `Resurrection-V5-Audio.html`: every theme (8 s or looped) and effect, verdict and notes, link to the scene |
-| Audio quality is **not** claimed from levels | **PASS** | the page, the checklist and the report say the numbers only show that sound is produced |
-| Someone has listened to the music | **NOT TESTED** | nobody has |
+| Keyboard and mouse, whole game | AUTOMATED PASS with synthetic events; feel NOT TESTED | job kbm |
+| Gamepad: all menus, dialogue, pause, save, ending | AUTOMATED PASS with a simulated pad; **real controller BLOCKED → NOT TESTED** | job pad; the hub detects a real pad (name, mapping, live buttons): AUTOMATED PASS with the simulated one |
+| Phone over the local network: touch, portrait/landscape, performance | AUTOMATED PASS for an emulated touch screen at 390×844, 844×390, 320×568, 568×320 (whole game; layout; rotation); **real phone BLOCKED → NOT TESTED** | job touch, RC1 job; `npm run v5:lan` serves only the game files, read-only (tested) |
+| Key remapping: conflicts, saving, reset | AUTOMATED PASS | swap on conflict, reserved keys refused, Esc cancels, kept after reload, damaged settings repaired |
 
-### 4. Playtest preparation
+### Sight and sound
 
 | Item | Status | Evidence |
 |---|---|---|
-| Instructions that need no development environment: how to start, controls, duration, feedback | **PASS (auto)** for the files; usability NOT TESTED | `resurrection-v5-playtest.zip`: `START-HERE.html` (EN/中文), `Resurrection-V5-Playtest.html` (one file, double-click), `feedback-form.html`. The single file runs in Chromium from disk with no network request (PASS (auto)); other browsers NOT TESTED |
-| Automatic chapter start and end times | **PASS (auto)** | recorder keeps real play time and clock start/end per chapter |
-| Stuck, pause, skip and exit statistics | **PASS (auto)** | idle stretches, hints, retries, pauses (count and time), skipped lines, page exits and tab switches; summary tool prints them |
-| Voluntary feedback on story and feeling | **PASS (auto)** | 1–5 and one sentence after each chapter (skippable) and the optional form, every question optional |
-| No personal data collected, nothing uploaded without consent | **PASS (auto)** | nothing is recorded before Start or Continue, the title says what is recorded, the single-file playtest page made no network request in the browser test, no name or contact asked, “Delete my playtest record” in the pause menu |
-| The owner plays once first, then others are invited | **NOT DONE** | `playtest/SESSION-LOG-TEMPLATE.md` has the owner’s section; no session has been run and `RESULTS.md` is empty by design |
+| Previews of the key scenes (train, coast ride, lighthouse, porch at night, 2004 beach, first snow, and the duet) | AUTOMATED PASS | start page → “Key scenes”; each opens the live scene and leaves the real save alone; real-browser screenshots in `docs/v5-evidence/rc1/` |
+| The owner has looked at the live scenes | NOT TESTED | procedure §5 |
+| Listening entry for the original music | AUTOMATED PASS | `Resurrection-V5-Audio.html`, `/v5/audio` |
+| Audio quality | **NOT TESTED** | nobody has listened; level numbers are not a quality claim |
 
-### 5. P5
+### Playtest preparation
 
-| Item | Status |
-|---|---|
-| `V5-P5-BASELINE.md` kept and extended | done |
-| P5 history reported separately from V5 | yes: the P5 job is not part of the V5 acceptance |
-| P5 tests deleted or disabled to get a green run | **no**: the job still runs and still fails the same 5 of 10 tests with the same 5 errors as before V5 existed (`V5-P5-BASELINE.md`) |
-| P5 repair | a separate maintenance task; does not block V5 RC1 |
-
-### 6. RC1 delivery
-
-| # | Deliverable | Where |
+| Item | Status | Evidence |
 |---|---|---|
-| 1 | One-command local start | `npm run v5` (Mac: double-click `start-v5.command`); phone: `npm run v5:lan`; or open `Resurrection-V5-RC.html` from the zip (`npm run v5:rc`; CI artifact `resurrection-v5-rc1-package`) |
-| 2 | Real-browser preview | the hub and its seven live scenes; screenshots from real Chromium (software GPU, labelled) in `docs/v5-evidence/rc1/`; a preview on your own GPU needs you to open the hub |
-| 3 | Performance report | `V5-RC1-PERF.md`: definitions, what CI measured (software, labelled), and empty tables for the owner’s Mac, browsers and phone |
-| 4 | Original-music listening entry | `/v5/audio`, `Resurrection-V5-Audio.html`, `V5-AUDIO-CHECKLIST.md` |
-| 5 | Playtest record template | `playtest/SESSION-LOG-TEMPLATE.md`, `playtest/feedback-form.html`, `PLAYER-SHEET.md`, `RESULTS.md` (empty) |
-| 6 | Release-blocker list | `V5-RC1-BLOCKERS.md` |
-| 7 | RC1 Git commit | on the branch (commit shown at the end of the final report) |
-| 8 | Final acceptance matrix | this file |
+| Instructions that need no development environment | AUTOMATED PASS for the files; usability NOT TESTED | `resurrection-v5-playtest.zip`: `START-HERE.html`, `Resurrection-V5-Playtest.html`, `feedback-form.html`; opened from disk in Chromium with no network request |
+| Automatic chapter start and end times; stuck, pause, skip and exit statistics | AUTOMATED PASS | recorder fields tested in Node and Chromium |
+| Voluntary feedback on story and feeling | AUTOMATED PASS | one-sentence and 1–5 answers after each chapter (skippable); the form, every question optional |
+| No personal data, nothing uploaded | AUTOMATED PASS | nothing recorded before Start or Continue; the title says what is recorded; the form and the game contain no network code (unit test); no network request in the browser test; “Delete my playtest record” |
+| The owner plays once, then others | **NOT DONE** | `playtest/SESSION-LOG-TEMPLATE.md`; `playtest/RESULTS.md` is empty by design |
+| Measured play time | **NOT MEASURED** | the 27–37 minute figure is an **estimate** (EN 28–37, ZH 27–35) from a model; the bot’s virtual game time is about 9 minutes and is not human time |
 
-## 2 · Automated results behind the PASS (auto) rows
+## 2 · Delivery
 
-| Check | Result |
-|---|---|
-| `npm test` | 243 / 243 pass (229 earlier tests plus 14 for RC1: key bindings, frame-time statistics, the recorder, preview saves, the single-file bundle, the server) |
-| Node shell: EN and ZH full game, tech page, the single-file bundle full game, previews, frame-time tour, three input devices | all pass |
-| Chromium, V5 main job (title, every beat, Tab, whole game EN and ZH, remap, touch, gamepad menus, keyboard menus, audio, tech, regression) | MAINV5 |
-| Chromium, RC1 job (6 tests: remap, previews, frame-time tour, hub and gamepad monitor, single files from disk, touch layout with rotation) | 6 / 6 pass |
-| Whole game with only keyboard and mouse / only a gamepad / only touch | all three pass (562 s / 537 s / 539 s of game time) |
-| Container smoke, authoritative suite, main browser suite | pass |
-| P5 job | 5 of 10 fail, identical to the baseline (separate, not a V5 result) |
+| # | Deliverable | Where (verified to exist) |
+|---|---|---|
+| 1 | Start it with one action | double-click `Resurrection-V5-Start.html` from `release/v5-rc1/resurrection-v5-rc1.zip`; or `npm run v5` (Mac: double-click `start-v5.command`); phone: `npm run v5:lan` |
+| 2 | Real-browser preview | the start page → key scenes; screenshots from real Chromium (software GPU, labelled) in `docs/v5-evidence/rc1/` |
+| 3 | Performance report | `V5-RC1-PERF.md` |
+| 4 | Original-music listening entry | `Resurrection-V5-Audio.html`, `/v5/audio`, `V5-AUDIO-CHECKLIST.md` |
+| 5 | Playtest record templates | `playtest/SESSION-LOG-TEMPLATE.md`, `playtest/feedback-form.html`, `PLAYER-SHEET.md`, `RESULTS.md` |
+| 6 | Blocker list | `V5-RC1-BLOCKERS.md` |
+| 7 | RC1 Git commit | see the final report; the package was built from `b78e03b` |
+| 8 | This matrix | this file |
 
-## 3 · Found and fixed while preparing RC1
+## 3 · What the owner does next
 
-See the last table of `V5-RC1-BLOCKERS.md`: key conflicts and Esc binding, hint text overlapping subtitles, touch buttons
-over the title and menus, the recorder starting before consent, the recorder switch persisting, panels exceeding phone height.
-
-## 4 · What the owner does next
-
-1. Open `Resurrection-V5-RC.html` (or `npm run v5`) on the Mac and follow `V5-RC1-DEVICE-TEST.md`: frame-time test in Chrome and Safari (and Firefox), one full play with the recorder, the key scenes, the music.
-2. Plug in a controller and test with the hub’s monitor, then a phone with `npm run v5:lan`.
-3. Fill in `V5-RC1-PERF.md`, mark the rows above PASS (owner) or FAIL, add problems to `V5-RC1-BLOCKERS.md`.
-4. Play once yourself, then invite 5–8 others with `resurrection-v5-playtest.zip`.
-5. Decide on release only after B1–B6 in the blockers list are closed or accepted. Merging, deployment and any submission remain yours to approve.
+1. Unzip `release/v5-rc1/resurrection-v5-rc1.zip` and open `Resurrection-V5-Start.html` on the Mac. Follow `V5-RC1-DEVICE-TEST.md`.
+2. Play the game once, listen to the music, look at the key scenes and the characters, write down stalls and problems.
+3. Frame-time test in Chrome and Safari (and Firefox) and fill `V5-RC1-PERF.md`; try a controller and a phone.
+4. Then invite 5–8 others with `resurrection-v5-playtest.zip`.
+5. Merging, deployment and any submission remain yours to approve.

@@ -119,3 +119,20 @@ The four verbs:
 ## Files
 
 See `git log --stat feature/resurrection-v5-complete` and the file list in docs/V5-TEST-REPORT.md.
+
+## RC1 review tooling (added after the game was complete; no story or gameplay changes)
+
+| Part | Files | How it works |
+|---|---|---|
+| Start page and review hub | `frontend/v5/home.html`, `home.js`, `rc.html`, `rc.js`, `rc-scenes.js`, `rc/shots/` | Plain pages that only link and report. The same files are served by `tools/v5-serve.mjs` and inlined into single files; a flag `window.__V5_STANDALONE__` makes the links relative. |
+| Previews | `?preview=<beat>` in `main.js`, `data/preview-saves.json`, `tools/v5-preview-saves.mjs` | One save per beat (plus `snow`, the end of the new pier) is made by playing the core with the scripted bot. A preview loads one, shows a tip, and never writes the real save. A test fails if the file is stale. |
+| Frame-time test | `?bench=…` in `main.js`, `core/bench.js` | The renderer measures `requestAnimationFrame` gaps on a fixed tour with the game logic frozen; statistics (average, 1% low, p99, worst, hitches) and a Markdown report are pure functions in `core/bench.js` (unit-tested). The quality level is applied in memory only. |
+| Key bindings | `core/keymap.js`, settings in `main.js` | Pure functions: stored bindings are sanitised, rebinding swaps on conflict and refuses reserved keys. |
+| Playtest recorder | `playtest.js`, title notice, pause-menu buttons | Nothing is recorded until Start or Continue; chapter clock times, pauses, exits, a frame-time histogram (approximate 1% low). Local storage only. |
+| Single-file builds | `tools/v5-bundle.mjs` | A small module inliner for exactly the import/export forms used here (fails on anything else; refuses cycles and missing exports). `tools/v5-shell-run.mjs --bundle` plays the whole game through the bundled script in Node. |
+| Servers and packs | `tools/v5-serve.mjs`, `tools/v5-rc-pack.mjs`, `tools/v5-playtest-pack.mjs` | A read-only static server (`--lan` for phones); the owner package and the player folder. |
+| CI | `.github/workflows/test.yml` | A first job compares the push with the previous one: if only documents, release files, RC1 pages, tools, their tests or the workflow changed, the long browser jobs are skipped. |
+| Tests | `test/v5-rc.test.mjs` (Node), `e2e/v5-rc.spec.js` (Chromium) | Key bindings, statistics, recorder consent, preview saves, bundle, server, privacy checks; remap, previews, frame-time tour, hub, single files from disk, start page, touch layouts. |
+
+Known limits: the frame-time tour measures drawing, not walking or physics; `performance.memory` exists only in Chrome-based browsers;
+everything here was verified in Chromium with a software renderer, not on real GPUs, Safari, Firefox, controllers or phones.
