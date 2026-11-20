@@ -201,3 +201,12 @@ test('controls: the journal has its own key, and it can be remapped like the oth
   assert.ok(ACTIONS.includes('journal'));
   assert.ok(has('en', 'ui.k.journal') && has('zh', 'ui.k.journal'));
 });
+
+test('the guide points at what the player does next: the marker is on every required thing used, Tab is in the instruction whenever it is needed', async () => {
+  const { audit } = await import('../tools/v5-guide-audit.mjs');
+  for (const choices of [undefined, { train: 0, parting: 1, finish: 0, closer: 1, defend: 1, offer: 1, letter: 1 }]) {
+    const r = await audit(choices ? { choices } : {});
+    assert.equal(r.g.s.beat, 'end'); assert.deepEqual(r.misses, []); assert.ok(r.uses.length > 60); assert.equal(r.tabs.length, 5);
+    for (let c = 1; c <= 7; c++) { assert.ok(r.switches.some((x) => x.kind === 'step' && Gm.chapterOf(x.beat) === c), 'a step completed in chapter ' + c); }
+  }
+});

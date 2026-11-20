@@ -73,7 +73,7 @@ export function createGuide(c) {
       if (e.type === 'tab') { markTut('tab'); if (tut && tut.id === 'tab') { finishTut(); } }
       if ((e.type === 'restored' || e.type === 'carved' || e.type === 'lens' || e.type === 'lit') && tut && tut.id === 'hold') { finishTut(); }
       if (e.type === 'restored' || e.type === 'carved') { markTut('hold'); }
-      if (e.type === 'beat') { lastGoal = null; knownFound = null; }
+      if (e.type === 'beat' && e.loading) { lastGoal = null; knownFound = null; }   // only a load starts over; a beat change in play is a new goal to announce
     });
   }
   function finishTut() { if (tut) { markTut(tut.id); } tut = null; tutT = 0; tipBox.hidden = true; }
@@ -163,7 +163,7 @@ export function createGuide(c) {
       toast.textContent = ''; toast.append(el('span', { class: 'ml', text: T('jr.new') }), el('span', { class: 'mt', text: last ? T('mem.' + last.id + '.t') : '' }), el('span', { class: 'mk', text: label('journal') }));
       c.play('found');
     }
-    toastT = Math.max(0, toastT - dt); toast.hidden = !(toastT > 0) || !!cine;
+    if (!cine) { toastT = Math.max(0, toastT - dt); } toast.hidden = !(toastT > 0) || !!cine;   // a memory found during a dialogue is announced after it
   }
   // the fragment most recently found: the one of the latest chapter and position in the list
   let seenIds = null;

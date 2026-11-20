@@ -176,11 +176,45 @@ test.describe('V5 — The Summer We Never Finished', () => {
           const { playThrough } = await import('/v5-test/bot.mjs');
           const h = window.__V5_TEST__; await h.virtualize();
           const want = new Set(keys); let pend = null;
+          // the guide as the player sees it: the task bar must show the goal, the next step and the progress of the real
+          // game state in every frame of play; a finished step must be announced; the journal must open, show what has been
+          // found, and close again; the marker must be on the thing the player then uses
+          const G = { checks: 0, mism: [], done: {}, newGoal: {}, journal: {}, pointer: [], uses: 0, lastDone: '', lastNew: false, held: false };
+          const q = (id) => document.querySelector(`[data-testid="${id}"]`);
+          const shotNow = async (name) => { h.shotReq = name; while (h.shotReq) { await new Promise((r) => h.realTimeout(r, 40)); } };
+          const isEn = window.V5Debug.snapshot().lang === 'en';
+          const key = async (code, type) => window.dispatchEvent(new KeyboardEvent(type, { code, key: code, bubbles: true, cancelable: true }));
+          async function guideCheck(input, s0, o0) {
+            const D = window.V5Debug; const s = D.snapshot(); const o = D.objective(); const cine = document.getElementById('app').classList.contains('cine');
+            // the marker was on what the player used (checked at the start of a press or a hold)
+            const starts = input && (input.use || (input.useHeld && !G.held)); G.held = !!(input && input.useHeld);
+            if (starts && s0 && o0 && s0.prompt && !s0.prompt.optional && !s0.dialog && !s0.choice) { G.uses += 1; if (o0.target) { const d = Math.hypot(o0.target.x - s0.prompt.x, o0.target.z - s0.prompt.z); if (d > 2.5) { G.pointer.push(`${s0.beat}: used ${s0.prompt.id}, marker ${d.toFixed(1)} m away`); } } }
+            if (!o || s.mode !== 'play' || cine || !q('quest') || q('quest').hidden) { return; }
+            G.checks += 1;
+            const goal = q('quest-goal').textContent, next = q('quest-next').textContent, prog = q('quest-progress');
+            if (goal !== D.text(o.goal) && G.mism.length < 20) { G.mism.push(`${o.beat} goal: "${goal}" vs "${D.text(o.goal)}"`); }
+            if (o.nextKey && next !== D.text(o.nextKey) && G.mism.length < 20) { G.mism.push(`${o.beat} next: "${next}" vs "${D.text(o.nextKey)}"`); }
+            if (o.progress.of > 1 && prog.textContent !== `${o.progress.n}/${o.progress.of}` && G.mism.length < 20) { G.mism.push(`${o.beat} progress: "${prog.textContent}" vs ${o.progress.n}/${o.progress.of}`); }
+            const ch = o.chapter; const qd = q('quest-done'); const badge = document.querySelector('.quest .qnew');
+            if (!qd.hidden && qd.textContent && qd.textContent !== G.lastDone) { G.lastDone = qd.textContent; (G.done[ch] = G.done[ch] || []).push(`${o.beat}: ${qd.textContent}`); if (isEn && G.done[ch].length <= 2) { await shotNow(`guide-ch${ch}-${o.beat}-done-${G.done[ch].length}`); } }
+            const nowNew = !!(badge && !badge.hidden); if (nowNew && !G.lastNew) { (G.newGoal[ch] = G.newGoal[ch] || []).push(`${o.beat}: ${goal}`); if (isEn && G.newGoal[ch].length === 1) { await shotNow(`guide-ch${ch}-${o.beat}-new-goal`); } } G.lastNew = nowNew;
+            // once per chapter, after the first step of the chapter was announced: open the journal with the real key, check it, close it
+            if (G.done[ch] && !G.journal[ch] && !s.prompt) {
+              await key('KeyJ', 'keydown'); await h.step({}); await key('KeyJ', 'keyup'); await h.step({});
+              const panel = q('journal-memories'); const found = D.journal().found; const shown = panel ? panel.querySelectorAll('.jm:not(.locked)').length : -1;
+              const goalsTxt = q('journal-goals') ? q('journal-goals').textContent : '';
+              G.journal[ch] = { open: !!panel && D.snapshot().mode === 'pause', found, shown, hasGoal: goalsTxt.indexOf(D.text(o.goal)) >= 0 };
+              if (isEn) { await shotNow(`guide-ch${ch}-journal`); }
+              await key('KeyJ', 'keydown'); await h.step({}); await key('KeyJ', 'keyup'); await h.step({});
+              G.journal[ch].closed = D.snapshot().mode === 'play';
+            }
+          }
           // a screenshot request on key lines of dialogue (taken by the test runner, with the HUD), and the playtest rating cards
           const step = async (input) => {
             const rate = document.querySelector('[data-testid="rate-done"]');
             if (rate && !document.querySelector('[data-testid="panel"]').hidden) { document.querySelector('[data-testid="rate-fun-4"]').click(); document.querySelector('[data-testid="rate-moved-3"]').click(); rate.click(); }
-            const ev = await h.step(input); const s = window.V5Debug.snapshot();
+            const s0 = window.V5Debug.snapshot(); const o0 = window.V5Debug.objective();
+            const ev = await h.step(input); await guideCheck(input, s0, o0); const s = window.V5Debug.snapshot();
             const k = s.dialog && Array.isArray(s.dialog.line) ? s.dialog.line[1] : null;
             if (k && want.has(k) && !pend) { pend = { k, n: 0 }; want.delete(k); }
             if (pend && ++pend.n === 8) { h.shotReq = pend.k; while (h.shotReq) { await new Promise((r) => h.realTimeout(r, 40)); } pend = null; }
@@ -189,7 +223,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
           const bot = await playThrough(h.game, { step, choices });
           for (let i = 0; i < 900 && !document.querySelector('[data-testid="credits"]'); i++) { await step({}); }
           const credits = document.querySelector('[data-testid="credits"]');
-          return { t: bot.t, beats: bot.beats, stuck: bot.stuck, credits: credits ? credits.textContent : null, snap: window.V5Debug.snapshot(), album: document.querySelectorAll('[data-testid="album"] img').length };
+          return { t: bot.t, beats: bot.beats, stuck: bot.stuck, credits: credits ? credits.textContent : null, snap: window.V5Debug.snapshot(), album: document.querySelectorAll('[data-testid="album"] img').length, guide: G };
         }, [run.choices, KEY_LINES]);
         // while it plays: a screenshot at every new beat and every 20 s of wall time
         let done = false, out = null, err = null; playing.then((r) => { out = r; done = true; }, (e) => { err = e; done = true; });
@@ -197,7 +231,8 @@ test.describe('V5 — The Summer We Never Finished', () => {
         while (!done) {
           await page.waitForTimeout(200); if (done) { break; }
           const req = await page.evaluate(() => window.__V5_TEST__.shotReq || null).catch(() => null);
-          if (req) { await page.waitForTimeout(350); await page.waitForFunction(() => { const el = document.querySelector('.subs'); return !el || !el.classList.contains('on') || parseFloat(getComputedStyle(el).opacity) > 0.98; }, null, { timeout: 3000, polling: 50 /* not 'raf': the virtual clock keeps one rAF callback, the game's */ }).catch(() => {}); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
+          if (req) { if (/^guide-/.test(req)) { await page.waitForTimeout(150); await attach(testInfo, `${req}-${run.lang}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
+            await page.waitForTimeout(350); await page.waitForFunction(() => { const el = document.querySelector('.subs'); return !el || !el.classList.contains('on') || parseFloat(getComputedStyle(el).opacity) > 0.98; }, null, { timeout: 3000, polling: 50 /* not 'raf': the virtual clock keeps one rAF callback, the game's */ }).catch(() => {}); await attach(testInfo, `scene-${run.lang}-${req}`, await shot(page)); await page.evaluate(() => { window.__V5_TEST__.shotReq = null; }); continue; }
           if (Date.now() - lastShot < 1500) { continue; }
           const s = await snap(page).catch(() => null); if (!s) { continue; }
           if (s.beat !== lastBeat || Date.now() - lastShot > 20000) { lastBeat = s.beat; lastShot = Date.now(); n += 1; await attach(testInfo, `${run.lang}-${String(n).padStart(3, '0')}-${s.beat}`, await shot(page)); }
@@ -213,6 +248,14 @@ test.describe('V5 — The Summer We Never Finished', () => {
         expect(out.snap.photos.every((p) => p.thumb)).toBe(true);
         expect(out.album).toBeGreaterThanOrEqual(6);
         expect(out.stuck).toEqual([]);
+        // the guide in the real page, every chapter
+        const gd = out.guide; console.log('V5_GUIDE ' + run.lang + ' ' + JSON.stringify({ checks: gd.checks, uses: gd.uses, mism: gd.mism, pointer: gd.pointer, done: Object.fromEntries(Object.entries(gd.done).map(([k, v]) => [k, v.slice(0, 6)])), newGoal: gd.newGoal, journal: gd.journal }));
+        expect(gd.checks).toBeGreaterThan(5000); expect(gd.mism).toEqual([]); expect(gd.pointer).toEqual([]); expect(gd.uses).toBeGreaterThan(60);
+        for (let c = 1; c <= 7; c++) {
+          expect(gd.done[c] && gd.done[c].length, 'a finished step announced in chapter ' + c).toBeGreaterThan(0);
+          if (c > 1) { expect(gd.newGoal[c] && gd.newGoal[c].length, 'a new goal announced in chapter ' + c).toBeGreaterThan(0); }
+          const j = gd.journal[c]; expect(j, 'journal opened in chapter ' + c).toBeTruthy(); expect(j.open && j.closed && j.hasGoal, 'journal in chapter ' + c + ' ' + JSON.stringify(j)).toBe(true); expect(j.shown).toBe(j.found);
+        }
         const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.save.v1')).beat);
         expect(saved).toBe('end');
         if (playtest) {
