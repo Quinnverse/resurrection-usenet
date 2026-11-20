@@ -173,6 +173,8 @@ function check() {
     ['quest-goal', 'quest-next', 'quest-chapter', 'tut', 'mem-toast'].forEach((id) => { const e = byTestId(id); if (e) { const tx = e.textContent; if (raw.test(tx) || tx.split(/\s+/).some((w) => raw.test(w))) { stats.missingText.add(id + ': ' + tx.slice(0, 80)); } } });
     if (dbg.mode === 'play') { stats.questChecks = (stats.questChecks || 0) + 1; if (byTestId('quest-goal')) { stats.questShown = (stats.questShown || 0) + 1; } }
     const o = window.V5Debug.objective && window.V5Debug.objective(); if (o) { (stats.goals = stats.goals || new Set()).add(o.beat); }
+    const cineNow = appEl.classList.contains('cine'); if (dbg.mode === 'play') { const bb = (stats.cineBy = stats.cineBy || {}); const r = bb[dbg.beat] = bb[dbg.beat] || [0, 0]; r[1] += 1; if (cineNow && !dbg.dialog && !dbg.choice) { r[0] += 1; } }
+    const qd = cineNow ? null : byTestId('quest-done'); if (!cineNow) { const txt = qd ? qd.textContent : null; stats.doneRun = qd && txt === stats.doneTxt ? (stats.doneRun || 0) + 1 : (qd ? 1 : 0); stats.doneTxt = txt; }   // the same note, shown for more than ~5 s of play if (qd && stats.doneRun > 15) { stats.missingText.add('quest-done note stays on screen: ' + qd.textContent.slice(0, 60)); }
   }
   // every visible text must be a translation, never a raw key
   const subs = byTestId('subs'); if (subs && subs.children[1] && subs.attrs['data-key'] && subs.children[1].textContent === subs.attrs['data-key']) { stats.missingText.add(subs.attrs['data-key']); }
@@ -235,7 +237,7 @@ try {
       creditsHave: want.map((w) => [w, credits.includes(w)]), albumPhotos: album ? album.children.length : 0, photosWithThumb: hook.game.s.photos.filter((p) => p.thumb).length, photos: hook.game.s.photos.length,
       savedBeat: saved && saved.beat, promptFrames: stats.promptFrames, promptNotShown: stats.promptOff, playerOffscreenFrames: stats.offscreen,
       perBeat: Object.fromEntries(Object.entries(stats.beats).map(([k, v]) => [k, { world: v.world, frames: v.frames, off: v.off, promptOff: v.promptOff || 0, samples: v.samples, camDist: v.maxDist ? [+v.minDist.toFixed(2), +v.maxDist.toFixed(2)] : null }])),
-      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
+      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
     });
     if (SHOTS) { // contact sheets, 3 x 4 previews each
       const W = 480, H = 270, C = 3, R = 4;

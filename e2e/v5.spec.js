@@ -197,7 +197,8 @@ test.describe('V5 — The Summer We Never Finished', () => {
             if (o.progress.of > 1 && prog.textContent !== `${o.progress.n}/${o.progress.of}` && G.mism.length < 20) { G.mism.push(`${o.beat} progress: "${prog.textContent}" vs ${o.progress.n}/${o.progress.of}`); }
             const ch = o.chapter; const qd = q('quest-done'); const badge = document.querySelector('.quest .qnew');
             if (!qd.hidden && qd.textContent && qd.textContent !== G.lastDone) { G.lastDone = qd.textContent; (G.done[ch] = G.done[ch] || []).push(`${o.beat}: ${qd.textContent}`); if (isEn && G.done[ch].length <= 2) { await shotNow(`guide-ch${ch}-${o.beat}-done-${G.done[ch].length}`); } }
-            const nowNew = !!(badge && !badge.hidden); if (nowNew && !G.lastNew) { (G.newGoal[ch] = G.newGoal[ch] || []).push(`${o.beat}: ${goal}`); if (isEn && G.newGoal[ch].length === 1) { await shotNow(`guide-ch${ch}-${o.beat}-new-goal`); } } G.lastNew = nowNew;
+            if (!qd.hidden) { G.doneOn = (G.doneOn || 0) + 1; G.doneMax = Math.max(G.doneMax || 0, G.doneOn); } else { G.doneOn = 0; }
+            const nowNew = !!(badge && !badge.hidden); G.newOn = nowNew ? (G.newOn || 0) + 1 : 0; G.newMax = Math.max(G.newMax || 0, G.newOn); if (nowNew && !G.lastNew) { (G.newGoal[ch] = G.newGoal[ch] || []).push(`${o.beat}: ${goal}`); if (isEn && G.newGoal[ch].length === 1) { await shotNow(`guide-ch${ch}-${o.beat}-new-goal`); } } G.lastNew = nowNew;
             // once per chapter, after the first step of the chapter was announced: open the journal with the real key, check it, close it
             if (G.done[ch] && !G.journal[ch] && !s.prompt) {
               await key('KeyJ', 'keydown'); await h.step({}); await key('KeyJ', 'keyup'); await h.step({});
@@ -249,7 +250,8 @@ test.describe('V5 — The Summer We Never Finished', () => {
         expect(out.album).toBeGreaterThanOrEqual(6);
         expect(out.stuck).toEqual([]);
         // the guide in the real page, every chapter
-        const gd = out.guide; console.log('V5_GUIDE ' + run.lang + ' ' + JSON.stringify({ checks: gd.checks, uses: gd.uses, mism: gd.mism, pointer: gd.pointer, done: Object.fromEntries(Object.entries(gd.done).map(([k, v]) => [k, v.slice(0, 6)])), newGoal: gd.newGoal, journal: gd.journal }));
+        const gd = out.guide; console.log('V5_GUIDE ' + run.lang + ' ' + JSON.stringify({ newMax: gd.newMax, doneMax: gd.doneMax, checks: gd.checks, uses: gd.uses, mism: gd.mism, pointer: gd.pointer, done: Object.fromEntries(Object.entries(gd.done).map(([k, v]) => [k, v.slice(0, 6)])), newGoal: gd.newGoal, journal: gd.journal }));
+        expect(gd.newMax, 'the New goal badge goes away (frames on screen in a row)').toBeLessThan(150); expect(gd.doneMax, 'the step-done note goes away').toBeLessThan(150);
         expect(gd.checks).toBeGreaterThan(5000); expect(gd.mism).toEqual([]); expect(gd.pointer).toEqual([]); expect(gd.uses).toBeGreaterThan(60);
         for (let c = 1; c <= 7; c++) {
           expect(gd.done[c] && gd.done[c].length, 'a finished step announced in chapter ' + c).toBeGreaterThan(0);

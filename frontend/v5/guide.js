@@ -101,7 +101,7 @@ export function createGuide(c) {
     bar.hidden = !o; bar.classList.toggle('dim', !!cine);
     if (o) {
       const req = o.steps.filter((x) => !x.optional);
-      if (lastGoal !== o.goal) { if (lastGoal) { newT = 2.4; qnew.textContent = T('hud.newGoal'); c.play('hint'); } lastGoal = o.goal; lastDone = req.map((x) => x.done); sig = ''; }
+      if (lastGoal !== o.goal) { if (lastGoal) { newT = 2.4; qnew.textContent = T('hud.newGoal'); c.play('hint'); } doneT = 0; lastGoal = o.goal;   /* a note about the old goal never shows under the new one */ lastDone = req.map((x) => x.done); sig = ''; }
       // a step just done: say so, briefly
       const nowDone = req.map((x) => x.done); req.forEach((x, i) => { if (x.done && lastDone && !lastDone[i]) { doneT = 2.8; qdone.textContent = '✓ ' + T('hud.stepDone', { s: T(x.key) }); c.play('blip'); } }); lastDone = nowDone;
       const help = s.assist || 0; const nextText = o.nextKey ? T(o.nextKey) : '';
@@ -115,7 +115,8 @@ export function createGuide(c) {
         qsteps.textContent = ''; o.steps.forEach((x) => qsteps.append(el('li', { class: (x.done ? 'done' : '') + (x.optional ? ' opt' : '') + (x.id === o.next ? ' now' : ''), text: (x.done ? '✓ ' : '○ ') + T(x.key) + (x.optional ? ' (' + T('hud.optional') + ')' : '') })));
         qsteps.hidden = !expanded; qtoggle.textContent = expanded ? T('hud.less') : T('hud.more'); qtoggle.hidden = o.steps.length < 2;
       }
-      if (!cine) { newT = Math.max(0, newT - dt); doneT = Math.max(0, doneT - dt); }   // the notes wait until the dialogue is over bar.classList.toggle('new', newT > 0); qnew.hidden = !(newT > 0); qdone.hidden = !(doneT > 0);
+      if (!cine) { newT = Math.max(0, newT - dt); doneT = Math.max(0, doneT - dt); }   // the notes wait until the dialogue is over
+      bar.classList.toggle('new', newT > 0); qnew.hidden = !(newT > 0); qdone.hidden = !(doneT > 0);
     }
     // ---- help markers
     const tgt = o && o.target; const help = s.assist || 0; const g0 = g.s.flags;

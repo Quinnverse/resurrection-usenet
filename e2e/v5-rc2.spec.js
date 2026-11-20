@@ -143,6 +143,7 @@ test.describe('V5 RC2 — a first-time player', () => {
     let o = await obj(page); expect(o.next).toBe('disk');
     await expect(page.getByTestId('quest-next')).toContainText('KEEP'); await expect(page.getByTestId('quest-done')).toContainText('Switch on Mom’s computer');
     await attach(testInfo, 'rc2-03-computer-asks-for-disk', await shot(page));
+    await expect(page.getByTestId('quest-done'), 'the step-done note goes away after a few seconds').toBeHidden({ timeout: 12000 });
     // pressing again gives the same answer, not something new
     await page.keyboard.press('KeyE'); await page.waitForTimeout(300); const again = (await snap(page)).dialog; expect(again && again.id).toBe('c1.noDisk');
     for (let i = 0; i < 4 && (await snap(page)).dialog; i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(300); }
