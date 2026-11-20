@@ -152,7 +152,7 @@ export function createGuide(c) {
       else if (tut && tut.id === 'use' && !s.prompt && tutT > 6) { tut = null; }   // walked away: shown again at the next prompt
       else if (tut && tut.secs && tutT > tut.secs) { finishTut(); }
     }
-    if (tut && !cine) { const dk = 'tut.' + tut.id + '.' + c.device(); const dv = T(dk); const txt = dv !== dk ? dv : T('tut.' + tut.id);   // a wording of its own for the pad and the touch screen where one reads better const tsig = tut.id + c.device() + c.prefs.lang + Object.values(c.keys).join(','); if (tipBox.getAttribute('data-sig') !== tsig) { tipBox.setAttribute('data-sig', tsig); tipBox.textContent = ''; tipBox.append(el('span', { class: 'tt', text: txt })); if (!tutDone().first) { tipBox.append(el('span', { class: 'toff', text: T('tut.off') })); } } tipBox.hidden = false; tipBox.setAttribute('data-id', tut.id); }
+    if (tut && !cine) { const dk = 'tut.' + tut.id + '.' + c.device(); const dv = T(dk); const txt = dv !== dk ? dv : T('tut.' + tut.id); /* a wording of its own for the pad and the touch screen where one reads better */ const tsig = tut.id + c.device() + c.prefs.lang + Object.values(c.keys).join(','); if (tipBox.getAttribute('data-sig') !== tsig) { tipBox.setAttribute('data-sig', tsig); tipBox.textContent = ''; tipBox.append(el('span', { class: 'tt', text: txt })); if (!tutDone().first) { tipBox.append(el('span', { class: 'toff', text: T('tut.off') })); } } tipBox.hidden = false; tipBox.setAttribute('data-id', tut.id); }
     else { tipBox.hidden = true; }
     if (tut && tut.id === 'move' && !tutDone().first) { tutDone().first = 1; }
     // ---- journal note
