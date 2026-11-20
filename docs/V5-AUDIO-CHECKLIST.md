@@ -2,7 +2,7 @@
 
 **Status: NOT TESTED by ear.** Nobody has listened to the V5 audio yet. The automated browser test only shows that every theme and effect produces a signal and does not clip (see `docs/V5-TEST-REPORT.md`).
 
-How to listen: run the game (`npm start`), open `/v5/audio` (or `/v5/audio` in the playtest package). Each row has a ▶ button, a verdict menu and a notes field; “Download results” saves them as JSON. Listen once on speakers and once on headphones, at a normal volume. Then play chapter 4 in the game for the duet, which is not on the page.
+How to listen: open `Resurrection-V5-Audio.html` from the RC1 package (double-click), or run `npm run v5` and open `/v5/audio`. Each music row has ▶ 8 s, ▶ loop (until you press stop) and a link that opens the scene where it is heard; every row has a verdict menu and a notes field; “Download results” saves them as JSON. Listen once on speakers and once on headphones, at a normal volume. Then play chapter 4 in the game for the duet, which is not on the page.
 
 试听方法：运行游戏后打开 `/v5/audio`。每行有播放按钮、结论下拉框和备注栏，可下载结果。请分别用音箱和耳机各听一遍；第 4 章的二重奏需要在游戏中试听。
 

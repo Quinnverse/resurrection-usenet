@@ -15,6 +15,19 @@ Status words:
 game on their own in automated runs. But no person has played it, nobody has listened to the audio, and no real
 controller, phone or GPU has been used. Those are the release conditions; the automated results do not replace them.
 
+## RC1 (release candidate 1)
+
+RC1 adds no story. It adds the means to judge the game on real hardware and with real people, and fixes what that
+preparation turned up. **It is still not releasable**: the real-device, listening and playtest items are open.
+Read `V5-RC1-ACCEPTANCE.md` (the matrix), `V5-RC1-BLOCKERS.md` (what is open and who closes it) and `V5-RC1-README.md`
+(how to start it). Automated results for RC1 are in the acceptance matrix; the sections below remain the record of the
+earlier verification round.
+
+What RC1 added: the review hub with seven live key-scene previews, a frame-time test (average and 1% low FPS, stalls,
+load times, draw calls, memory where reported), single-file builds that open from disk, a local server with a phone mode,
+key remapping with conflict handling, a consent-first playtest recorder and a player folder that needs no development
+environment, and touch layout checks in portrait, landscape and after a rotation.
+
 ## 1. Automated (run by machines; results from CI and the Node shell)
 
 ### Node
