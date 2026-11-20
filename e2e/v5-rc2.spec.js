@@ -159,7 +159,7 @@ test.describe('V5 RC2 — a first-time player', () => {
     for (let i = 0; i < 20 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(600); }
     expect((await snap(page)).dialog).toBeFalsy();
     await expect(page.getByTestId('quest-goal')).toHaveText('帮琳收拾小屋'); await expect(page.getByTestId('quest-progress')).toHaveText('0/2');
-    await page.keyboard.press('KeyJ'); await expect(page.getByTestId('journal-memories')).toContainText('记忆');
+    await page.keyboard.press('KeyJ'); await expect(page.getByTestId('journal-memories')).toContainText('备份软盘'); await expect(page.locator('[data-testid="panel"]')).toContainText('记忆手册');
     await attach(testInfo, 'rc2-12-chinese-journal', await shot(page));
     expect(w.issues).toEqual([]);
   });
