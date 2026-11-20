@@ -30,7 +30,8 @@ function installPad() {
   window.__press = (i, on) => { pad.buttons[i].pressed = on; pad.buttons[i].value = on ? 1 : 0; pad.timestamp += 1; };
 }
 async function startGame(page) { await page.goto('/v5/'); await expect(page.getByTestId('title')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter'); await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); }
-const SIX = ['2.train', '3.ride', '3.beam', '4.porch', '6.beach', 'end'];
+const SIX = ['2.train', '3.ride', '3.beam', '4.porch', '6.beach', 'snow'];
+const BEAT_OF = { snow: '7.town' };   // the snow preview is a moment inside chapter 7’s town beat
 
 test.describe('V5 RC1 review tooling', () => {
   test('key remapping: conflicts swap, reserved keys are refused, Esc cancels, bindings persist, damaged settings are repaired', async ({ page }, testInfo) => {
@@ -66,7 +67,7 @@ test.describe('V5 RC1 review tooling', () => {
     for (const beat of SIX.concat(['4.duet'])) {
       await page.evaluate((s) => localStorage.setItem('v5.save.v1', s), sentinel);
       await page.goto('/v5/?preview=' + beat);
-      await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe(beat);
+      await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe(BEAT_OF[beat] || beat);
       expect((await snap(page)).mode).toBe('play'); await expect(page.getByTestId('tip')).toContainText('Nothing here is saved');
       await page.waitForTimeout(3500);   // let the scene settle and the autosave timer (5 s of game time) have its chance
       await attach(testInfo, `preview-${beat}`, await shot(page));
@@ -163,17 +164,18 @@ test.describe('V5 RC1 review tooling', () => {
       const m = { label, vp, problems: [] }; const need = (ok, what) => { if (!ok) { m.problems.push(what); } };
       need(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'page is wider than the screen');
       need(inside(await page.getByTestId('title').boundingBox(), vp), 'title box outside the screen'); need(inside(await page.getByTestId('start').boundingBox(), vp), 'Start outside the screen');
+      await expect(page.getByTestId('touchui'), 'no touch buttons over the title').toBeHidden();
       await attach(testInfo, `touch-${label}-title`, await shot(page));
       await page.getByTestId('start').tap(); await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(1500);
       const ids = ['jump', 'use', 'pause', 'hint']; const boxes = {};
       for (const id of ids) { boxes[id] = await page.getByTestId('touch-' + id).boundingBox(); need(inside(boxes[id], vp), `touch-${id} outside the screen`); need(boxes[id] && boxes[id].width >= 40 && boxes[id].height >= 40, `touch-${id} smaller than 40 px`); }
       for (let i = 0; i < ids.length; i++) { for (let j = i + 1; j < ids.length; j++) { need(!(boxes[ids[i]] && boxes[ids[j]] && overlap(boxes[ids[i]], boxes[ids[j]])), `touch-${ids[i]} overlaps touch-${ids[j]}`); } }
       await attach(testInfo, `touch-${label}-play`, await shot(page));
-      await page.getByTestId('touch-pause').tap(); await expect(page.getByTestId('panel')).toBeVisible(); const pb = await page.getByTestId('panel').boundingBox(); need(inside(pb, vp), 'pause panel outside the screen');
+      await page.getByTestId('touch-pause').tap(); await expect(page.getByTestId('panel')).toBeVisible(); await expect(page.getByTestId('touchui'), 'no touch buttons behind the pause menu').toBeHidden(); const pb = await page.getByTestId('panel').boundingBox(); need(inside(pb, vp), 'pause panel outside the screen');
       await page.getByTestId('settings').tap(); await page.waitForTimeout(300); need(inside(await page.getByTestId('panel').boundingBox(), vp), 'settings panel outside the screen');
       await page.getByTestId('resume').scrollIntoViewIfNeeded(); need(inside(await page.getByTestId('resume').boundingBox(), vp), 'Resume cannot be scrolled into view');
       await attach(testInfo, `touch-${label}-settings`, await shot(page));
-      await page.getByTestId('resume').tap(); await page.waitForTimeout(300); need((await snap(page)).mode === 'play', 'Resume did not return to the game');
+      await page.getByTestId('resume').tap(); await page.waitForTimeout(300); need((await snap(page)).mode === 'play', 'Resume did not return to the game'); await expect(page.getByTestId('touchui')).toBeVisible();
       // rotate: same page, other orientation
       await page.setViewportSize({ width: vp.height, height: vp.width }); await page.waitForTimeout(800);
       const rv = { width: vp.height, height: vp.width };

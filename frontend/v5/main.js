@@ -757,6 +757,7 @@ function frame(now) {
 function tick(now) {
   const rawMs = last ? now - last : 16; perfSample(rawMs);
   if (benchWake) { const w = benchWake; benchWake = null; w(rawMs); }
+  touchUI.classList.toggle('off', mode !== 'play');   // the round buttons belong to play: on the title and in menus they only get in the way
   const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now; rt.t += dt; rt.frames += 1;
   // fps from the real frame time, not the capped simulation step
   fpsAcc += rawMs / 1000; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop && !BENCH) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
@@ -820,8 +821,9 @@ async function startBench() {
   mode = 'loading'; ui.overlay.hidden = false; ui.overlay.textContent = '';
   const status = el('p', { class: 'loading', 'data-testid': 'bench-status', text: `Measuring (${BENCH.tiers[0]})…` }); ui.overlay.append(status);
   const saves = await previewSaves(); const tier = BENCH.tiers[0]; const rest = BENCH.tiers.slice(1);
+  const build = window.__V5_BUILD__ || await fetch('/v5/data/build.json').then((r) => (r.ok ? r.text() : null)).then((t) => (t ? JSON.parse(t).build : null)).catch(() => null);
   let store = readJSON(BENCH_KEY, null); const run = BENCH.run || ('b' + Date.now().toString(36));
-  if (!store || store.run !== run) { store = { run, startedAt: new Date().toISOString(), readyMs: performance.now(), results: [], device: null, build: window.__V5_BUILD__ || null }; }
+  if (!store || store.run !== run) { store = { run, startedAt: new Date().toISOString(), readyMs: performance.now(), results: [], device: null, build: build || null }; }
   g = Gm.createGame(ar); ui.overlay.hidden = true; mode = 'play';
   const { results, refresh } = await runBenchTier(tier, saves);
   store.results = store.results.concat(results); store.device = benchDevice(refresh); store.tiers = (store.tiers || []).concat([tier]); write(BENCH_KEY, store);

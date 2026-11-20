@@ -190,9 +190,9 @@ try {
   if (PREVIEW_ID) {
     for (let i = 0; i < 20; i++) { await new Promise((r) => setImmediate(r)); }
     for (let i = 0; i < 150; i++) { frameOnce({}); await null; }
-    const dbg = window.V5Debug.snapshot(); const tipEl = byTestId('tip');
-    Object.assign(report, { preview: PREVIEW_ID, beatNow: dbg.beat, mode: dbg.mode, world: dbg.world, realSaveWritten: store.has('v5.save.v1'), tip: tipEl ? tipEl.textContent : null });
-    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && dbg.beat === PREVIEW_ID && dbg.mode === 'play' && !store.has('v5.save.v1');
+    const dbg = window.V5Debug.snapshot(); const tipEl = byTestId('tip'); const wantBeat = JSON.parse(fs.readFileSync(path.join(root, 'frontend/v5/data/preview-saves.json'), 'utf8')).saves[PREVIEW_ID].beat;
+    Object.assign(report, { preview: PREVIEW_ID, wantBeat, beatNow: dbg.beat, mode: dbg.mode, world: dbg.world, realSaveWritten: store.has('v5.save.v1'), tip: tipEl ? tipEl.textContent : null });
+    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && dbg.beat === wantBeat && dbg.mode === 'play' && !store.has('v5.save.v1');
   } else if (BENCH_TIERS) {
     for (let i = 0; i < 20; i++) { await new Promise((r) => setImmediate(r)); }
     let n = 0; while (!window.V5BenchReport && !navigated.length && n < 400000) { frameOnce({}); await null; n += 1; }

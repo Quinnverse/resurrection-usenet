@@ -120,9 +120,10 @@ test('preview saves: one valid save per beat, and the file is what the current c
   const made = JSON.stringify(await makeSaves()) + '\n'; assert.equal(fs.readFileSync(FILE, 'utf8'), made, 'run: node tools/v5-preview-saves.mjs');
   const ar = loadArchive(); const j = JSON.parse(made);
   Gm.BEATS.forEach((b) => { const s = Gm.parseSave(j.saves[b], ar); assert.ok(s, b); assert.equal(s.beat, b); });
+  const snow = Gm.parseSave(j.saves.snow, ar); assert.ok(snow); assert.equal(snow.beat, '7.town'); assert.equal(snow.season, 'winter'); assert.ok(snow.edition.pier_walk && snow.edition.seasons, 'the snow preview is the finished winter pier');
   const { SCENES } = await import('../frontend/v5/rc-scenes.js');
-  SCENES.forEach((sc) => { assert.ok(Gm.BEATS.includes(sc.beat), sc.beat); for (let i = 1; i <= sc.imgs; i++) { assert.ok(fs.existsSync(path.join(root, 'frontend/v5/rc/shots', `${sc.beat}-${i}.jpg`)), `${sc.beat}-${i}.jpg`); } });
-  assert.deepEqual(['2.train', '3.ride', '3.beam', '4.porch', '6.beach', 'end'].filter((b) => !SCENES.some((x) => x.beat === b)), [], 'the six key scenes are all in the hub');
+  SCENES.forEach((sc) => { assert.ok(j.saves[sc.beat], sc.beat); for (let i = 1; i <= sc.imgs; i++) { assert.ok(fs.existsSync(path.join(root, 'frontend/v5/rc/shots', `${sc.shot || sc.beat}-${i}.jpg`)), `${sc.shot || sc.beat}-${i}.jpg`); } });
+  assert.deepEqual(['2.train', '3.ride', '3.beam', '4.porch', '6.beach', 'snow'].filter((b) => !SCENES.some((x) => x.beat === b)), [], 'the six key scenes are all in the hub');
 });
 
 // ---- single-file bundle ---------------------------------------------------------------------------------------------

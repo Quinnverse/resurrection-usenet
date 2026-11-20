@@ -23,7 +23,7 @@ $('#links').append(
 if (!S) { $('#links').append(link('Technical demo · 技术演示', '/v5/tech', '', 'tech')); }
 
 SCENES.forEach((sc) => {
-  const imgs = []; for (let i = 1; i <= sc.imgs; i++) { imgs.push(el('img', { src: SHOTS + sc.beat + '-' + i + '.jpg', alt: sc.en + ' (software-rendered CI screenshot ' + i + ')' })); }
+  const imgs = []; for (let i = 1; i <= sc.imgs; i++) { imgs.push(el('img', { src: SHOTS + (sc.shot || sc.beat) + '-' + i + '.jpg', alt: sc.en + ' (software-rendered CI screenshot ' + i + ')' })); }
   $('#scenes').append(el('div', { class: 'card', 'data-testid': 'scene-' + sc.beat }, [
     el('div', { class: 'imgs' }, imgs),
     el('div', { class: 'body' }, [el('h3', { text: sc.en }), el('div', { class: 'zh', text: sc.zh }), el('div', { class: 'look', text: sc.look }),
@@ -43,6 +43,8 @@ function refreshRate(done) {
 }
 const g = gl(); const rows = [];
 const add = (k, v, cls) => rows.push([k, v, cls]);
+const build = el('span', { text: window.__V5_BUILD__ || '…' }); add('Build · 版本', build);
+if (!window.__V5_BUILD__) { fetch('/v5/data/build.json').then((r) => (r.ok ? r.text() : null)).then((t) => { build.textContent = t ? JSON.parse(t).build : 'unknown (not served by tools/v5-serve.mjs)'; }).catch(() => { build.textContent = 'unknown'; }); }
 add('Browser · 浏览器', navigator.userAgent);
 add('Platform · 平台', navigator.platform || '–');
 add('Screen · 屏幕', `${screen.width}×${screen.height}, window ${innerWidth}×${innerHeight}, device pixel ratio ${devicePixelRatio}`);

@@ -27,7 +27,7 @@ async function loadTune() {
   return 'built-in default tune';
 }
 // where each arrangement can be heard in the game (opens that moment, nothing is saved)
-const SCENE_FOR = { study: '1.study', summer: '4.cottage', train: '2.train', coast: '3.ride', night: '4.porch', parting: '5.depart', y2004: '5.alone', cottage04: '6.beach', winter: 'end', ending: 'end' };
+const SCENE_FOR = { study: '1.study', summer: '4.cottage', train: '2.train', coast: '3.ride', night: '4.porch', parting: '5.depart', y2004: '5.alone', cottage04: '6.beach', winter: 'snow', ending: 'end' };
 const GAME = window.__V5_STANDALONE__ ? 'Resurrection-V5.html' : '/v5/';
 function row(kind, id, where, want) {
   const level = el('span', { class: 'lvl' });
