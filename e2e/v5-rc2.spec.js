@@ -129,8 +129,8 @@ test.describe('V5 RC2 — a first-time player', () => {
     expect(await page.evaluate(() => { const b = window.__V5_TEST__ && 0; void b; return !!document.querySelector('[data-testid="quest"]:not([hidden])'); })).toBe(true);
     await attach(testInfo, 'rc2-01-first-tip-and-goal', await shot(page));
     // 2 walking finishes the walking tip; the next tip is about looking around
-    await walk(page, 'KeyW', 1600); await page.waitForTimeout(400);
-    await expect.poll(() => page.evaluate(() => window.V5Debug.guide().tip)).toBe('look');
+    // hold W until the walking tip has done its job (on a slow software GPU a second of real time is less game time)
+    await page.keyboard.down('KeyW'); await expect.poll(() => page.evaluate(() => window.V5Debug.guide().tip), { timeout: 15000 }).toBe('look'); await page.keyboard.up('KeyW');
     await page.mouse.move(640, 360); await page.mouse.down({ button: 'right' }); for (let i = 0; i < 12; i++) { await page.mouse.move(640 + i * 30, 360); await page.waitForTimeout(40); } await page.mouse.up({ button: 'right' });
     await expect.poll(() => page.evaluate(() => window.V5Debug.guide().tip), { timeout: 10000 }).not.toBe('look');
     // 3 straight to the computer: its name appears, the tip says press E; pressing it asks for the disk
