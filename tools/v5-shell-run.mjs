@@ -167,6 +167,13 @@ function check() {
     if (b.wantShot && b.frames === b.wantShot.at) { capture(b.wantShot.key.split('|')[1]); b.wantShot = null; }
     if (b.frames % 450 === 0) { capture('t' + Math.round(b.frames / 30)); }
   }
+  // the guide: the task bar is shown in play, and its texts and the tips are translations with every {k:…} token filled in
+  if (stats.frames % 10 === 0) {
+    const raw = /\{k:|^(obj|step|do|tut|hud|jr|mem|dev)\.[\w.]+$/;
+    ['quest-goal', 'quest-next', 'quest-chapter', 'tut', 'mem-toast'].forEach((id) => { const e = byTestId(id); if (e) { const tx = e.textContent; if (raw.test(tx) || tx.split(/\s+/).some((w) => raw.test(w))) { stats.missingText.add(id + ': ' + tx.slice(0, 80)); } } });
+    if (dbg.mode === 'play') { stats.questChecks = (stats.questChecks || 0) + 1; if (byTestId('quest-goal')) { stats.questShown = (stats.questShown || 0) + 1; } }
+    const o = window.V5Debug.objective && window.V5Debug.objective(); if (o) { (stats.goals = stats.goals || new Set()).add(o.beat); }
+  }
   // every visible text must be a translation, never a raw key
   const subs = byTestId('subs'); if (subs && subs.children[1] && subs.attrs['data-key'] && subs.children[1].textContent === subs.attrs['data-key']) { stats.missingText.add(subs.attrs['data-key']); }
   const pr = byTestId('prompt');
@@ -228,7 +235,7 @@ try {
       creditsHave: want.map((w) => [w, credits.includes(w)]), albumPhotos: album ? album.children.length : 0, photosWithThumb: hook.game.s.photos.filter((p) => p.thumb).length, photos: hook.game.s.photos.length,
       savedBeat: saved && saved.beat, promptFrames: stats.promptFrames, promptNotShown: stats.promptOff, playerOffscreenFrames: stats.offscreen,
       perBeat: Object.fromEntries(Object.entries(stats.beats).map(([k, v]) => [k, { world: v.world, frames: v.frames, off: v.off, promptOff: v.promptOff || 0, samples: v.samples, camDist: v.maxDist ? [+v.minDist.toFixed(2), +v.maxDist.toFixed(2)] : null }])),
-      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog
+      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
     });
     if (SHOTS) { // contact sheets, 3 x 4 previews each
       const W = 480, H = 270, C = 3, R = 4;

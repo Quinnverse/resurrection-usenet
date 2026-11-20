@@ -210,9 +210,10 @@ test.describe('V5 RC1 review tooling', () => {
       await expect(page.getByTestId('touchui'), 'no touch buttons over the title').toBeHidden();
       await attach(testInfo, `touch-${label}-title`, await shot(page));
       await page.getByTestId('start').tap(); await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(1500);
-      const ids = ['jump', 'use', 'pause', 'hint']; const boxes = {};
+      const ids = ['jump', 'use', 'pause', 'hint', 'journal']; const boxes = {};
       for (const id of ids) { boxes[id] = await page.getByTestId('touch-' + id).boundingBox(); need(inside(boxes[id], vp), `touch-${id} outside the screen`); need(boxes[id] && boxes[id].width >= 40 && boxes[id].height >= 40, `touch-${id} smaller than 40 px`); }
       for (let i = 0; i < ids.length; i++) { for (let j = i + 1; j < ids.length; j++) { need(!(boxes[ids[i]] && boxes[ids[j]] && overlap(boxes[ids[i]], boxes[ids[j]])), `touch-${ids[i]} overlaps touch-${ids[j]}`); } }
+      const qb = await page.getByTestId('quest').boundingBox(); need(inside(qb, vp), 'task bar outside the screen'); ids.forEach((id) => need(!(qb && boxes[id] && overlap(qb, boxes[id])), `task bar overlaps touch-${id}`));
       await attach(testInfo, `touch-${label}-play`, await shot(page));
       await page.getByTestId('touch-pause').tap(); await expect(page.getByTestId('panel')).toBeVisible(); await expect(page.getByTestId('touchui'), 'no touch buttons behind the pause menu').toBeHidden(); const pb = await page.getByTestId('panel').boundingBox(); need(inside(pb, vp), 'pause panel outside the screen');
       await page.getByTestId('settings').tap(); await page.waitForTimeout(300); need(inside(await page.getByTestId('panel').boundingBox(), vp), 'settings panel outside the screen');

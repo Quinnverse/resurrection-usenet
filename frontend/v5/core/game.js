@@ -22,6 +22,8 @@ import * as Ph from './physics.js';
 import * as Co from './companion.js';
 import * as Toys from './toys.js';
 import { LAYOUTS, point, bridgeFloors, THEO_TOWN, IRIS_TOWN, LIGHTHOUSE } from './layout.js';
+import * as Ob from './objectives.js';
+export { objective } from './objectives.js';
 const PIER_END = { x: 0, z: 24.4 };
 
 export const SCHEMA = 1, PROVENANCE_VERSION = 'v5-fixture-1';
@@ -52,7 +54,7 @@ export const DIALOGS = {
   'c1.disk': [L('mara', 'c1.mara.found'), L('mara', 'c1.mara.note')],
   'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'c1.screen.title'), L('mara', 'c1.mara.open')],
   'c1.theo1': [L('theo', 'c1.theo.hello', 'theo'), L('theo', 'c1.theo.almost', 'theo'), L('mara', 'c1.mara.howLong'), L('theo', 'c1.theo.dontAsk', 'theo'), L('theo', 'c1.theo.bridge', 'theo')],
-  'c1.theo2': [L('theo', 'c1.theo.planks', 'theo'), L('mara', 'c1.mara.june'), L('theo', 'c1.theo.beard', 'theo'), L('theo', 'c1.theo.pier', 'theo'), L('theo', 'c1.theo.tab', 'theo')],
+  'c1.theo2': [L('theo', 'c1.theo.planks', 'theo'), L('mara', 'c1.mara.june'), L('theo', 'c1.theo.beard', 'theo'), L('theo', 'c1.theo.pier', 'theo'), L('theo', 'c1.theo.tab', 'theo'), L('theo', 'c1.theo.pierHow', 'theo')],
   'c1.memory': [L('mara', 'c1.mara.carved'), L('mara', 'c1.mara.show')],
   'c1.carveIntro': [L('june', 'c1.june.carve', 'june'), L('elena', 'c1.elena.carveWhat'), L('june', 'c1.june.carveUs', 'june')],
   'c1.carved': [L('june', 'c1.june.crookedE', 'june'), L('elena', 'c1.elena.likeYou', 'elena'), L('june', 'c1.june.exactly', 'june'), L('june', 'c1.june.train', 'june')],
@@ -340,7 +342,8 @@ const BEACH_LEGS = [[[295, 27.5], [290, 24.6]], [[284, 21.2], [278.4, 18.4], [27
 function startPlatformWalk(g) { Co.lead(g.rt.june, STATION_WALK, { ahead: 3, waitR: 7, speed: 1.5 }); g.rt.walkSaid = 0; }
 function irisSetup(g) {
   const sg = Ar.sceneGraph(g.ar, g.s.era, g.s.restored, g.s.edition); const o = sg.objects.find((x) => x.id === 'iris');
-  g.rt.iris = { x: IRIS_TOWN.bakery.x, z: IRIS_TOWN.bakery.z, script: o ? o.data : null, state: o ? o.state : 'missing', route: [], gone: false, boatX: 0, leaving: false, talks: 0 };
+  const talks = g.rt.iris ? g.rt.iris.talks || 0 : 0;
+  g.rt.iris = { x: IRIS_TOWN.bakery.x, z: IRIS_TOWN.bakery.z, script: o ? o.data : null, state: o ? o.state : 'missing', route: [], gone: false, boatX: 0, leaving: false, talks };
 }
 function juneOnGallery(g) {
   const G = LAYOUTS.coast.gallery; const j = g.rt.june;
@@ -454,7 +457,7 @@ function use(g, p) {
     case 'irisTalk': rt.iris.talks += 1; say(g, 'iris', 'iris.loop' + (((rt.iris.talks - 1) % 3) + 1), 3.6); return;
     case 'theo':
       if (s.beat === '1.town' && !seen(g, 'c1.theo1')) { dialog(g, 'c1.theo1'); return; }
-      say(g, 'theo', s.beat === '7.town' ? 'c7.theo.idle' : (s.restored.bridge ? 'c1.theo.idle' : 'c1.theo.wait'), 3.2); return;
+      say(g, 'theo', s.beat === '7.town' ? 'c7.theo.idle' : s.beat === '1.pier' ? 'c1.theo.pierIdle' : (s.restored.bridge ? 'c1.theo.idle' : 'c1.theo.wait'), 4.2); return;
     case 'pierEnd': dialog(g, 'c1.memory', () => { g.rt.ev.push({ type: 'memory' }); enterBeat(g, '1.carve'); }); return;
     case 'seaview': s.flags.sea04 = true; say(g, 'elena', 'c5.sea04', 4.5); return;
     case 'road': { const go = () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '7.study'); }; if (!s.flags.toldCareful) { Co.react(rt.june, 'quiet', 'idle', 4); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; go(); }); } else { go(); } return; }
@@ -708,8 +711,13 @@ export function tick(g, dt, input0) {
   const active = !busy && !rt.dialog && !rt.choice;
   const anyInput = Math.abs(input.mx) + Math.abs(input.mz) > 0.1 || input.use || input.useHeld || input.jump || input.shoot || input.tab;
   rt.idleT = anyInput ? 0 : rt.idleT + dt;
-  if (input.hint) { rt.hintLevel = Math.min(3, rt.hintLevel + 1); rt.idleT = 0; nudge(g); }
-  else if (active && rt.idleT > 22 * (rt.hintLevel + 1) && rt.hintLevel < 2) { rt.hintLevel += 1; rt.ev.push({ type: 'hint', level: rt.hintLevel }); nudge(g); }
+  if (input.hint) { rt.hintLevel = Math.min(3, rt.hintLevel + 1); rt.idleT = 0; nudge(g); if (rt.assist) { rt.assist.shown = Math.max(rt.assist.shown || 0, rt.hintLevel); } }
+  // automatic help grows with time without progress (walking about is not progress), see core/objectives.js
+  Ob.track(g, dt, active && !rt.seatedLock, input.autoHelp).forEach((e) => {
+    rt.ev.push(e);
+    if (e.level > 0 && e.level > rt.hintLevel) { rt.hintLevel = e.level; rt.ev.push({ type: 'hint', level: rt.hintLevel, auto: true }); nudge(g); }
+    if (e.level === 0) { rt.hintLevel = 0; }
+  });
   const fn = TICK[rt.scene]; if (fn) { fn(g, dt, input, active); }
   if (g.rt !== rt) { return g.rt.ev; }
   // companions
@@ -771,6 +779,14 @@ const TICK = {
     }
     if (rt.theoPier && rt.theo && rt.theo.state === 'WAIT' && rt.theo.z > 23 && rt.body.z > 22.6 && !rt.dialog && !rt.finalSaid) { rt.finalSaid = true; dialog(g, 'c7.final', () => { g.rt.ev.push({ type: 'credits-roll' }); enterBeat(g, 'end'); }); }
     if (s.beat === '7.town' && !s.flags.c7theo && rt.beatT > 1.5 && !rt.dialog) { s.flags.c7theo = true; dialog(g, 'c7.theo'); }
+    // the pier: pushing against the end of a deck or the 2004 fence says what it is and what to try
+    if (s.beat === '1.pier' && active) {
+      const b = rt.body, lp = rt.pushAt || { x: b.x, z: b.z }; rt.pushAt = { x: b.x, z: b.z };
+      const fwd = Math.hypot(input.mx, input.mz) > 0.3 && Math.hypot(b.x - lp.x, b.z - lp.z) < dt * 0.4 && Math.abs(b.x) < 1.2;   // pushing, not moving
+      const spot = s.era === 1998 && b.z > 17.5 && b.z < 18.2 ? 'deck' : s.era === 2004 && b.z > 13.6 && b.z < 14.5 ? 'fence' : s.era === 2004 && b.z > 22.6 ? 'stubEnd' : null;
+      rt.pushT = fwd && spot ? (rt.pushT || 0) + dt : 0;
+      if (rt.pushT > 0.6) { rt.pushT = 0; if (!rt.caption || rt.caption.key !== 'c1.mara.' + spot) { say(g, 'mara', 'c1.mara.' + spot, 4.2); } }
+    }
   },
   station(g, dt, input, active) {
     const rt = g.rt, s = g.s, lay = LAYOUTS.station, tr = rt.train;
@@ -1029,7 +1045,7 @@ export function snapshot(g) {
     stars: rt.stars ? { i: rt.stars.i, linked: rt.stars.linked.slice(), onStar: !!rt.stars.onStar, aimYaw: rt.aimYaw, aimPitch: rt.aimPitch } : null, sketch: rt.sketch ? { still: rt.sketch.still, resets: rt.sketch.resets } : null, leg: rt.leg === undefined ? null : rt.leg,
         dare: rt.dare === undefined ? null : rt.dare, sleep: rt.sleep ? { t: rt.sleep.t, done: !!rt.sleep.done } : null,
     aim: rt.aim, carry: rt.carry, seated: !!rt.seated, bridge: s.bridge, crank: s.crank, hold: Object.assign({}, rt.hold), restored: Object.keys(s.restored), edition: Object.assign({}, s.edition), window: Object.assign({}, s.window), photos: s.photos.map((p) => ({ id: p.id, reaction: p.reaction, kind: p.kind })),
-    choices: Object.assign({}, s.choices), flags: Object.assign({}, s.flags), season: rt.season, assets: rt.graph ? [...rt.graph.assets] : [], credits: rt.graph ? rt.graph.credits : null, tab: !!s.flags.tab, hintLevel: rt.hintLevel, idleT: rt.idleT
+    choices: Object.assign({}, s.choices), flags: Object.assign({}, s.flags), season: rt.season, assets: rt.graph ? [...rt.graph.assets] : [], credits: rt.graph ? rt.graph.credits : null, tab: !!s.flags.tab, hintLevel: rt.hintLevel, idleT: rt.idleT, assist: rt.assist ? rt.assist.level : 0, stuckT: rt.assist ? Math.round(rt.assist.t * 10) / 10 : 0
   };
 }
 export { points as availablePoints };

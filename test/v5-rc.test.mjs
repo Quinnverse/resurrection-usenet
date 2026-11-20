@@ -36,8 +36,8 @@ test('keymap: binding a key that another action uses swaps them, so no key does 
   assert.equal(K.DEFAULT_KEYS.forward, 'KeyW', 'the input map is not changed');
 });
 test('keymap: a free key is simply bound; the same key again is a no-op', () => {
-  const r = K.rebind(K.DEFAULT_KEYS, 'jump', 'KeyJ'); assert.equal(r.ok, true); assert.equal(r.swappedWith, null); assert.equal(r.keys.jump, 'KeyJ');
-  const again = K.rebind(r.keys, 'jump', 'KeyJ'); assert.equal(again.ok, true); assert.equal(again.swappedWith, null);
+  const r = K.rebind(K.DEFAULT_KEYS, 'jump', 'KeyK'); assert.equal(r.ok, true); assert.equal(r.swappedWith, null); assert.equal(r.keys.jump, 'KeyK');
+  const again = K.rebind(r.keys, 'jump', 'KeyK'); assert.equal(again.ok, true); assert.equal(again.swappedWith, null);
 });
 test('keymap: keys the game needs cannot be bound', () => {
   ['Escape', 'F3', 'F5', 'Digit1', 'Digit2', 'Digit3', 'MetaLeft', 'OSRight', 'ContextMenu'].forEach((c) => { const r = K.rebind(K.DEFAULT_KEYS, 'use', c); assert.equal(r.ok, false, c); assert.equal(r.reason, 'reserved'); assert.deepEqual(r.keys, K.DEFAULT_KEYS); });

@@ -206,7 +206,8 @@ const ZH = {
 };
 
 import { EN_MORE, ZH_MORE } from './i18n-more.js';
-Object.assign(EN, EN_MORE); Object.assign(ZH, ZH_MORE);
+import { EN_RC2, ZH_RC2 } from './i18n-rc2.js';
+Object.assign(EN, EN_MORE, EN_RC2); Object.assign(ZH, ZH_MORE, ZH_RC2);
 export const dictionaries = { en: EN, zh: ZH };
 export function t(lang, key, vars) {
   const d = dictionaries[lang] || EN;

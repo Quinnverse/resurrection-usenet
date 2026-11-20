@@ -4,8 +4,8 @@
 //  - keys the game itself needs cannot be bound: Esc (pause, cancel), F-keys (frame-time overlay, browser), 1 2 3
 //    (dialogue choices), the Windows/Command and context-menu keys;
 //  - stored bindings that are unknown, malformed, reserved or duplicated fall back to the defaults.
-export const ACTIONS = ['forward', 'back', 'left', 'right', 'jump', 'sprint', 'use', 'tab', 'aim', 'hint'];
-export const DEFAULT_KEYS = { forward: 'KeyW', back: 'KeyS', left: 'KeyA', right: 'KeyD', jump: 'Space', sprint: 'ShiftLeft', use: 'KeyE', tab: 'Tab', hint: 'KeyH', aim: 'KeyQ' };
+export const ACTIONS = ['forward', 'back', 'left', 'right', 'jump', 'sprint', 'use', 'tab', 'aim', 'hint', 'journal'];
+export const DEFAULT_KEYS = { forward: 'KeyW', back: 'KeyS', left: 'KeyA', right: 'KeyD', jump: 'Space', sprint: 'ShiftLeft', use: 'KeyE', tab: 'Tab', hint: 'KeyH', aim: 'KeyQ', journal: 'KeyJ' };
 
 export function isReserved(code) {
   return code === 'Escape' || /^F\d{1,2}$/.test(code) || /^Digit[123]$/.test(code) || /^(Meta|OS)(Left|Right)$/.test(code) || code === 'ContextMenu';

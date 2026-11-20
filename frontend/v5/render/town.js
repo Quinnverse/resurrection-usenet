@@ -6,7 +6,7 @@
 // Two builds come from two manifests. Every object below that differs between them is tagged with an asset id from
 // those manifests; setBuild() shows exactly the assets the current manifest lists. levels.js tags the walkable floor
 // and obstacles with the same ids, so what you see and what you can walk on always change together.
-import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, label, skyDome } from './kit.js';
+import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, label, skyDome, softPoints } from './kit.js';
 import { makeTheo, makeCast, animate as animatePerson } from './people.js';
 import { THEO_TOWN as THEO, BRIDGE, CANAL, PIER, IRIS_TOWN } from '../core/layout.js';
 
@@ -371,7 +371,7 @@ export function buildTown(opts) {
   const snowGeo = new THREE.BufferGeometry(); const SN = o.low ? 500 : 1100; const sp = new Float32Array(SN * 3);
   for (let i = 0; i < SN; i++) { sp[i * 3] = -20 + R() * 44; sp[i * 3 + 1] = R() * 16; sp[i * 3 + 2] = -18 + R() * 46; }
   snowGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
-  const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.09, transparent: true, opacity: 0.9, depthWrite: false })); snow.visible = false; snow.frustumCulled = false; scene.add(snow);
+  const snow = new THREE.Points(snowGeo, softPoints('snow', { size: o.low ? 0.18 : 0.15 })); snow.visible = false; snow.frustumCulled = false; scene.add(snow);
   const leaves = new THREE.Group(); scene.add(leaves); leaves.visible = false;
   for (let i = 0; i < 70; i++) { const lf = box(0.12, 0.02, 0.08, [0xd9772a, 0xc0443c, 0xe0a83a][i % 3], -14 + R() * 30, R() * 0.05 + 0.03, -12 + R() * 26, { cast: false }); lf.rotation.y = R() * 6; leaves.add(lf); }
   // gulls (1998 only)

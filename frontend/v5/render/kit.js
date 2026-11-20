@@ -139,6 +139,24 @@ export function glowSprite(color, size, opacity) {
   return s;
 }
 
+// Round, soft-edged points (square GL points read as white noise on screen). `kind`:
+//   'mote' — warm, faint, small: dust in a sunbeam, barely there
+//   'snow' — white, larger, fully opaque in the middle: clearly snow, never confused with dust
+let dotTex = null;
+export function softPoints(kind, opts) {
+  const o = opts || {};
+  if (!dotTex && hasDOM()) {
+    dotTex = canvasTex(32, 32, (ctx) => {
+      const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.45, 'rgba(255,255,255,0.75)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 32, 32);
+    });
+  }
+  const snow = kind === 'snow';
+  return new THREE.PointsMaterial({ color: o.color || (snow ? 0xffffff : 0xffd9a8), size: o.size || (snow ? 0.16 : 0.03), map: dotTex || null, alphaTest: dotTex ? 0.02 : 0, transparent: true,
+    opacity: o.opacity !== undefined ? o.opacity : (snow ? 0.95 : 0.22), depthWrite: false, blending: snow ? THREE.NormalBlending : THREE.AdditiveBlending, sizeAttenuation: true });
+}
+
 // Text label sprite that always faces the camera.
 export function label(text, opts) {
   const o = opts || {};

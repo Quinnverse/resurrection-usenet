@@ -14,6 +14,9 @@ import * as A from './render/audio.js';
 import * as PT from './playtest.js';
 import { ACTIONS, DEFAULT_KEYS, sanitizeKeys, rebind } from './core/keymap.js';
 import * as Bn from './core/bench.js';
+import { createGuide } from './guide.js';
+import { objective } from './core/objectives.js';
+import { counts as journalCounts } from './core/journal.js';
 
 // Automated runs only (tools/v5-shell-run.mjs, e2e/v5.spec.js): a harness that defines window.__V5_TEST__ before this
 // module loads may replace the input of each frame and receives the game's events. When it is absent (every real
@@ -36,7 +39,11 @@ if (PREVIEW || BENCH) { const l = new URLSearchParams(QS).get('lang'); if (l ===
 const BENCH_KEY = 'v5.bench.v1';
 let benchRun = null, benchWake = null;
 const reduce = () => prefs.reduce || mediaReduce;
-const T = (k, v) => tr(prefs.lang, k, v);
+// {k:action} tokens in texts become the player's own controls (see guide.js); until the guide exists they are left as they are
+let fillKeys = (s) => s;
+const T = (k, v) => fillKeys(tr(prefs.lang, k, v));
+// the device the player used last: 'kbm', 'pad' or 'touch'. Prompts, tips and hints name its controls.
+let lastDev = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 'touch' : 'kbm';
 const keys = sanitizeKeys(readJSON(KEYS_KEY, {})).keys;   // unknown, reserved or duplicated stored keys fall back to the defaults
 
 // ---- DOM ------------------------------------------------------------------------------------------------------
@@ -70,6 +77,12 @@ window.addEventListener('resize', resize); resize();
 let ar = null, g = null, mode = 'loading';
 const worlds = {}; let world = null, worldId = null;
 const cast = {};
+// the on-screen guide: task bar, tips, help markers, memory journal (guide.js)
+const guide = createGuide({
+  app, el, T: (k, v) => T(k, v), prefs, savePrefs: () => write(PREF_KEY, prefs), keys, keyLabel: (code) => keyLabel(code), device: () => lastDev,
+  snap: () => Gm.snapshot(g), game: () => g, mode: () => mode, camera, THREE, scene: () => (world ? world.scene : null), play: (n) => A.play(n), camYaw: () => cam.yaw
+});
+fillKeys = guide.fill;
 const cam = { yaw: 0, pitch: 0.38, dist: 4.5, pos: new THREE.Vector3(), look: new THREE.Vector3(), shotT: 0 };
 const rt = { t: 0, frames: 0, fps: 60, lastSave: 0, chapterShown: 0, lastBeat: null, lastDialogLine: null, subs: null, sourceProv: null, holdKey: false, events: [], log: [] };
 
@@ -161,8 +174,10 @@ const isTyping = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.ta
 let rebinding = null;
 window.addEventListener('keydown', (e) => {
   if (isTyping(e)) { return; }
+  lastDev = 'kbm';
   PT.input('keyboard'); if (e.code === 'F3') { e.preventDefault(); perfHud.hidden = !perfHud.hidden; return; }
   A.unlock();
+  if (rt.journalOpen && !rebinding && (e.code === keys.journal)) { e.preventDefault(); closePanel(); return; }
   if (rebinding) {
     e.preventDefault();
     if (e.code === 'Escape') { rebinding = null; rt.keyNote = null; renderSettings(); return; }
@@ -183,7 +198,7 @@ window.addEventListener('blur', () => { down.clear(); mouse.left = mouse.right =
 const cv = renderer.domElement;
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
 cv.addEventListener('mousedown', (e) => {
-  PT.input('mouse');
+  PT.input('mouse'); lastDev = 'kbm';
   A.unlock(); if (mode !== 'play') { return; }
   if (!locked && cv.requestPointerLock && !reduceLockPref()) { try { const r = cv.requestPointerLock(); if (r && r.catch) { r.catch(() => { /* refused: dragging still works */ }); } } catch (err) { /* refused */ } }
   if (e.button === 0) { mouse.left = true; mouse.click = true; } if (e.button === 2) { mouse.right = true; }
@@ -207,12 +222,13 @@ const touchUI = el('div', { class: 'touchui', hidden: '', 'data-testid': 'touchu
   tbtn('shoot', '●', () => { tpad.shoot = true; }),
   tbtn('tab', '⇄', () => { tpad.tab = true; }),
   tbtn('hint', '?', () => { tpad.hint = true; }),
+  tbtn('journal', '📖', () => { tpad.journal = true; }),
   tbtn('pause', 'II', () => onEscape())
 ]);
 app.appendChild(touchUI);
 // on a touch screen (coarse pointer) the buttons are there from the start; elsewhere they appear on the first touch
 if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); }
-cv.addEventListener('touchstart', () => { PT.input('touch'); if (!tpad.used) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); } }, { passive: true });
+cv.addEventListener('touchstart', () => { PT.input('touch'); lastDev = 'touch'; if (!tpad.used) { tpad.used = true; touchUI.hidden = false; app.classList.add('touch'); } }, { passive: true });
 // ---- gamepad: polled once per frame; an "edge" is a button that is down now and was up last frame -------------
 // Standard mapping: left stick move, right stick look, A (0) jump / continue / pick, X (2) interact (hold), B (1) back /
 // skip a seen line, Y (3) switch era, LB/RB/L3 (4/5/10) sprint, LT (6) raise camera, RT (7) shutter, Back (8) hint,
@@ -221,7 +237,7 @@ function gamepad() { const pads = navigator.getGamepads ? navigator.getGamepads(
 let padPrevB = [];
 function pollPad() {
   const gp = gamepad(); const cur = gp ? gp.buttons.map((b) => !!(b && (b.pressed || b.value > 0.5))) : [];
-  const prev = padPrevB; padPrevB = cur; if (gp) { PT.input('gamepad'); }
+  const prev = padPrevB; padPrevB = cur; if (gp) { PT.input('gamepad'); if (cur.some((b) => b) || gp.axes.some((a) => Math.abs(a) > 0.4)) { lastDev = 'pad'; } }
   // radial dead zone: the stick direction is kept, only the small circle in the middle is ignored
   const stick = (a, b) => { if (!gp) { return [0, 0]; } const x = gp.axes[a] || 0, y = gp.axes[b] || 0, m = Math.hypot(x, y); if (m < 0.18) { return [0, 0]; } const k = Math.min(1, (m - 0.18) / 0.82) / m; return [x * k, y * k]; };
   return { gp, btn: (i) => !!cur[i], edge: (i) => !!cur[i] && !prev[i], left: stick(0, 1), right: stick(2, 3) };
@@ -267,7 +283,7 @@ function collectInput(dt) {
     mx: Math.max(-1, Math.min(1, mx)), mz: Math.max(-1, Math.min(1, mz)), yaw: cam.yaw,
     jump: p('jump') || tpad.jump || (P.edge(0) && !s.dialog && !ch), jumpHeld: k('jump') || P.btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || P.btn(4) || P.btn(5) || P.btn(10) || stickSprint,
     use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || P.edge(2), useHeld: k('use') || P.btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
-    tab: p('tab') || P.edge(3) || tpad.tab, hint: p('hint') || P.edge(8) || tpad.hint,
+    tab: p('tab') || P.edge(3) || tpad.tab, hint: p('hint') || P.edge(8) || tpad.hint, autoHelp: prefs.autoHelp !== false,
     aim: mouse.right || k('aim') || P.btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || P.btn(6))) || (p('use') && (mouse.right || k('aim'))) || P.edge(7) || (tpad.shoot && tpad.aim),
     aimDX: mouse.dx, aimDY: mouse.dy, advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen) || !!(P.edge(1) && s.dialog && s.dialog.seen), choose: rt.choose
   };
@@ -286,7 +302,8 @@ function collectInput(dt) {
   if (input.hint) { PT.hintKey(); } if (input.skip) { PT.skipped(); }
   if (s.scene !== 'train' && tpad.aim) { tpad.aim = false; }
   touchUI.classList.toggle('train', s.scene === 'train'); touchUI.classList.toggle('era', s.scene === 'town' && !!s.tab);
-  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = tpad.tab = tpad.hint = false;
+  if ((p('journal') || (P.edge(12) && !ch) || tpad.journal) && !s.dialog && !s.choice) { rt.openJournal = true; }
+  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = tpad.tab = tpad.hint = tpad.journal = false;
   return input;
 }
 
@@ -533,8 +550,8 @@ function renderHud() {
   const pr = s.prompt; const cine = !!s.dialog || (!!s.shot && !['beamctl', 'town-beam', 'paper'].includes(s.shot)) || s.choice;
   app.classList.toggle('cine', cine);
   if (pr && !cine && mode === 'play') {
-    const key = keyLabel(keys.use);
-    const sig = pr.id + pr.verb + prefs.lang + (pr.hold ? 'h' : '');
+    const key = guide.glyph();
+    const sig = pr.id + pr.verb + prefs.lang + (pr.hold ? 'h' : '') + lastDev + key;
     if (ui.prompt.getAttribute('data-sig') !== sig) { ui.prompt.setAttribute('data-sig', sig); ui.prompt.textContent = ''; ui.prompt.append(el('span', { class: 'key', text: key }), el('span', { class: 'verb', text: (pr.hold ? T('ui.hold') + ' · ' : '') + T(pr.verb) }), el('span', { class: 'name', text: T('name.' + pr.id) })); if (pr.hold) { ui.prompt.append(el('span', { class: 'ring' }, [el('span', { class: 'fill' })])); } ui.prompt.setAttribute('data-id', pr.id); }
     if (pr.hold) { const f = ui.prompt.querySelector('.fill'); if (f) { f.style.width = Math.round((pr.progress || 0) * 100) + '%'; } }
     const p3 = new THREE.Vector3(pr.x, (s.y || 0) + 1.7, pr.z); if (pr.id === 'theo' || pr.id === 'june' || pr.id === 'hand') { p3.y += 0.6; } p3.project(camera);
@@ -646,7 +663,7 @@ function showProvenance() {
 }
 ui.source.addEventListener('click', showProvenance);
 ui.era.addEventListener('click', () => { if (mode === 'play') { rt.forceTab = true; } });
-function closePanel() { PT.resume(); rt.keyNote = null; rebinding = null; ui.panel.hidden = true; mode = 'play'; if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); } }
+function closePanel() { PT.resume(); rt.journalOpen = false; rt.keyNote = null; rebinding = null; ui.panel.hidden = true; mode = 'play'; if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); } }
 
 // ---- menus ----------------------------------------------------------------------------------------------------
 function onEscape() {
@@ -658,11 +675,18 @@ function onEscape() {
   if (document.pointerLockElement) { document.exitPointerLock(); }
   openPause();
 }
+function openJournal() {
+  PT.pause(); mode = 'pause'; rt.journalOpen = true; ui.panel.hidden = false; down.clear();
+  if (document.pointerLockElement) { document.exitPointerLock(); }
+  guide.journal(ui.panel);
+  const close = el('button', { type: 'button', class: 'btn', text: T('jr.close') + '  (' + guide.label('journal') + ')', 'data-testid': 'journal-close', onclick: closePanel });
+  ui.panel.append(close); close.focus();
+}
 function openPause() {
   PT.pause();
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = ''; down.clear();
   const b = (text, id, fn) => el('button', { type: 'button', class: 'mbtn', text, 'data-testid': id, onclick: fn });
-  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), PT.active() && PT.recording() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, PT.active() && PT.recording() ? b(T('pt.delete'), 'pt-delete', () => { PT.reset(); closePanel(); tip(T('pt.deleted'), 4); }) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
+  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.journal'), 'journal', () => openJournal()), b(T('ui.settings'), 'settings', renderSettings), PT.active() && PT.recording() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, PT.active() && PT.recording() ? b(T('pt.delete'), 'pt-delete', () => { PT.reset(); closePanel(); tip(T('pt.deleted'), 4); }) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
   const r = ui.panel.querySelector('[data-testid="resume"]'); if (r) { r.focus(); }
 }
 function renderSettings() {
@@ -678,6 +702,8 @@ function renderSettings() {
     row(T('ui.music'), [range(ap.music, 'music', (v) => A.setPref('music', v))]), row(T('ui.sfx'), [range(ap.sfx, 'sfx', (v) => A.setPref('sfx', v))]),
     row(T('ui.quality'), ['low', 'medium', 'high'].map((q) => btn(T('ui.q.' + q) + (prefs.quality === q ? ' ✓' : ''), 'q-' + q, () => { prefs.quality = q; write(PREF_KEY, prefs); resize(); renderer.shadowMap.enabled = q !== 'low'; renderSettings(); }))),
     row(T('ui.motion'), [btn(prefs.reduce ? T('ui.motionReduced') : T('ui.motionFull'), 'motion', () => setP('reduce', !prefs.reduce))]),
+    row(T('ui.tutorial'), [btn(prefs.tips === false ? T('ui.off') : T('ui.on'), 'tips', () => { if (prefs.tips === false) { prefs.tut = {}; } setP('tips', prefs.tips === false); })]),
+    row(T('ui.autoHelp'), [btn(prefs.autoHelp === false ? T('ui.off') : T('ui.on'), 'auto-help', () => setP('autoHelp', prefs.autoHelp === false))]),
     row(T('ui.subs'), [btn(prefs.subs === 'large' ? T('ui.subsLarge') : T('ui.subsNormal'), 'subs', () => setP('subs', prefs.subs === 'large' ? 'normal' : 'large'))]),
     row(T('ui.language'), [btn(T('ui.lang'), 'lang', () => { setP('lang', prefs.lang === 'zh' ? 'en' : 'zh'); applyLang(); })]),
     row(T('ui.keys'), [kb, btn(T('ui.resetKeys'), 'reset-keys', () => { Object.assign(keys, DEFAULT_KEYS); write(KEYS_KEY, keys); rebinding = null; rt.keyNote = null; renderSettings(); })]),
@@ -720,7 +746,7 @@ function begin(saved) {
   g = Gm.createGame(ar, saved || null); Object.values(worlds).forEach((w) => { void w; });
   worldId = null; rt.lastChapter = null; mode = 'play'; if (testHook) { testHook.game = g; }
   const tune = Ar.sceneGraph(ar, 1998).objects.find((o) => o.id === 'tune'); if (tune && tune.data) { A.setTune(tune.data); }
-  onBeat({ beat: g.s.beat, chapter: Gm.chapterOf(g.s.beat), scene: g.rt.scene }); save(false);
+  onBeat({ beat: g.s.beat, chapter: Gm.chapterOf(g.s.beat), scene: g.rt.scene }); save(false); guide.resetForGame();
 }
 
 // ---- playtest: chapter ratings, device info, and the F3 frame-time overlay ------------------------------------
@@ -770,7 +796,7 @@ function tick(now) {
   } else if (mode === 'play') {
     let input = collectInput(dt); if (rt.forceTab) { input.tab = true; rt.forceTab = false; }
     if (testHook && testHook.input) { input = testHook.input(input) || input; }
-    const evs = Gm.tick(g, dt, input); evs.forEach(handle); if (testHook && testHook.events) { testHook.events(evs); }
+    const evs = Gm.tick(g, dt, input); evs.forEach(handle); guide.events(evs); if (testHook && testHook.events) { testHook.events(evs); }
   } else {
     pressed.clear(); mouse.dx = mouse.dy = 0; mouse.click = false;
     menuPad();
@@ -779,6 +805,8 @@ function tick(now) {
   world.update(dt, rt.t, reduce());
   updateCamera(false);
   renderHud();
+  guide.update(dt, app.classList.contains('cine'));
+  if (rt.openJournal) { rt.openJournal = false; if (mode === 'play') { openJournal(); } }
   if (mode === 'play' && rt.t - rt.lastSave > 5) { save(false); }
   PT.frame(rawMs, mode === 'play', mode === 'play' ? Gm.snapshot(g) : null, !!rt.inputSeen); rt.inputSeen = false;
   renderer.render(world.scene, camera);
@@ -786,7 +814,7 @@ function tick(now) {
 }
 
 // Read-only view for automated browser tests. It cannot change anything.
-window.V5Debug = { snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
+window.V5Debug = { objective() { return g ? objective(g) : null; }, journal() { return g ? journalCounts(g) : null; }, guide() { return { quest: !guide.el.bar.hidden && guide.el.bar.textContent, tip: guide.el.tipBox.hidden ? null : guide.el.tipBox.getAttribute('data-id'), arrow: !guide.el.arrow.hidden, toast: !guide.el.toast.hidden, device: lastDev }; }, snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
 
 // ---- RC1 review modes: preview a saved moment (?preview=<beat>) and measure frame times (?bench=...) -------------
 async function previewSaves() { const r = await fetch('/v5/data/preview-saves.json'); if (!r.ok) { throw new Error('preview-saves ' + r.status); } return JSON.parse(await r.text()).saves || {}; }

@@ -1,5 +1,5 @@
 // P5 prologue: Mom's study at sunset (adapted from P4). Room interior x -4.3..4.3, z -3.3..3.3, height 2.9 (see levels.js).
-import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite } from './kit.js';
+import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, softPoints } from './kit.js';
 
 const H = 2.9;
 
@@ -248,10 +248,10 @@ export function buildStudy(opts) {
   anchors.window = outside;
 
   // ---- dust in the sunbeam ----------------------------------------------------------------------------
-  const dustGeo = new THREE.BufferGeometry(); const dn = 140; const dpos = new Float32Array(dn * 3);
-  for (let i = 0; i < dn; i++) { dpos[i * 3] = -1.6 + R() * 2.6; dpos[i * 3 + 1] = 0.3 + R() * 2.2; dpos[i * 3 + 2] = -3.0 + R() * 3.4; }
+  const dustGeo = new THREE.BufferGeometry(); const dn = 46; const dpos = new Float32Array(dn * 3);
+  for (let i = 0; i < dn; i++) { const k = R(); dpos[i * 3] = -1.2 + R() * 1.4 + k * 0.6; dpos[i * 3 + 1] = 0.6 + k * 1.8; dpos[i * 3 + 2] = -2.9 + R() * 1.6 + k * 1.2; }   // a slanting column under the window
   dustGeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
-  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xffe0b0, size: 0.025, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const dust = new THREE.Points(dustGeo, softPoints('mote', { size: 0.035, opacity: 0.2 }));
   scene.add(dust);
 
   // ---- behaviour --------------------------------------------------------------------------------------

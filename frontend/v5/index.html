@@ -45,7 +45,7 @@
     .btn:focus, .mbtn:focus, .sbtn:focus, .kbtn:focus, .copt:focus { outline:2px solid var(--gold); outline-offset:3px; }
     .confirm { position:fixed; z-index:30; left:50%; top:50%; transform:translate(-50%, -50%); background:rgba(14,10,22,.96); border:1px solid rgba(255,246,234,.4); border-radius:10px; padding:18px 22px; max-width:min(440px, 90vw); }
     /* almost no HUD: a chapter marker that fades, a prompt only in reach, subtitles, and choices when asked */
-    .chapter { position:absolute; z-index:6; top:max(18px, env(safe-area-inset-top)); left:max(22px, env(safe-area-inset-left)); font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); text-shadow:var(--shadow); opacity:0; transition:opacity 1.2s; pointer-events:none; }
+    .chapter { position:absolute; z-index:6; top:max(18px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); white-space:nowrap; font-size:.8rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); text-shadow:var(--shadow); opacity:0; transition:opacity 1.2s; pointer-events:none; }
     .chapter.on { opacity:.95; }
     .era { position:absolute; z-index:6; top:max(16px, env(safe-area-inset-top)); right:max(18px, env(safe-area-inset-right)); background:transparent; border:0; color:var(--dim); font-size:.78rem; letter-spacing:.08em; text-shadow:var(--shadow); cursor:pointer; }
     .source { position:absolute; z-index:6; top:max(38px, calc(env(safe-area-inset-top) + 22px)); right:max(18px, env(safe-area-inset-right)); background:transparent; border:0; color:rgba(191,232,255,.75); font-size:.72rem; text-decoration:underline dotted; cursor:pointer; text-shadow:var(--shadow); }
@@ -105,6 +105,38 @@
     .roll .unsent { margin-top:22px; font-style:italic; color:var(--ink); }
     .err, .loading { max-width:560px; line-height:1.6; }
     @media (max-width:640px) { .subs .line { font-size:1.05rem; } .banner { font-size:1.1rem; } }
+    /* RC2 guide: the task bar (top left), one tip at a time (bottom), help markers, the memory note, the journal */
+    .quest { position:absolute; z-index:6; top:max(16px, env(safe-area-inset-top)); left:max(18px, env(safe-area-inset-left)); max-width:min(360px, 46vw); padding:9px 13px 10px; border-radius:10px; background:linear-gradient(180deg, rgba(18,12,28,.62), rgba(18,12,28,.42)); border:1px solid rgba(255,246,234,.14); color:var(--ink); text-shadow:var(--shadow); pointer-events:none; transition:opacity .35s, box-shadow .4s, border-color .4s; }
+    .quest.dim, #app.cine .quest { opacity:0; }
+    .quest.new { border-color:rgba(255,210,122,.75); box-shadow:0 0 18px rgba(255,210,122,.35); }
+    .quest .qch { font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); opacity:.9; display:flex; gap:8px; align-items:center; }
+    .quest .qnew { font-size:.62rem; letter-spacing:.08em; color:#111; background:var(--gold); border-radius:8px; padding:0 6px; text-transform:none; }
+    .quest .qgoal { font-size:1rem; font-weight:600; margin-top:3px; line-height:1.3; }
+    .quest .qprog { margin-left:8px; font-size:.78rem; font-weight:400; color:var(--gold); }
+    .quest .qnext { font-size:.86rem; margin-top:5px; line-height:1.4; color:rgba(255,246,234,.9); }
+    .quest .qnl { color:var(--gold); margin-right:6px; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; }
+    .quest .qnext.pulse { animation:qpulse 1.6s ease-in-out infinite; }
+    @keyframes qpulse { 0%,100% { color:rgba(255,246,234,.9); } 50% { color:#ffe2a0; } }
+    .quest .qhelp { display:inline-block; margin-left:6px; font-size:.72rem; color:#111; background:rgba(255,210,122,.85); border-radius:7px; padding:0 6px; text-shadow:none; }
+    .quest .qhelp:empty { display:none; }
+    .quest .qdone { margin-top:5px; font-size:.82rem; color:#9be39b; }
+    .qsteps { margin:6px 0 0; padding-left:0; list-style:none; font-size:.8rem; line-height:1.55; }
+    .qsteps li { color:rgba(255,246,234,.75); } .qsteps li.done { color:#9be39b; } .qsteps li.now { color:var(--ink); font-weight:600; } .qsteps li.opt { opacity:.75; font-style:italic; }
+    .quest .qtoggle { pointer-events:auto; margin-top:6px; background:transparent; border:0; color:var(--dim); font-size:.72rem; padding:2px 0; cursor:pointer; text-decoration:underline dotted; }
+    #app.touch .quest { top:max(104px, calc(env(safe-area-inset-top) + 90px)); max-width:min(320px, 60vw); }
+    .tut { position:absolute; z-index:7; left:50%; bottom:max(150px, calc(env(safe-area-inset-bottom) + 130px)); transform:translateX(-50%); max-width:min(560px, 88vw); padding:10px 16px; border-radius:12px; background:rgba(18,12,28,.72); border:1px solid rgba(255,210,122,.45); color:var(--ink); font-size:.95rem; text-align:center; text-shadow:var(--shadow); pointer-events:none; animation:tutin .4s ease-out; }
+    .tut .toff { display:block; margin-top:4px; font-size:.7rem; color:var(--dim); }
+    #app.cine .tut { display:none; }
+    @keyframes tutin { from { opacity:0; transform:translate(-50%, 8px); } to { opacity:1; transform:translate(-50%, 0); } }
+    .assist-arrow { position:absolute; z-index:6; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:rgba(18,12,28,.55); border:1.5px solid rgba(255,210,122,.8); color:var(--gold); font-size:1.1rem; pointer-events:none; box-shadow:0 0 14px rgba(255,210,122,.35); }
+    .memtoast { position:absolute; z-index:7; right:max(18px, env(safe-area-inset-right)); top:max(66px, calc(env(safe-area-inset-top) + 50px)); display:flex; flex-direction:column; gap:2px; padding:9px 14px; border-radius:10px; background:rgba(251,246,234,.94); color:#2a2026; box-shadow:0 10px 30px rgba(0,0,0,.35); pointer-events:none; animation:tutin .35s ease-out; max-width:min(320px, 70vw); }
+    .memtoast .ml { font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:#8a4a3a; } .memtoast .mt { font-weight:600; } .memtoast .mk { font-size:.72rem; color:#6a5a5a; }
+    .jgoals { margin:4px 0 12px; } .jg { margin:3px 0; } .jg.done { color:#9be39b; } .jg.now { font-weight:600; } .jnext { margin-top:6px; color:var(--gold); font-size:.88rem; }
+    .jsteps { margin-left:14px; }
+    .jmem { display:grid; gap:8px; margin-top:6px; } .jch { margin-top:8px; font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+    .jm { padding:8px 10px; border-radius:8px; background:rgba(255,246,234,.06); border:1px solid rgba(255,246,234,.1); } .jm.locked { opacity:.55; }
+    .jm .jt { font-weight:600; } .jm .jmeta { font-size:.74rem; color:var(--dim); margin-top:2px; } .jm .jd { font-size:.86rem; margin-top:4px; line-height:1.45; } .jm .jsrc { font:11px/1.4 var(--mono); color:#bfe8ff; margin-top:5px; word-break:break-all; }
+    .touchui .tb-journal { position:fixed; top:max(52px, env(safe-area-inset-top)); left:max(118px, calc(env(safe-area-inset-left) + 104px)); width:44px; height:44px; font-size:1rem; }
     html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after { animation:none !important; transition-duration:.01s !important; }
   </style>
 </head>

@@ -1,7 +1,7 @@
 // V5 scenes beyond the town and the study: the station and its train, the carriage interior, the coast road with
 // the half-built lighthouse and the cliff, and the cliffside cottage. Coordinates match core/layout.js.
 // Low-poly, procedural, in the same palette and material language as the town (render/kit.js).
-import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, skyDome } from './kit.js';
+import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, skyDome, softPoints } from './kit.js';
 import { LAYOUTS, roadInfo } from '../core/layout.js';
 import { trainTarget, STARS, dirOf } from '../core/toys.js';
 
@@ -293,7 +293,7 @@ export function buildCottage(opts) {
   const gamebox = box(0.3, 0.4, 0.06, 0x2f5d8a, 2.65, 1.25, 1.6, { ry: -Math.PI / 2 }); sheets.add(gamebox);
   const kept = new THREE.Group(); kept.position.set(-0.9, 0, -2.75); kept.rotation.set(-0.15, 0.2, 0.08); sheets.add(kept);
   kept.add(box(0.9, 1.15, 0.06, 0x3f7cc4, 0, 0.58, 0), box(0.72, 0.95, 0.03, 0xdde8f0, 0, 0.6, 0.03));
-  const dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 240 }, (_, i) => (i % 3 === 1 ? 0.3 + R() * 2.2 : (R() - 0.5) * 7)), 3)), new THREE.PointsMaterial({ color: 0xfff0d0, size: 0.02, transparent: true, opacity: 0.5, depthWrite: false })); scene.add(dust);
+  const dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 120 }, (_, i) => (i % 3 === 1 ? 0.3 + R() * 2.2 : (R() - 0.5) * 7)), 3)), softPoints('mote', { color: 0xf3e6cf, size: 0.03, opacity: 0.16 })); scene.add(dust);
   const api = {
     scene, blockers,
     // where each box is: 'floor', 'carried' (in someone's arms, drawn on the person) or 'placed' (stacked by the door)

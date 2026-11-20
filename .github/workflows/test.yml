@@ -178,7 +178,7 @@ jobs:
           retention-days: 14
 
   browser-v5-rc:
-    name: V5 RC1 review pages and packages (Playwright)
+    name: V5 RC1/RC2 review pages, first-time player guide, packages (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -211,9 +211,9 @@ jobs:
             dist/resurrection-v5-playtest.zip
           retention-days: 30
 
-      - name: Run the RC1 browser tests
+      - name: Run the RC1 and RC2 browser tests
         run: |
-          npx playwright test e2e/v5-rc.spec.js
+          npx playwright test e2e/v5-rc.spec.js e2e/v5-rc2.spec.js
 
       - name: Upload RC1 screenshots and report
         if: always()
