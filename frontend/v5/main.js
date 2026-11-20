@@ -301,7 +301,7 @@ function collectInput(dt) {
   rt.inputSeen = Math.abs(input.mx) + Math.abs(input.mz) > 0.1 || input.use || input.useHeld || input.jump || input.tab || input.aim || input.advance || Math.abs(mouse.dx) + Math.abs(mouse.dy) > 2 || input.choose !== null && input.choose !== undefined;
   if (input.hint) { PT.hintKey(); } if (input.skip) { PT.skipped(); }
   if (s.scene !== 'train' && tpad.aim) { tpad.aim = false; }
-  touchUI.classList.toggle('train', s.scene === 'train'); touchUI.classList.toggle('era', s.scene === 'town' && !!s.tab);
+  touchUI.classList.toggle('train', s.scene === 'train'); touchUI.classList.toggle('can-tab', s.scene === 'town' && !!s.tab);   // not 'era': that is the year label's class and moved the buttons to the top
   if ((p('journal') || (P.edge(12) && !ch) || tpad.journal) && !s.dialog && !s.choice) { rt.openJournal = true; }
   rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = tpad.tab = tpad.hint = tpad.journal = false;
   return input;
