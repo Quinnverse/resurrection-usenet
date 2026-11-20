@@ -64,3 +64,6 @@ test-results/
 playwright-report/
 ci-v5/
 dist/
+
+# Local test runs (tools/v5-run.mjs): logs, screenshots, reports of this machine. Never CI evidence.
+test-runs/

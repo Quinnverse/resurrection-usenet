@@ -6,7 +6,9 @@
 const os = require('node:os');
 const path = require('node:path');
 
-const PORT = 3999;
+// E2E_PORT and E2E_OUT let the local runner (tools/v5-run.mjs) use a free port and keep each run's results apart
+const PORT = Number(process.env.E2E_PORT) || 3999;
+const OUT = process.env.E2E_OUT || '.';
 const LIVE = process.env.E2E_BASE_URL;
 
 module.exports = {
@@ -18,13 +20,14 @@ module.exports = {
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
-  outputDir: 'test-results',
+  reporter: [['list'], ['html', { open: 'never', outputFolder: path.join(OUT, 'playwright-report') }]],
+  outputDir: path.join(OUT, 'test-results'),
   use: {
     baseURL: LIVE || `http://127.0.0.1:${PORT}`,
     browserName: 'chromium',
     headless: true,
     trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
     ...(LIVE && process.env.E2E_USER
       ? { httpCredentials: { username: process.env.E2E_USER, password: process.env.E2E_PASSWORD || '' } }
       : {})

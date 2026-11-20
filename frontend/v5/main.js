@@ -686,7 +686,7 @@ function openPause() {
   PT.pause();
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = ''; down.clear();
   const b = (text, id, fn) => el('button', { type: 'button', class: 'mbtn', text, 'data-testid': id, onclick: fn });
-  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.journal'), 'journal', () => openJournal()), b(T('ui.settings'), 'settings', renderSettings), PT.active() && PT.recording() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, PT.active() && PT.recording() ? b(T('pt.delete'), 'pt-delete', () => { PT.reset(); closePanel(); tip(T('pt.deleted'), 4); }) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
+  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), b(T('ui.journal'), 'journal', () => openJournal()), PT.active() && PT.recording() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, PT.active() && PT.recording() ? b(T('pt.delete'), 'pt-delete', () => { PT.reset(); closePanel(); tip(T('pt.deleted'), 4); }) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
   const r = ui.panel.querySelector('[data-testid="resume"]'); if (r) { r.focus(); }
 }
 function renderSettings() {

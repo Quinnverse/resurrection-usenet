@@ -210,3 +210,13 @@ test('the guide points at what the player does next: the marker is on every requ
     for (let c = 1; c <= 7; c++) { assert.ok(r.switches.some((x) => x.kind === 'step' && Gm.chapterOf(x.beat) === c), 'a step completed in chapter ' + c); }
   }
 });
+
+test('saving halfway along the pier and loading it keeps every step already done', async () => {
+  const g = Gm.createGame(ar); const bot = makeBot(g, { optional: false }); await toPier(g, bot);
+  await bot.walkTo(0, 13.5); await bot.tick({ tab: true }); await bot.wait(0.3); await bot.walkTo(0, 17.6); await bot.tick({ tab: true }); await bot.wait(0.3);
+  for (const z of [20.0, 22.6]) {
+    await bot.walkTo(0, z); const a = objective(g); const b = objective(Gm.createGame(ar, Gm.parseSave(JSON.parse(JSON.stringify(Gm.serialize(g))), ar)));
+    assert.deepEqual(b.steps.map((x) => [x.id, x.done]), a.steps.map((x) => [x.id, x.done]), 'at z ' + z);
+    assert.equal(b.next, a.next); assert.equal(b.nextKey, a.nextKey); assert.deepEqual(b.progress, a.progress);
+  }
+});

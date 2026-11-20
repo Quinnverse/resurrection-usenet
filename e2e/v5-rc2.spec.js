@@ -247,6 +247,43 @@ test.describe('V5 RC2 — a first-time player', () => {
     });
   }
 
+  test('save and continue halfway through a goal: the task bar, its steps and the journal come back exactly as they were', async ({ page }, testInfo) => {
+    test.setTimeout(20 * 60 * 1000);
+    const w = watch(page); await page.addInitScript(initHook); await serveBot(page);
+    await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
+    // the scripted player plays to the middle of the pier: 1998 deck end, then 2004 on the middle section
+    await page.evaluate(async () => {
+      const { makeBot, DT } = await import('/v5-test/bot.mjs'); const { LAYOUTS } = await import('/v5/core/layout.js');
+      const h = window.__V5_TEST__; await h.virtualize(); const g = h.game; const bot = makeBot(g, { step: (i) => h.step(i), optional: false });
+      const P = (sc, id) => LAYOUTS[sc].points.find((p) => p.id === id); const comp = P('study', 'computer');
+      await bot.goUse('keepbox', -1.1, 2.2); await bot.goUse('computer', comp.x, comp.z + 1.0); await bot.until((s) => s.scene === 'town');
+      await bot.walkTo(0, 7.4); await bot.until((s) => s.prompt && s.prompt.id === 'theo', 10, () => bot.axes(0, 1)); await bot.use('theo'); await bot.talk();
+      await bot.until((s) => s.prompt && s.prompt.id === 'gap', 10, () => bot.axes(0, 1)); await bot.hold('gap', 6); await bot.until((s) => s.beat === '1.pier', 60);
+      await bot.walkTo(0, 13.5); await bot.tick({ tab: true }); await bot.wait(0.4); await bot.walkTo(0, 17.6); await bot.tick({ tab: true }); await bot.wait(0.4); await bot.walkTo(0, 20.0);
+      await bot.wait(6.5);   // the game saves every 5 s of play
+      h.unvirtualize(); void DT;
+    });
+    await page.waitForTimeout(1500);
+    const read = () => page.evaluate(() => { const D = window.V5Debug; const o = D.objective(); const t = (id) => (document.querySelector(`[data-testid="${id}"]`) || {}).textContent || null; return { beat: D.snapshot().beat, era: D.snapshot().era, steps: o.steps.map((x) => [x.id, x.done]), next: o.next, goal: t('quest-goal'), nextText: t('quest-next'), progress: t('quest-progress'), journal: D.journal().found }; });
+    const before = await read();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.save.v1')));
+    expect(saved.beat).toBe('1.pier'); expect(saved.era).toBe(2004); expect(saved.pos.town.z).toBeGreaterThan(17);
+    expect(before.progress).toBe('3/5'); expect(before.next).toBe('cross');
+    await attach(testInfo, 'rc2-15-before-reload', await shot(page));
+    await page.keyboard.press('KeyJ'); const memBefore = await page.getByTestId('journal-memories').textContent(); await page.keyboard.press('KeyJ');
+    // reload the page and continue
+    await page.reload(); await expect(page.getByTestId('continue')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(1500);
+    const after = await read();
+    expect(after).toEqual(before);
+    await page.keyboard.press('KeyJ'); expect(await page.getByTestId('journal-memories').textContent()).toBe(memBefore);
+    await attach(testInfo, 'rc2-16-after-continue-journal', await shot(page)); await page.keyboard.press('KeyJ');
+    await attach(testInfo, 'rc2-17-after-continue', await shot(page));
+    expect(w.issues).toEqual([]);
+  });
+
   test('the air: faint warm dust in the study sunbeam, clearly different snow at the end', async ({ page }, testInfo) => {
     const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'medium', tut: TIPS_DONE });
     await page.goto('/v5/?preview=1.study'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('1.study'); await page.waitForTimeout(2500);

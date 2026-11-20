@@ -55,7 +55,7 @@ const BEATS = {
     const stub = remember(g, 'stub', s.era === 2004 && b.z > 17.0 && b.z < 23.5);
     const far = remember(g, 'far', s.era === 1998 && b.z > 22.0);
     const steps = [
-      { id: 'tab', done: on98 || deck },
+      { id: 'tab', done: on98 || deck || stub || far },   // a later step implies the earlier ones (after loading a save halfway out, only the current one can be seen)
       { id: 'deck', done: deck || stub || far },
       { id: 'stub', done: stub || far },
       { id: 'cross', done: far },

@@ -16,7 +16,15 @@
     "v5:lan": "node tools/v5-serve.mjs --lan --open",
     "v5:bundle": "node tools/v5-bundle.mjs",
     "v5:rc": "node tools/v5-rc-pack.mjs && node tools/v5-playtest-pack.mjs",
-    "v5:previews": "node tools/v5-preview-saves.mjs"
+    "v5:previews": "node tools/v5-preview-saves.mjs",
+    "test:quick": "node tools/v5-run.mjs start quick --fg",
+    "test:guide": "node tools/v5-run.mjs start guide",
+    "test:full:local": "node tools/v5-run.mjs start full",
+    "v5:status": "node tools/v5-run.mjs status",
+    "v5:logs": "node tools/v5-run.mjs logs",
+    "v5:stop": "node tools/v5-run.mjs stop",
+    "v5:runs": "node tools/v5-run.mjs list",
+    "v5:ci": "node tools/v5-run.mjs ci"
   },
   "keywords": [
     "horror",
