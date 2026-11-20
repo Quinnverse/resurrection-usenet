@@ -40,7 +40,7 @@
     .sbtn.on { background:var(--gold); color:#111; } .note.pt { color:var(--gold); }
     .copt.focus { outline:2px solid var(--gold); outline-offset:2px; }
     .touchui.off { display:none; }
-    .touchui .tb-tab { display:none; } .touchui.era .tb-tab { display:block; }
+    .touchui .tb-tab { display:none; position:absolute; right:calc(100% + 14px); bottom:0; } .touchui.era .tb-tab { display:block; }   /* beside the jump button, so the column never grows into the top of the screen */
     .touchui .tb-hint { position:fixed; top:max(52px, env(safe-area-inset-top)); left:max(66px, calc(env(safe-area-inset-left) + 52px)); width:44px; height:44px; font-size:.9rem; }
     .btn:focus, .mbtn:focus, .sbtn:focus, .kbtn:focus, .copt:focus { outline:2px solid var(--gold); outline-offset:3px; }
     .confirm { position:fixed; z-index:30; left:50%; top:50%; transform:translate(-50%, -50%); background:rgba(14,10,22,.96); border:1px solid rgba(255,246,234,.4); border-radius:10px; padding:18px 22px; max-width:min(440px, 90vw); }
@@ -123,7 +123,8 @@
     .qsteps { margin:6px 0 0; padding-left:0; list-style:none; font-size:.8rem; line-height:1.55; }
     .qsteps li { color:rgba(255,246,234,.75); } .qsteps li.done { color:#9be39b; } .qsteps li.now { color:var(--ink); font-weight:600; } .qsteps li.opt { opacity:.75; font-style:italic; }
     .quest .qtoggle { pointer-events:auto; margin-top:6px; background:transparent; border:0; color:var(--dim); font-size:.72rem; padding:2px 0; cursor:pointer; text-decoration:underline dotted; }
-    #app.touch .quest { top:max(104px, calc(env(safe-area-inset-top) + 90px)); max-width:min(320px, 60vw); }
+    #app.touch .quest { top:max(104px, calc(env(safe-area-inset-top) + 90px)); max-width:min(300px, 42vw); padding:7px 10px 8px; }
+    #app.touch .quest .qgoal { font-size:.88rem; } #app.touch .quest .qnext { font-size:.78rem; } #app.touch .quest .qch { font-size:.6rem; }
     .tut { position:absolute; z-index:7; left:50%; bottom:max(150px, calc(env(safe-area-inset-bottom) + 130px)); transform:translateX(-50%); max-width:min(560px, 88vw); padding:10px 16px; border-radius:12px; background:rgba(18,12,28,.72); border:1px solid rgba(255,210,122,.45); color:var(--ink); font-size:.95rem; text-align:center; text-shadow:var(--shadow); pointer-events:none; animation:tutin .4s ease-out; }
     .tut .toff { display:block; margin-top:4px; font-size:.7rem; color:var(--dim); }
     #app.cine .tut { display:none; }

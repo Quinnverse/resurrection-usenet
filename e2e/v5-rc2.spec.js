@@ -141,7 +141,8 @@ test.describe('V5 RC2 — a first-time player', () => {
     await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
     await page.goto('/v5/?preview=1.pier'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('1.pier');
     await expect(page.getByTestId('quest-next')).toContainText('the ⇄ button');
-    const qb = await page.getByTestId('quest').boundingBox(); for (const id of ['pause', 'hint', 'journal', 'jump', 'use']) { const b = await page.getByTestId('touch-' + id).boundingBox(); const hit = b && qb && !(qb.x + qb.width <= b.x || b.x + b.width <= qb.x || qb.y + qb.height <= b.y || b.y + b.height <= qb.y); expect(hit, 'task bar over touch-' + id).toBe(false); }
+    const era = await page.getByTestId('era').boundingBox(); for (const id of ['jump', 'use', 'tab']) { const b = await page.getByTestId('touch-' + id).boundingBox(); const hit = b && era && !(era.x + era.width <= b.x || b.x + b.width <= era.x || era.y + era.height <= b.y || b.y + b.height <= era.y); expect(hit, 'touch-' + id + ' over the year label').toBe(false); }
+    const qb = await page.getByTestId('quest').boundingBox(); for (const id of ['pause', 'hint', 'journal', 'jump', 'use', 'tab']) { const b = await page.getByTestId('touch-' + id).boundingBox(); const hit = b && qb && !(qb.x + qb.width <= b.x || b.x + b.width <= qb.x || qb.y + qb.height <= b.y || b.y + b.height <= qb.y); expect(hit, 'task bar over touch-' + id).toBe(false); }
     await attach(testInfo, 'rc2-09-touch-instructions', await shot(page));
     await page.getByTestId('touch-journal').tap(); await expect(page.getByTestId('journal-memories')).toBeVisible(); await attach(testInfo, 'rc2-10-touch-journal', await shot(page));
     await page.getByTestId('journal-close').tap(); expect((await snap(page)).mode).toBe('play');
@@ -155,7 +156,8 @@ test.describe('V5 RC2 — a first-time player', () => {
     await expect(page.getByTestId('quest-goal')).toHaveText('打开妈妈的游戏档案'); await expect(page.getByTestId('tut')).toContainText('走动');
     await attach(testInfo, 'rc2-11-chinese-first-tip', await shot(page));
     await page.goto('/v5/?preview=6.cottage&lang=zh'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('6.cottage');
-    for (let i = 0; i < 6 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(500); }
+    for (let i = 0; i < 20 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(600); }
+    expect((await snap(page)).dialog).toBeFalsy();
     await expect(page.getByTestId('quest-goal')).toHaveText('帮琳收拾小屋'); await expect(page.getByTestId('quest-progress')).toHaveText('0/2');
     await page.keyboard.press('KeyJ'); await expect(page.getByTestId('journal-memories')).toContainText('记忆');
     await attach(testInfo, 'rc2-12-chinese-journal', await shot(page));

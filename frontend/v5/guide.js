@@ -105,7 +105,7 @@ export function createGuide(c) {
       // a step just done: say so, briefly
       const nowDone = req.map((x) => x.done); req.forEach((x, i) => { if (x.done && lastDone && !lastDone[i]) { doneT = 2.8; qdone.textContent = '✓ ' + T('hud.stepDone', { s: T(x.key) }); c.play('blip'); } }); lastDone = nowDone;
       const help = s.assist || 0; const nextText = o.nextKey ? T(o.nextKey) : '';
-      const k = [o.goal, o.nextKey, nowDone.join(''), o.progress.n, o.progress.of, expanded, help, c.device(), c.prefs.lang, o.steps.map((x) => (x.done ? 1 : 0)).join('')].join('|');
+      const k = [o.goal, o.nextKey, nowDone.join(''), o.progress.n, o.progress.of, expanded, help, c.device(), c.prefs.lang, o.steps.map((x) => (x.done ? 1 : 0)).join(''), Object.values(c.keys).join(',')].join('|');   // remapping a key rewrites the instructions at once
       if (k !== sig) {
         sig = k;
         qchT.textContent = T('chap.' + o.chapter); qgoalT.textContent = T(o.goal);
@@ -152,7 +152,7 @@ export function createGuide(c) {
       else if (tut && tut.id === 'use' && !s.prompt && tutT > 6) { tut = null; }   // walked away: shown again at the next prompt
       else if (tut && tut.secs && tutT > tut.secs) { finishTut(); }
     }
-    if (tut && !cine) { const txt = T('tut.' + tut.id); if (tipBox.getAttribute('data-sig') !== tut.id + c.device() + c.prefs.lang) { tipBox.setAttribute('data-sig', tut.id + c.device() + c.prefs.lang); tipBox.textContent = ''; tipBox.append(el('span', { class: 'tt', text: txt })); if (!tutDone().first) { tipBox.append(el('span', { class: 'toff', text: T('tut.off') })); } } tipBox.hidden = false; tipBox.setAttribute('data-id', tut.id); }
+    if (tut && !cine) { const txt = T('tut.' + tut.id); const tsig = tut.id + c.device() + c.prefs.lang + Object.values(c.keys).join(','); if (tipBox.getAttribute('data-sig') !== tsig) { tipBox.setAttribute('data-sig', tsig); tipBox.textContent = ''; tipBox.append(el('span', { class: 'tt', text: txt })); if (!tutDone().first) { tipBox.append(el('span', { class: 'toff', text: T('tut.off') })); } } tipBox.hidden = false; tipBox.setAttribute('data-id', tut.id); }
     else { tipBox.hidden = true; }
     if (tut && tut.id === 'move' && !tutDone().first) { tutDone().first = 1; }
     // ---- journal note
