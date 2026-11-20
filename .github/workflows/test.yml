@@ -96,7 +96,7 @@ jobs:
   browser-v5:
     name: Browser end-to-end, V5 full game (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150   # the two whole-game tests take 29 to 38 minutes each, depending on the runner
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

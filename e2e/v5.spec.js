@@ -233,16 +233,17 @@ test.describe('V5 — The Summer We Never Finished', () => {
   test('key remapping: a rebound key moves, the old one does not, reset restores it', async ({ page }) => {
     const w = watch(page); const { saves } = await savesByBeat();
     await continueFrom(page, saves['1.town']); await page.waitForTimeout(1500);
-    const walk = async (code) => { const a = await snap(page); await page.keyboard.down(code); await page.waitForTimeout(1500); await page.keyboard.up(code); await page.waitForTimeout(300); const b = await snap(page); return Math.hypot(b.x - a.x, b.z - a.z); };
+    // hold the key for at least 1.5 s; when a key is expected to move the player keep holding (up to 12 s) until it has, so a slow runner (a few frames per second) does not make the check flaky
+    const walk = async (code, expectMove) => { const a = await snap(page); await page.keyboard.down(code); const t0 = Date.now(); await page.waitForTimeout(1500); while (expectMove && Date.now() - t0 < 12000) { const m = await snap(page); if (Math.hypot(m.x - a.x, m.z - a.z) > 0.3) { break; } await page.waitForTimeout(250); } await page.keyboard.up(code); await page.waitForTimeout(300); const b = await snap(page); return Math.hypot(b.x - a.x, b.z - a.z); };
     await page.keyboard.press('Escape'); await page.getByTestId('settings').click();
     await page.getByTestId('key-forward').click(); await page.keyboard.press('KeyI');
     await expect(page.getByTestId('key-forward')).toContainText('I');
     await page.getByTestId('resume').click(); await page.waitForTimeout(300);
-    const byI = await walk('KeyI'), byW = await walk('KeyW');
+    const byI = await walk('KeyI', true), byW = await walk('KeyW', false);
     console.log('V5_REMAP ' + JSON.stringify({ byI, byW }));
     expect(byI).toBeGreaterThan(0.3); expect(byW).toBeLessThan(0.1);
     await page.keyboard.press('Escape'); await page.getByTestId('settings').click(); await page.getByTestId('reset-keys').click(); await page.getByTestId('resume').click();
-    expect(await walk('KeyW')).toBeGreaterThan(0.3);
+    expect(await walk('KeyW', true)).toBeGreaterThan(0.3);
     expect(w.issues).toEqual([]);
   });
 

@@ -1,7 +1,7 @@
-# Resurrection V5 — release notes (pre-release, not released)
+# Resurrection V5 — release notes (RC1, not released)
 
 Branch `feature/resurrection-v5-complete`. This build has **not** been released, deployed or submitted, and does not
-yet meet the release conditions in `docs/V5-TEST-REPORT.md`.
+yet meet the release conditions: see `docs/V5-RC1-ACCEPTANCE.md` and `docs/V5-RC1-BLOCKERS.md`.
 
 ## What it is
 
@@ -43,9 +43,25 @@ camera and the shutter. Choices and menus are tapped.
 
 ## Extra pages
 
+- `/v5/rc` — the RC1 review hub: links, the key scenes, what this browser and GPU report, a gamepad monitor.
+- `/v5/?preview=<beat>` — opens one moment of the story (the train, the coast ride, the lighthouse beam, the porch at night, the duet, the 2004 beach, `snow` for the first snow) without touching your save.
+- `/v5/?bench=low,medium,high` — a frame-time tour of nine scenes with a report (average and 1% low FPS, stalls, load times, memory where the browser reports it).
 - `/v5/tech` — the 3-minute technical demo (archive → parse → manifest → restore → walkable floor).
-- `/v5/audio` — the listening check for every theme and sound effect.
+- `/v5/audio` — the listening check for every theme and sound effect (8 s, or looped), with a link to the scene where each is heard.
 - `/v5/?playtest=1` — the game with the playtest recorder on (see `docs/playtest/README.md`).
+- `Resurrection-V5*.html` — the same pages as single files that open from disk with no server (`npm run v5:rc`).
+
+## Key bindings
+
+Binding a key that another action already uses swaps the two. Esc, F-keys, 1–3 and the system keys (Windows/Command, context menu)
+are used by the game and cannot be bound. Esc cancels a rebinding. Settings that are damaged or conflicting fall back to the
+defaults. “Reset keys” restores W A S D, Space, Shift, E, Tab, Q, H.
+
+## Playtest recorder and privacy
+
+Only in the playtest page (`?playtest=1` or `Resurrection-V5-Playtest.html`). Nothing is recorded until the player presses Start or
+Continue; the title says what is recorded. It stays in the player’s browser, is never sent anywhere, can be downloaded by the
+player, and can be deleted from the pause menu. No name or contact detail is asked for.
 
 ## Known issues
 
