@@ -141,9 +141,11 @@ test.describe('V5 RC2 — a first-time player', () => {
     await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
     await page.goto('/v5/?preview=1.pier'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('1.pier');
     await expect(page.getByTestId('quest-next')).toContainText('the ⇄ button');
-    const era = await page.getByTestId('era').boundingBox(); for (const id of ['jump', 'use', 'tab']) { const b = await page.getByTestId('touch-' + id).boundingBox(); const hit = b && era && !(era.x + era.width <= b.x || b.x + b.width <= era.x || era.y + era.height <= b.y || b.y + b.height <= era.y); expect(hit, 'touch-' + id + ' over the year label').toBe(false); }
-    const qb = await page.getByTestId('quest').boundingBox(); for (const id of ['pause', 'hint', 'journal', 'jump', 'use', 'tab']) { const b = await page.getByTestId('touch-' + id).boundingBox(); const hit = b && qb && !(qb.x + qb.width <= b.x || b.x + b.width <= qb.x || qb.y + qb.height <= b.y || b.y + b.height <= qb.y); expect(hit, 'task bar over touch-' + id).toBe(false); }
     await attach(testInfo, 'rc2-09-touch-instructions', await shot(page));
+    const era = await page.getByTestId('era').boundingBox(); const tb = {}; for (const id of ['jump', 'use', 'tab']) { tb[id] = await page.getByTestId('touch-' + id).boundingBox(); }
+    console.log('V5_TOUCH_BOXES ' + JSON.stringify({ era, tb, quest: await page.getByTestId('quest').boundingBox() }));
+    for (const id of ['jump', 'use', 'tab']) { const b = tb[id]; const hit = b && era && !(era.x + era.width <= b.x || b.x + b.width <= era.x || era.y + era.height <= b.y || b.y + b.height <= era.y); expect.soft(hit, 'touch-' + id + ' over the year label ' + JSON.stringify({ era, b })).toBe(false); }
+    const qb = await page.getByTestId('quest').boundingBox(); for (const id of ['pause', 'hint', 'journal', 'jump', 'use', 'tab']) { const b = await page.getByTestId('touch-' + id).boundingBox(); const hit = b && qb && !(qb.x + qb.width <= b.x || b.x + b.width <= qb.x || qb.y + qb.height <= b.y || b.y + b.height <= qb.y); expect(hit, 'task bar over touch-' + id).toBe(false); }
     await page.getByTestId('touch-journal').tap(); await expect(page.getByTestId('journal-memories')).toBeVisible(); await attach(testInfo, 'rc2-10-touch-journal', await shot(page));
     await page.getByTestId('journal-close').tap(); expect((await snap(page)).mode).toBe('play');
     expect(w.issues).toEqual([]); await ctx.close();

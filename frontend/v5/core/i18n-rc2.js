@@ -113,7 +113,7 @@ export const EN_RC2 = {
   'hint.7.town.3': 'Then the lighthouse on the point: hold {k:use} to restore the lamp, then hold {k:use} again to make something new. At the end, {k:steer} turns the beam.',
   'hint.end.2': '{k:tab} still shows 1998 and 2004 as they were.', 'hint.end.3': '{k:pause} for the menu.', 'hint.1.carve.3': 'Hold {k:use} at the post.',
   // ---- tips (shown once, one at a time, when they are needed) ---------------------------------------------------
-  'tut.move': '{k:move} to walk', 'tut.look': '{k:look} to look around', 'tut.use': 'When a name appears next to something, press {k:use}',
+  'tut.move': '{k:move} to walk', 'tut.look': 'Move {k:look} to look around', 'tut.move.pad': 'Left stick to walk', 'tut.look.pad': 'Right stick to look around', 'tut.move.touch': 'Drag on the left side of the screen to walk', 'tut.look.touch': 'Drag on the right side to look around', 'tut.use': 'When a name appears next to something, press {k:use}',
   'tut.goal': 'Your goal is always at the top left. {k:hint}: a hint if you are stuck.', 'tut.hold': 'Some things take a moment: hold {k:use} until the bar fills',
   'tut.tab': '{k:tab} switches between 1998 and 2004. What is missing in one may be there in the other.', 'tut.journal': 'You found a memory. {k:journal} opens the memory journal.',
   'tut.pause': '{k:pause}: pause, settings, language, controls', 'tut.off': 'Tips can be turned off in Settings.',
@@ -262,7 +262,7 @@ export const ZH_RC2 = {
   'hint.7.town.1': '先恢复名字：入口大门上的牌子。用 {k:tab} 去读 1998 版的。', 'hint.7.town.2': '然后去面包店找艾瑞丝。她的船在小码头。之后：在码头入口按住 {k:use} 铺新木板。',
   'hint.7.town.3': '然后是海角上的灯塔：按住 {k:use} 恢复那盏灯，再按住 {k:use} 创作新的东西。最后用{k:steer}转动光束。',
   'hint.end.2': '{k:tab} 依然会显示原样的 1998 和 2004。', 'hint.end.3': '{k:pause} 打开菜单。', 'hint.1.carve.3': '在桩前按住 {k:use}。',
-  'tut.move': '{k:move} 走动', 'tut.look': '{k:look} 环顾四周', 'tut.use': '物品旁出现名字时，按 {k:use}',
+  'tut.move': '{k:move} 走动', 'tut.look': '移动{k:look}来环顾四周', 'tut.move.pad': '用左摇杆走动', 'tut.look.pad': '用右摇杆环顾四周', 'tut.move.touch': '在屏幕左半边拖动来走动', 'tut.look.touch': '在屏幕右半边拖动来环顾四周', 'tut.use': '物品旁出现名字时，按 {k:use}',
   'tut.goal': '当前目标始终在左上角。卡住时按 {k:hint} 获得提示。', 'tut.hold': '有些事需要一点时间：按住 {k:use}，直到进度条填满',
   'tut.tab': '{k:tab} 在 1998 和 2004 之间切换。一个版本里缺的东西，另一个版本里可能有。', 'tut.journal': '你找到了一段记忆。{k:journal} 打开记忆手册。',
   'tut.pause': '{k:pause}：暂停、设置、语言、操作', 'tut.off': '可以在设置里关闭提示。',
