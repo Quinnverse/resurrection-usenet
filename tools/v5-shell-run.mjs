@@ -10,6 +10,10 @@
 //                                                                       the shell's camera sees (tools/p4-preview.mjs)
 //   node tools/v5-shell-run.mjs --device pad|kbm|touch                 the whole game through one input device's code path
 //   node tools/v5-shell-run.mjs --tech                                  the tech demo page and its 3-minute walkthrough
+//   node tools/v5-shell-run.mjs --preview <beat>                        the ?preview=<beat> review mode: opens that moment, saves nothing
+//   node tools/v5-shell-run.mjs --bench <tiers>                         the ?bench= measurement tour (tiers like low or low,medium); virtual
+//                                                                       frames, so it checks the logic and the report, not speed
+//   node tools/v5-shell-run.mjs --bundle                                run the single-file bundle (tools/v5-bundle.mjs) instead of the ES modules
 import { register } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,6 +23,10 @@ const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.res
 const args = process.argv.slice(2); const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? (args[i + 1] || true) : null; };
 const TECH = args.includes('--tech'); const DEVICE = opt('--device'); const SHOTS = opt('--shots');
 const LANG = opt('--lang') || 'en', ALT = args.includes('--alt'), QUIET = args.includes('--quiet'), CONT = opt('--continue');
+const PREVIEW_ID = opt('--preview'), BENCH_TIERS = opt('--bench'), BUNDLE = args.includes('--bundle');
+const navigated = [];
+if (PREVIEW_ID) { globalThis.location = { search: '?preview=' + PREVIEW_ID, pathname: '/v5/', replace: (u) => navigated.push(u) }; }
+if (BENCH_TIERS) { globalThis.location = { search: '?bench=' + (BENCH_TIERS === true ? 'low' : BENCH_TIERS) + '&beats=1.study,2.train&secs=1&warm=0&run=t1', pathname: '/v5/', replace: (u) => navigated.push(u) }; }
 const SHIM = pathToFileURL(path.join(here, 'v5-three-shim.mjs')).href;
 
 // ---- route three.module.min.js to the shim (except from the shim itself) -------------------------------------
@@ -92,7 +100,7 @@ Object.assign(globalThis, {
   dispatchEvent: (ev) => { (winListeners[ev.type] || []).forEach((f) => f(Object.assign({ target: globalThis, preventDefault() {}, stopPropagation() {} }, ev))); return true; },
   getComputedStyle: (e) => ({ display: (e.style && e.style.display) || 'block', visibility: 'visible' }), matchMedia: () => ({ matches: false }), confirm: () => true,
   localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) },
-  document: { querySelector: (sel) => qsa(sel)[0] || null, querySelectorAll: (sel) => qsa(sel), getElementById: (id) => (id === 'app' ? appEl : id === 'stage' ? stageEl : idMap.get(id) || null), createElement: (t) => new El(t), createTextNode: (t) => { const n = new El('#text'); n._text = String(t); return n; }, addEventListener() {}, documentElement: { lang: 'en' }, title: '', pointerLockElement: null, exitPointerLock() {} },
+  document: { querySelector: (sel) => qsa(sel)[0] || null, querySelectorAll: (sel) => qsa(sel), getElementById: (id) => (id === 'app' ? appEl : id === 'stage' ? stageEl : idMap.get(id) || null), createElement: (t) => new El(t), createTextNode: (t) => { const n = new El('#text'); n._text = String(t); return n; }, addEventListener() {}, removeEventListener() {}, hidden: false, documentElement: { lang: 'en' }, title: '', pointerLockElement: null, exitPointerLock() {} },
   fetch: async (url) => { const f = path.join(root, 'frontend', String(url).replace(/^\//, '')); if (!fs.existsSync(f)) { return { ok: false, status: 404 }; } const txt = fs.readFileSync(f, 'utf8'); return { ok: true, status: 200, text: async () => txt }; }
 });
 Object.defineProperty(globalThis, 'navigator', { value: { language: LANG === 'zh' ? 'zh-CN' : 'en-US', getGamepads: () => [] }, configurable: true });
@@ -121,10 +129,16 @@ if (TECH) {
   r.ok = errors.length === 0 && states[0].fixture && !states[0].path2004 && states[1].path2004 && !states[2].restoreOk && !states[2].path1998 && states[3].path1998 && !states[3].restored;
   console.log(JSON.stringify(r, null, 1)); process.exit(r.ok ? 0 : 1);
 }
-const { RENDER_LOG, REAL: THREE } = await import(SHIM);
+let RENDER_LOG, THREE;
+if (BUNDLE) {
+  // the single-file bundle: three.js replaced by the shim, evaluated as one classic script (what a browser does with the HTML file)
+  const { bundleGame } = await import('./v5-bundle.mjs'); const code = bundleGame({ three: 'tools/v5-three-shim.mjs' });
+  const vm = await import('node:vm'); vm.runInThisContext(code, { filename: 'v5-bundle.js' });
+  ({ RENDER_LOG, REAL: THREE } = globalThis.__V5_SHIM__);
+} else { ({ RENDER_LOG, REAL: THREE } = await import(SHIM)); }
 const Gm = await import('../frontend/v5/core/game.js');
 const { t: tr } = await import('../frontend/v5/core/i18n.js');
-await import('../frontend/v5/main.js');
+if (!BUNDLE) { await import('../frontend/v5/main.js'); }
 
 const stats = { frames: 0, beats: {}, promptFrames: 0, promptOff: 0, offscreen: 0, missingText: new Set(), saves: {} };
 let curBeat = null; let preview = null; const shotLog = []; const shotRgb = []; const seenShot = new Set();
@@ -173,6 +187,20 @@ const waitFor = (fn, secs, label) => { for (let i = 0; i < secs * 30; i++) { if 
 
 const report = { lang: LANG, alt: ALT, ok: false };
 try {
+  if (PREVIEW_ID) {
+    for (let i = 0; i < 20; i++) { await new Promise((r) => setImmediate(r)); }
+    for (let i = 0; i < 150; i++) { frameOnce({}); await null; }
+    const dbg = window.V5Debug.snapshot(); const tipEl = byTestId('tip');
+    Object.assign(report, { preview: PREVIEW_ID, beatNow: dbg.beat, mode: dbg.mode, world: dbg.world, realSaveWritten: store.has('v5.save.v1'), tip: tipEl ? tipEl.textContent : null });
+    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && dbg.beat === PREVIEW_ID && dbg.mode === 'play' && !store.has('v5.save.v1');
+  } else if (BENCH_TIERS) {
+    for (let i = 0; i < 20; i++) { await new Promise((r) => setImmediate(r)); }
+    let n = 0; while (!window.V5BenchReport && !navigated.length && n < 400000) { frameOnce({}); await null; n += 1; }
+    const rep = window.V5BenchReport || null; const bs = JSON.parse(store.get('v5.bench.v1') || 'null');
+    Object.assign(report, { bench: BENCH_TIERS, frames: n, navigatedTo: navigated[0] || null, results: (rep ? rep.results : bs ? bs.results : []).map((r) => ({ tier: r.tier, beat: r.beat, frames: r.stats.frames, avgFps: r.stats.avgFps, low1Fps: r.stats.low1Fps, loadMs: Math.round(r.loadMs) })), reportShown: !!rep, markdownLines: rep ? byTestId('bench-md').textContent.split('\n').length : 0, realSaveWritten: store.has('v5.save.v1') });
+    const multi = String(BENCH_TIERS).includes(',');
+    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && report.results.length === 2 && report.results.every((r) => r.frames > 0) && !store.has('v5.save.v1') && (multi ? /bench=medium/.test(report.navigatedTo || '') && /run=t1/.test(report.navigatedTo || '') : report.reportShown && report.markdownLines > 5);
+  } else {
   waitFor(() => byTestId(CONT ? 'continue' : 'start'), 5, 'title screen');
   if (CONT) {
     click('continue'); const beat = JSON.parse(store.get('v5.save.v1')).beat;
@@ -213,6 +241,7 @@ try {
     const outDir = path.join(root, 'test-results', 'v5-shell'); fs.mkdirSync(outDir, { recursive: true });
     Object.entries(stats.saves).forEach(([beat, raw]) => fs.writeFileSync(path.join(outDir, `save-${LANG}${ALT ? '-alt' : ''}-${beat}.json`), raw));
     report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && stats.missingText.size === 0 && want.every((w) => credits.includes(w)) && saved && saved.beat === 'end';
+  }
   }
 } catch (e) { report.error = String(e && e.stack ? e.stack : e).split('\n').slice(0, 6).join('\n'); }
 report.shellErrors = errors.slice(0, 5); report.renderProblems = RENDER_LOG.problems.slice(0, 5); report.renderProblemCount = RENDER_LOG.problems.length; report.missingText = [...stats.missingText];

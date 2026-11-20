@@ -770,7 +770,8 @@ function serveStaticFile(res, filePath) {
       '.js': 'application/javascript',
       '.jsx': 'application/javascript',
       '.css': 'text/css',
-      '.json': 'application/json'
+      '.json': 'application/json',
+      '.jpg': 'image/jpeg'
     };
     
     fs.readFile(absolutePath, (readErr, data) => {
@@ -825,6 +826,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (pathname === '/v5/audio' || pathname === '/v5/audio/') {
       return serveStaticFile(res, 'v5/audio.html');
+    }
+    if (pathname === '/v5/rc' || pathname === '/v5/rc/') {
+      return serveStaticFile(res, 'v5/rc.html');
     }
     if (pathname.startsWith('/v5/')) {
       return serveStaticFile(res, pathname.slice(1));

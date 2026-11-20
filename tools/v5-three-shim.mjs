@@ -29,3 +29,5 @@ export class WebGLRenderer {
   dispose() {}
 }
 export { THREE as REAL };
+// lets a bundled copy (tools/v5-bundle.mjs, run by tools/v5-shell-run.mjs --bundle) hand its own instance to the harness
+globalThis.__V5_SHIM__ = { RENDER_LOG, REAL: THREE };

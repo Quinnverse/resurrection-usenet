@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resurrection V5 — RC1 review · 评审入口</title>
+  <style>
+    :root { --ink:#efe9dc; --dim:#a9a294; --gold:#ffd27a; --bg:#0d0b12; --card:#181420; --line:#2a2433; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:18px 22px 60px; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width:1180px; margin-inline:auto; }
+    h1 { font-size:1.3rem; margin:0 0 2px; } h2 { font-size:1.02rem; color:var(--gold); margin:30px 0 8px; letter-spacing:.04em; }
+    p { color:var(--dim); margin:4px 0 8px; max-width:880px; } a { color:#7fc4ff; } code { background:#241e2d; padding:1px 5px; border-radius:4px; font-size:.88em; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0; }
+    a.btn, button.btn { display:inline-block; background:#262130; color:var(--ink); border:1px solid #4a4256; border-radius:8px; padding:8px 14px; text-decoration:none; font:inherit; cursor:pointer; }
+    a.btn.primary { border-color:var(--gold); background:#3a3020; } a.btn:hover, button.btn:hover { border-color:var(--gold); }
+    .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+    .card .imgs { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#000; } .card .imgs img { width:100%; display:block; aspect-ratio:16/9; object-fit:cover; }
+    .card .body { padding:10px 12px 12px; } .card h3 { margin:0 0 2px; font-size:1rem; } .card .zh { color:var(--dim); font-size:.9rem; } .card .look { color:var(--dim); font-size:.86rem; margin:6px 0 8px; }
+    table { border-collapse:collapse; width:100%; font-size:.86rem; } td, th { border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; vertical-align:top; } th { color:var(--dim); font-weight:400; width:200px; }
+    .ok { color:#9be39b; } .bad { color:#ff9a8a; } .warn { color:#ffd27a; }
+    .pad { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:8px 0; }
+    .btns { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; } .btns span { min-width:44px; text-align:center; padding:3px 6px; border:1px solid #3a3446; border-radius:6px; font-size:.78rem; color:var(--dim); } .btns span.on { background:var(--gold); color:#111; border-color:var(--gold); }
+    .note { border-left:3px solid var(--gold); padding:4px 10px; color:var(--dim); font-size:.9rem; margin:10px 0; }
+    ol li, ul li { color:var(--dim); margin:2px 0; }
+  </style>
+</head>
+<body>
+  <h1>Resurrection V5 — RC1 review hub · 评审入口</h1>
+  <p id="mode"></p>
+  <div class="note">This page only links to things and reports what this browser can do. Screenshots below come from an automated Chromium run on a CI machine with <b>software rendering</b> (SwiftShader). They are not what your GPU draws: open the live links to see that. · 下面的截图来自 CI 上用软件渲染跑出来的 Chromium，不是你的显卡画面；请点“打开现场”查看真实画面。</div>
+
+  <h2>1 · Play and measure · 游玩与测量</h2>
+  <div class="row" id="links"></div>
+
+  <h2>2 · Key scenes · 关键场景（点击直达，不会改动你的存档）</h2>
+  <p>Each link opens that moment of the story with the real renderer. Nothing is saved. Click or press a key once to let sound start. · 每个链接直接进入那一刻，不保存进度；点击或按一个键后才会有声音。</p>
+  <div class="cards" id="scenes"></div>
+
+  <h2>3 · This device · 本机信息</h2>
+  <table id="device"></table>
+
+  <h2>4 · Gamepad check · 手柄检测</h2>
+  <p>Connect a controller, then press any button on it (browsers hide pads until then). The game expects the “standard” layout. · 连接手柄后按任意键，浏览器才会显示手柄；游戏按“标准”布局设计。</p>
+  <div id="pads"></div>
+  <p>Then, in the game with only the pad: move and look, jump (A), interact (X, hold to restore), pick dialogue choices (D-pad + A), skip a seen line (B), hint (Back), pause (Start), leave the pause menu (Start or B), menus with D-pad + A, Continue from the title. Write down anything that cannot be done with the pad alone.</p>
+
+  <script type="module" src="/v5/rc.js"></script>
+</body>
+</html>

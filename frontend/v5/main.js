@@ -12,20 +12,32 @@ import { buildStation, buildCarriage, buildCoast, buildCottage } from './render/
 import { makeCast, makeTheo, animate, setExpression, showProp } from './render/people.js';
 import * as A from './render/audio.js';
 import * as PT from './playtest.js';
+import { ACTIONS, DEFAULT_KEYS, sanitizeKeys, rebind } from './core/keymap.js';
+import * as Bn from './core/bench.js';
 
 // Automated runs only (tools/v5-shell-run.mjs, e2e/v5.spec.js): a harness that defines window.__V5_TEST__ before this
 // module loads may replace the input of each frame and receives the game's events. When it is absent (every real
 // session) nothing changes.
 const testHook = (typeof window !== 'undefined' && window.__V5_TEST__) || null;
-const SAVE_KEY = 'v5.save.v1', PREF_KEY = 'v5.prefs.v1', KEYS_KEY = 'v5.keys.v1';
+// the standalone playtest page keeps its own save, settings and keys: browsers share one storage between all local files
+const NS = typeof window !== 'undefined' && window.__V5_PLAYTEST__ === true ? 'v5pt' : 'v5';
+const SAVE_KEY = NS + '.save.v1', PREF_KEY = NS + '.prefs.v1', KEYS_KEY = NS + '.keys.v1';
 const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v === null || v === undefined ? d : v; } catch (e) { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage full or blocked */ } };
 const mediaReduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 const prefs = Object.assign({ lang: (navigator.language || '').startsWith('zh') ? 'zh' : 'en', reduce: false, quality: 'high', subs: 'normal' }, readJSON(PREF_KEY, {}));
+// Review modes (RC1): ?preview=<beat> opens a saved moment of the story without touching the real save;
+// ?bench=low,medium,high measures frame times on a fixed tour of scenes (see core/bench.js).
+const QS = typeof location !== 'undefined' && location.search ? location.search : '';
+const BENCH = Bn.parseBench(QS);
+const PREVIEW = BENCH ? null : (new URLSearchParams(QS).get('preview') || null);
+if (BENCH) { prefs.quality = BENCH.tiers[0]; }   // in memory only: the player's own setting is not changed
+if (PREVIEW || BENCH) { const l = new URLSearchParams(QS).get('lang'); if (l === 'en' || l === 'zh') { prefs.lang = l; } }
+const BENCH_KEY = 'v5.bench.v1';
+let benchRun = null, benchWake = null;
 const reduce = () => prefs.reduce || mediaReduce;
 const T = (k, v) => tr(prefs.lang, k, v);
-const DEFAULT_KEYS = { forward: 'KeyW', back: 'KeyS', left: 'KeyA', right: 'KeyD', jump: 'Space', sprint: 'ShiftLeft', use: 'KeyE', tab: 'Tab', hint: 'KeyH', aim: 'KeyQ' };
-const keys = Object.assign({}, DEFAULT_KEYS, readJSON(KEYS_KEY, {}));
+const keys = sanitizeKeys(readJSON(KEYS_KEY, {})).keys;   // unknown, reserved or duplicated stored keys fall back to the defaults
 
 // ---- DOM ------------------------------------------------------------------------------------------------------
 const app = document.getElementById('app'), stage = document.getElementById('stage');
@@ -151,7 +163,14 @@ window.addEventListener('keydown', (e) => {
   if (isTyping(e)) { return; }
   PT.input('keyboard'); if (e.code === 'F3') { e.preventDefault(); perfHud.hidden = !perfHud.hidden; return; }
   A.unlock();
-  if (rebinding) { e.preventDefault(); keys[rebinding] = e.code; write(KEYS_KEY, keys); rebinding = null; renderSettings(); return; }
+  if (rebinding) {
+    e.preventDefault();
+    if (e.code === 'Escape') { rebinding = null; rt.keyNote = null; renderSettings(); return; }
+    const r = rebind(keys, rebinding, e.code);
+    if (r.ok) { Object.assign(keys, r.keys); write(KEYS_KEY, keys); rt.keyNote = r.swappedWith ? T('ui.keySwapped', { a: T('ui.k.' + r.swappedWith), b: T('ui.k.' + rebinding) }) : null; rebinding = null; }
+    else { rt.keyNote = T('ui.keyReserved'); }   // stay in "press a key" so the player can pick another
+    renderSettings(); return;
+  }
   if (e.code === 'Escape') { e.preventDefault(); onEscape(); return; }
   if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('Arrow')) { if (mode === 'play') { e.preventDefault(); } }
   if (!down.has(e.code)) { pressed.add(e.code); } down.add(e.code);
@@ -391,6 +410,7 @@ function shotFor(name, s) {
 }
 function updateCamera(snap) {
   const s = Gm.snapshot(g); const me = person(avatarId());
+  if (benchRun) { s.shot = null; }   // free camera in the measurement tour, never a dialogue close-up
   let want = null;
   if (s.scene === 'train') {
     const seat = LAYOUTS.train.seat;
@@ -626,7 +646,7 @@ function showProvenance() {
 }
 ui.source.addEventListener('click', showProvenance);
 ui.era.addEventListener('click', () => { if (mode === 'play') { rt.forceTab = true; } });
-function closePanel() { ui.panel.hidden = true; mode = 'play'; if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); } }
+function closePanel() { PT.resume(); rt.keyNote = null; rebinding = null; ui.panel.hidden = true; mode = 'play'; if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); } }
 
 // ---- menus ----------------------------------------------------------------------------------------------------
 function onEscape() {
@@ -639,9 +659,10 @@ function onEscape() {
   openPause();
 }
 function openPause() {
+  PT.pause();
   mode = 'pause'; ui.panel.hidden = false; ui.panel.textContent = ''; down.clear();
   const b = (text, id, fn) => el('button', { type: 'button', class: 'mbtn', text, 'data-testid': id, onclick: fn });
-  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), PT.active() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
+  ui.panel.append(el('h2', { text: T('ui.pause') }), el('div', { class: 'menu' }, [b(T('ui.resume'), 'resume', closePanel), b(T('ui.settings'), 'settings', renderSettings), PT.active() && PT.recording() ? b(T('pt.download'), 'pt-download', () => PT.download()) : null, PT.active() && PT.recording() ? b(T('pt.delete'), 'pt-delete', () => { PT.reset(); closePanel(); tip(T('pt.deleted'), 4); }) : null, b(T('ui.safe'), 'safe-spot', safeSpot), b(T('ui.backTitle'), 'back-title', () => { save(true); closePanel(); showTitle(); })]));
   const r = ui.panel.querySelector('[data-testid="resume"]'); if (r) { r.focus(); }
 }
 function renderSettings() {
@@ -651,7 +672,7 @@ function renderSettings() {
   const btn = (text, id, fn) => el('button', { type: 'button', class: 'sbtn', text, 'data-testid': id, onclick: fn });
   const range = (v, id, fn) => el('input', { type: 'range', min: '0', max: '100', step: '5', value: String(Math.round(v * 100)), 'data-testid': id, oninput: (e) => fn(e.target.value / 100) });
   const setP = (k, v) => { prefs[k] = v; write(PREF_KEY, prefs); renderSettings(); };
-  const kb = el('div', { class: 'keys' }); ['forward', 'back', 'left', 'right', 'jump', 'sprint', 'use', 'tab', 'aim', 'hint'].forEach((a) => kb.append(el('button', { type: 'button', class: 'kbtn', 'data-testid': 'key-' + a, text: `${a}: ${rebinding === a ? T('ui.rebind') : keyLabel(keys[a])}`, onclick: () => { rebinding = a; renderSettings(); } })));
+  const kb = el('div', { class: 'keys' }); ACTIONS.forEach((a) => kb.append(el('button', { type: 'button', class: 'kbtn', 'data-testid': 'key-' + a, text: `${T('ui.k.' + a)}: ${rebinding === a ? T('ui.rebind') : keyLabel(keys[a])}`, onclick: () => { rebinding = a; renderSettings(); } })));
   ui.panel.append(el('h2', { text: T('ui.settings') }),
     row(T('ui.sound'), [btn(ap.muted ? T('ui.off') : T('ui.on'), 'sound', () => { A.setPref('muted', !ap.muted); renderSettings(); })]),
     row(T('ui.music'), [range(ap.music, 'music', (v) => A.setPref('music', v))]), row(T('ui.sfx'), [range(ap.sfx, 'sfx', (v) => A.setPref('sfx', v))]),
@@ -659,7 +680,8 @@ function renderSettings() {
     row(T('ui.motion'), [btn(prefs.reduce ? T('ui.motionReduced') : T('ui.motionFull'), 'motion', () => setP('reduce', !prefs.reduce))]),
     row(T('ui.subs'), [btn(prefs.subs === 'large' ? T('ui.subsLarge') : T('ui.subsNormal'), 'subs', () => setP('subs', prefs.subs === 'large' ? 'normal' : 'large'))]),
     row(T('ui.language'), [btn(T('ui.lang'), 'lang', () => { setP('lang', prefs.lang === 'zh' ? 'en' : 'zh'); applyLang(); })]),
-    row(T('ui.keys'), [kb, btn(T('ui.resetKeys'), 'reset-keys', () => { Object.assign(keys, DEFAULT_KEYS); write(KEYS_KEY, keys); renderSettings(); })]),
+    row(T('ui.keys'), [kb, btn(T('ui.resetKeys'), 'reset-keys', () => { Object.assign(keys, DEFAULT_KEYS); write(KEYS_KEY, keys); rebinding = null; rt.keyNote = null; renderSettings(); })]),
+    ...(rt.keyNote ? [el('p', { class: 'dim', 'data-testid': 'key-note', text: rt.keyNote })] : []),
     el('button', { type: 'button', class: 'btn', text: T('ui.resume'), 'data-testid': 'resume', onclick: closePanel }));
   const f = (keepFocus && ui.panel.querySelector(`[data-testid="${keepFocus}"]`)) || ui.panel.querySelector('button'); if (f) { f.focus(); }
 }
@@ -668,7 +690,7 @@ function applyLang() { document.documentElement.lang = prefs.lang === 'zh' ? 'zh
 
 // ---- title -----------------------------------------------------------------------------------------------------
 function readSave() { const raw = readJSON(SAVE_KEY, null); return raw ? Gm.parseSave(raw, ar) : null; }
-function save(show) { if (!g || mode === 'title' || mode === 'loading') { return; } write(SAVE_KEY, Gm.serialize(g)); rt.lastSave = rt.t; if (show) { ui.saved.textContent = T('ui.saved'); ui.saved.classList.add('on'); setTimeout(() => ui.saved.classList.remove('on'), 1200); } }
+function save(show) { if (!g || mode === 'title' || mode === 'loading' || rt.preview) { return; } write(SAVE_KEY, Gm.serialize(g)); rt.lastSave = rt.t; if (show) { ui.saved.textContent = T('ui.saved'); ui.saved.classList.add('on'); setTimeout(() => ui.saved.classList.remove('on'), 1200); } }
 function showTitle() {
   mode = 'title'; applyLang();
   if (!g) { g = Gm.createGame(ar); }
@@ -693,7 +715,7 @@ function askConfirm(text, then) {
 }
 function begin(saved) {
   if (document.activeElement && document.activeElement.blur) { document.activeElement.blur(); }
-  A.unlock(); ui.overlay.hidden = true; if (PT.active()) { PT.setTester(rt.testerField && rt.testerField.value); }
+  A.unlock(); ui.overlay.hidden = true; if (PT.active()) { PT.begin(rt.testerField ? rt.testerField.value : undefined); }
   if (!saved) { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
   g = Gm.createGame(ar, saved || null); Object.values(worlds).forEach((w) => { void w; });
   worldId = null; rt.lastChapter = null; mode = 'play'; if (testHook) { testHook.game = g; }
@@ -734,12 +756,17 @@ function frame(now) {
 }
 function tick(now) {
   const rawMs = last ? now - last : 16; perfSample(rawMs);
+  if (benchWake) { const w = benchWake; benchWake = null; w(rawMs); }
   const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now; rt.t += dt; rt.frames += 1;
   // fps from the real frame time, not the capped simulation step
-  fpsAcc += rawMs / 1000; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
+  fpsAcc += rawMs / 1000; fpsN += 1; if (fpsAcc > 1) { rt.fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (rt.fps < 24 && !autoDrop && !BENCH) { slowSecs += 1; if (slowSecs > 3) { autoDrop = 1; resize(); } } else { slowSecs = 0; } }
   if (!g || !world) { return; }
   pad = pollPad();
-  if (mode === 'play') {
+  if (mode === 'play' && benchRun) {
+    // measurement tour: a few real ticks so the scene is set up, then the game is frozen and the camera orbits
+    if (benchRun.ticks > 0) { benchRun.ticks -= 1; Gm.tick(g, dt, {}).forEach(handle); }
+    cam.yaw += dt * 0.5; if (g.rt.scene === 'porch') { g.rt.aimYaw = Math.sin(rt.t * 0.4) * 0.9; g.rt.aimPitch = 0.35 + Math.sin(rt.t * 0.3) * 0.2; }
+  } else if (mode === 'play') {
     let input = collectInput(dt); if (rt.forceTab) { input.tab = true; rt.forceTab = false; }
     if (testHook && testHook.input) { input = testHook.input(input) || input; }
     const evs = Gm.tick(g, dt, input); evs.forEach(handle); if (testHook && testHook.events) { testHook.events(evs); }
@@ -760,6 +787,61 @@ function tick(now) {
 // Read-only view for automated browser tests. It cannot change anything.
 window.V5Debug = { snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
 
+// ---- RC1 review modes: preview a saved moment (?preview=<beat>) and measure frame times (?bench=...) -------------
+async function previewSaves() { const r = await fetch('/v5/data/preview-saves.json'); if (!r.ok) { throw new Error('preview-saves ' + r.status); } return JSON.parse(await r.text()).saves || {}; }
+async function startPreview(id) {
+  const raw = (await previewSaves())[id]; const saved = raw ? Gm.parseSave(raw, ar) : null;
+  if (!saved) { showTitle(); return; }
+  rt.preview = id; begin(saved); tip(T('ui.preview', { beat: id }), 9);
+}
+const nextFrame = () => new Promise((resolve) => { benchWake = resolve; });
+const waitMs = async (ms, sink) => { const end = performance.now() + ms; while (performance.now() < end) { const f = await nextFrame(); if (sink) { sink.push(f); } } };
+function benchDevice(refresh) {
+  const d = deviceInfo(); const ua = navigator.userAgent || '';
+  return Object.assign({}, d, { browser: Bn.browserName(ua), refreshHz: refresh, pixelRatioUsed: renderer.getPixelRatio ? renderer.getPixelRatio() : null, canvas: renderer.domElement ? [renderer.domElement.width, renderer.domElement.height] : null, touchPoints: navigator.maxTouchPoints || 0, gamepads: gamepad() ? gamepad().id : null });
+}
+async function runBenchTier(tier, saves) {
+  const out = []; const idle = []; for (let i = 0; i < 90; i++) { idle.push(await nextFrame()); }
+  const refresh = Bn.refreshHz(idle.slice(10));
+  for (const beat of BENCH.beats) {
+    const raw = saves[beat]; if (!raw) { out.push({ tier, beat, error: 'no preview save' }); continue; }
+    benchRun = { ticks: 12 }; rt.preview = 'bench:' + beat; const heap0 = performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null;
+    const t0 = performance.now(); begin(Gm.parseSave(raw, ar)); mode = 'play'; benchRun = { ticks: 12 };
+    await nextFrame(); const first = await nextFrame(); const loadMs = performance.now() - t0;
+    await waitMs(BENCH.warm * 1000);
+    let hidden = false; const onVis = () => { if (document.hidden) { hidden = true; } }; document.addEventListener('visibilitychange', onVis); hidden = !!document.hidden;
+    const fr = []; await waitMs(BENCH.secs * 1000, fr); document.removeEventListener('visibilitychange', onVis);
+    const info = renderer.info || {}; const heap1 = performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null;
+    out.push({ tier, beat, loadMs, firstFrameMs: first, interrupted: hidden, stats: Bn.summarize(fr), heapMB: heap1 === null ? null : Math.round(heap1), heapGrowthMB: heap1 === null || heap0 === null ? null : Math.round(heap1 - heap0), calls: info.render && info.render.calls !== undefined ? info.render.calls : null, triangles: info.render && info.render.triangles !== undefined ? info.render.triangles : null, geometries: info.memory ? info.memory.geometries : null, textures: info.memory ? info.memory.textures : null, scene: worldId });
+  }
+  benchRun = null; return { results: out, refresh };
+}
+async function startBench() {
+  mode = 'loading'; ui.overlay.hidden = false; ui.overlay.textContent = '';
+  const status = el('p', { class: 'loading', 'data-testid': 'bench-status', text: `Measuring (${BENCH.tiers[0]})…` }); ui.overlay.append(status);
+  const saves = await previewSaves(); const tier = BENCH.tiers[0]; const rest = BENCH.tiers.slice(1);
+  let store = readJSON(BENCH_KEY, null); const run = BENCH.run || ('b' + Date.now().toString(36));
+  if (!store || store.run !== run) { store = { run, startedAt: new Date().toISOString(), readyMs: performance.now(), results: [], device: null, build: window.__V5_BUILD__ || null }; }
+  g = Gm.createGame(ar); ui.overlay.hidden = true; mode = 'play';
+  const { results, refresh } = await runBenchTier(tier, saves);
+  store.results = store.results.concat(results); store.device = benchDevice(refresh); store.tiers = (store.tiers || []).concat([tier]); write(BENCH_KEY, store);
+  if (rest.length) { location.replace(Bn.benchUrl(location.pathname, { tiers: rest, beats: BENCH.beats, secs: BENCH.secs, warm: BENCH.warm, run }) + (new URLSearchParams(QS).get('lang') ? '&lang=' + new URLSearchParams(QS).get('lang') : '')); return; }
+  showBenchReport(store);
+}
+function showBenchReport(store) {
+  mode = 'bench-report'; ui.overlay.hidden = true; ui.panel.hidden = false; ui.panel.textContent = '';
+  const report = { version: 1, run: store.run, when: store.startedAt, build: store.build, readyMs: store.readyMs, device: store.device, results: store.results.filter((r) => !r.error).map((r) => Object.assign({}, r)), errors: store.results.filter((r) => r.error) };
+  const md = Bn.markdown(report);
+  const act = (text, id, fn) => el('button', { type: 'button', class: 'btn', text, 'data-testid': id, onclick: fn });
+  const pre = el('pre', { class: 'benchmd', 'data-testid': 'bench-md', text: md }); pre.style.cssText = 'white-space:pre-wrap;font:12px/1.5 var(--mono);max-height:48vh;overflow:auto;user-select:text;text-align:left;margin:10px 0';
+  ui.panel.append(el('h2', { text: 'Frame-time report' }), el('p', { class: 'dim', text: `${store.results.length} measurements, ${(store.tiers || []).join(' / ')}${store.results.some((r) => r.interrupted) ? ' — the tab was hidden during some measurements: repeat those' : ''}. Copy the table into docs/V5-RC1-PERF.md, or download the JSON.` }), pre,
+    el('div', { class: 'row' }, [
+      act('Copy markdown', 'bench-copy', () => { try { navigator.clipboard.writeText(md); } catch (e) { const r = document.createRange ? document.createRange() : null; if (r) { r.selectNodeContents(pre); } } }),
+      act('Download JSON', 'bench-json', () => { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })), download: 'v5-bench-' + store.run + '.json' }); document.body.append(a); a.click(); a.remove(); }),
+      act('Run again', 'bench-again', () => { try { localStorage.removeItem(BENCH_KEY); } catch (e) { /* ignore */ } location.replace(Bn.benchUrl(location.pathname, { tiers: Bn.TIERS, beats: BENCH.beats, secs: BENCH.secs, warm: BENCH.warm })); })]));
+  window.V5BenchReport = report;
+}
+
 // ---- start ------------------------------------------------------------------------------------------------------
 async function loadArchive() {
   const files = Object.assign({}, Object.fromEntries(Ar.SOURCES.map((s) => [s.id, s.file])), Ar.EXTRA_FILES);
@@ -770,4 +852,4 @@ ui.overlay.className = 'overlay title'; ui.overlay.hidden = false; ui.overlay.ap
 requestAnimationFrame(frame);
 let gpuName = ''; try { gpuName = deviceInfo().gpu || ''; } catch (e) { gpuName = ''; }
 try { PT.start(deviceInfo()); } catch (e) { /* no device info here */ }
-loadArchive().then(() => { showTitle(); }).catch((e) => { ui.overlay.textContent = ''; ui.overlay.append(el('p', { class: 'err', text: T('ui.loadError'), 'data-testid': 'load-error' })); console.error(e); });
+loadArchive().then(() => (BENCH ? startBench() : PREVIEW ? startPreview(PREVIEW) : showTitle())).catch((e) => { ui.overlay.textContent = ''; ui.overlay.append(el('p', { class: 'err', text: T('ui.loadError'), 'data-testid': 'load-error' })); console.error(e); });
