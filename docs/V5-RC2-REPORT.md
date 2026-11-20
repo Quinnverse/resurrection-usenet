@@ -36,6 +36,7 @@ moving player.
 | **Chapter 1 pier** | Theo now explains it after “Press Tab”: “The summer pier has a hole in the middle. The newer pier is only the middle. Walk out in one, switch, keep walking.” Talking to him on the pier repeats that. Pushing against the deck end, the 2004 fence or the end of the middle section makes Mara say what it is and which year to try. Iris no longer restarts her lines when the year changes. | `core/game.js` |
 | **Memory journal** | 22 memories (19 found by the story itself, 3 optional for looking around), each with a title, the chapter, the year, the people, a short description and, for anything restored from the archive, its record: status, file, CRC-32, source and the state of every copy (e.g. `RESTORED · bridge.ll · crc32 a5055c02 · disk · [mirror: truncated, groups: stripped, disk: ok]`). The first snow is marked CREATED, not restored. A “New memory” note appears when one is found. Open with **J**, the pad's **D-pad ↑**, the **📖** touch button, or the pause menu. It never gates progress: a player who skips everything optional still finds all required memories (tested). | `core/journal.js`, `guide.js` |
 | **Air particles** | The study had 140 bright square points through the room; now 46 faint, warm, round motes only in the sunbeam column. The 2004 cottage dust is halved and faint. Snow is round, white and larger, so it cannot be mistaken for dust. | `render/kit.js` (`softPoints`), `study.js`, `scenes.js`, `town.js` |
+| **HUD in the played cameras** | Found by the Chromium whole-game check (no step announced in chapter 2): the train seat, the bike and the guitar cameras counted as cut-scenes, so the task bar, the tips, the aim hint and the prompts were hidden for 68% of chapter 2, 63% of the ride and 85% of the duet, outside any dialogue. These cameras now count as play. The Node shell fails a run if any beat hides the HUD outside dialogue for more than 20% of its frames. | `main.js` (`PLAY_SHOTS`), `tools/v5-shell-run.mjs` |
 | **Touch layout** | The era button pushed the jump and E buttons up over the year label; every touch button now has a fixed place. The task bar is smaller on phones. | `index.html` |
 
 ## 3 · Goals of all seven chapters
@@ -88,6 +89,51 @@ Memories found in this playthrough: 22 of 22 (3 optional).
 | A person who never saw the game understands the controls, the goal and the next step | **NOT TESTED** | needs the owner and other players |
 
 Screenshots are from GitHub Actions Chromium with software rendering, in `docs/v5-evidence/rc2/`.
+
+### 4.1 · Chapter 1 in real Chromium, two orders (CI run 44797009323, commit e8ac70e, job "V5 RC1/RC2 review pages")
+
+Both paths are played with real key presses (`e2e/v5-rc2.spec.js`, “chapter 1, path A / path B”); the timeline is what the
+task bar said at each moment (game seconds on a virtual 30 fps clock, not human time). Video: `video.webm` of each test in
+the run's `resurrection-v5-rc-evidence` artifact. Continuous screenshots (every 3 s in the run; every 15 s plus every named
+moment copied here): `docs/v5-evidence/rc2/ch1-path-A-*.jpg`, `ch1-path-B-*.jpg`.
+
+**Path A, computer first** (AUTOMATED PASS, reached 1.carve at 59 s, no step stuck):
+
+| t | What the player did | Task bar “Next” afterwards |
+|---|---|---|
+| 0 s | start in the study | Walk to the desk and press E at the computer. |
+| 3–8 s | E at the computer, three times (same answer each time) | It’s in the open box marked KEEP, by the armchair. E to open it. |
+| 13 s | opened the KEEP box | Back to the desk: E at the computer. |
+| 16 s | loaded the disk → town | Walk to the water and press E when his name appears. |
+| 28 s | talked to Theo | Stand at the edge of the canal and hold E. |
+| 32 s | restored the bridge | Theo is coming across. Wait for him. |
+| 40 s | on the pier | Press Tab. In 1998 the near half of the pier is open. |
+| 50 s | Tab → 1998 | Walk out along the pier until the planks stop. |
+| 52 s | end of the 1998 deck | At the end of the deck press Tab: in 2004 a middle section covers the gap. |
+| 53 s | Tab → 2004 | Walk along the 2004 section to its far end. |
+| 55 s | end of the 2004 section, Tab → 1998 | Walk to the end and press E at the last post. |
+| 59 s | the last post | Hold E at the post until the bar fills. (beat 1.carve) |
+
+**Path B, explore first, then lost on the pier** (AUTOMATED PASS, reached 1.carve at 160 s including 95 s of deliberate
+wandering, no step stuck):
+
+| t | What the player did | Task bar “Next” / what the game did |
+|---|---|---|
+| 2–10 s | looked at the photo, drawing, shelf, window | Walk to the desk and press E at the computer. |
+| 13 s | opened the KEEP box before the computer asked | Back to the desk: E at the computer. (never asks for a disk it already has) |
+| 16–40 s | same as A | same as A |
+| 51 s | walked into the 2004 fence | The 2004 pier is fenced off. Press Tab for 1998. Mara says so (`ch1-path-B-says-c1.mara.fence`) |
+| 54 s | asked Theo | Theo explains the pier again (`ch1-path-B-says-c1.theo.pierIdle`) |
+| 54–149 s | wandered without progress | help level 1 (edge arrow), 2 (companion line, task bar pulse), 3 (marker and “H · hint”): `ch1-path-B-help-level-1/2/3` |
+| 150–160 s | Tab → 1998, deck end, Tab → 2004, far end, Tab → 1998, last post | same instructions as A; beat 1.carve |
+
+### 4.2 · Why players got stuck after Tab (root cause, short)
+
+There was no state-machine deadlock. After Theo said “Press Tab”, the way forward was a spatial puzzle nobody explained: the
+pier can only be crossed by switching years halfway out (1998 near deck, then 2004 middle section, then 1998 far end). Theo
+and Iris repeated unrelated lines, the player stopped silently at the deck end or the fence, and the automatic hint fired
+only after 22 s *without any input*, so a player who kept walking never got it. RC2 fixes all three: Theo explains it, each
+edge says what to try, the task bar follows the player's position, and help is based on time without progress (30/60/90 s).
 
 ## 5 · Still open (honestly)
 

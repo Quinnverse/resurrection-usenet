@@ -544,10 +544,13 @@ function tip(text, secs) { ui.tip.textContent = text; ui.tip.classList.toggle('o
 function flash() { if (reduce()) { return; } app.classList.add('shift'); setTimeout(() => app.classList.remove('shift'), 380); }
 function fadeBlink() { ui.fade.classList.add('on'); setTimeout(() => ui.fade.classList.remove('on'), reduce() ? 80 : 420); }
 function cardFlash(a, b) { ui.overlay.className = 'overlay card'; ui.overlay.hidden = false; ui.overlay.textContent = ''; ui.overlay.append(el('div', { class: 'cardbox', 'data-testid': 'card' }, [el('div', { class: 'a', text: a }), el('div', { class: 'b', text: b })])); setTimeout(() => { if (ui.overlay.className === 'overlay card') { ui.overlay.hidden = true; } }, reduce() ? 1200 : 3200); }
+const PLAY_SHOTS = ['beamctl', 'town-beam', 'paper', 'seat', 'ride', 'duet'];
 function renderHud() {
   const s = Gm.snapshot(g);
   // prompt near the thing you can use: a key glyph, the verb, the name. Nothing else on screen.
-  const pr = s.prompt; const cine = !!s.dialog || (!!s.shot && !['beamctl', 'town-beam', 'paper'].includes(s.shot)) || s.choice;
+  // a cut-scene is a dialogue, a choice or a story camera; the cameras the player plays in (the train seat, the bike, the
+  // guitar, the beam, the drawing paper) are not, so the task bar, tips and prompts stay on screen there
+  const pr = s.prompt; const cine = !!s.dialog || (!!s.shot && !PLAY_SHOTS.includes(s.shot)) || s.choice;
   app.classList.toggle('cine', cine);
   if (pr && !cine && mode === 'play') {
     const key = guide.glyph();

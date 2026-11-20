@@ -174,7 +174,9 @@ function check() {
     if (dbg.mode === 'play') { stats.questChecks = (stats.questChecks || 0) + 1; if (byTestId('quest-goal')) { stats.questShown = (stats.questShown || 0) + 1; } }
     const o = window.V5Debug.objective && window.V5Debug.objective(); if (o) { (stats.goals = stats.goals || new Set()).add(o.beat); }
     const cineNow = appEl.classList.contains('cine'); if (dbg.mode === 'play') { const bb = (stats.cineBy = stats.cineBy || {}); const r = bb[dbg.beat] = bb[dbg.beat] || [0, 0]; r[1] += 1; if (cineNow && !dbg.dialog && !dbg.choice) { r[0] += 1; } }
-    const qd = cineNow ? null : byTestId('quest-done'); if (!cineNow) { const txt = qd ? qd.textContent : null; stats.doneRun = qd && txt === stats.doneTxt ? (stats.doneRun || 0) + 1 : (qd ? 1 : 0); stats.doneTxt = txt; }   // the same note, shown for more than ~5 s of play if (qd && stats.doneRun > 15) { stats.missingText.add('quest-done note stays on screen: ' + qd.textContent.slice(0, 60)); }
+    const qd = cineNow ? null : byTestId('quest-done'); if (!cineNow) { const txt = qd ? qd.textContent : null; stats.doneRun = qd && txt === stats.doneTxt ? (stats.doneRun || 0) + 1 : (qd ? 1 : 0); stats.doneTxt = txt; }
+    // the same note, shown for more than ~5 s of play
+    if (qd && stats.doneRun > 15) { stats.missingText.add('quest-done note stays on screen: ' + qd.textContent.slice(0, 60)); }
   }
   // every visible text must be a translation, never a raw key
   const subs = byTestId('subs'); if (subs && subs.children[1] && subs.attrs['data-key'] && subs.children[1].textContent === subs.attrs['data-key']) { stats.missingText.add(subs.attrs['data-key']); }
@@ -249,7 +251,10 @@ try {
     }
     const outDir = path.join(root, 'test-results', 'v5-shell'); fs.mkdirSync(outDir, { recursive: true });
     Object.entries(stats.saves).forEach(([beat, raw]) => fs.writeFileSync(path.join(outDir, `save-${LANG}${ALT ? '-alt' : ''}-${beat}.json`), raw));
-    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && stats.missingText.size === 0 && want.every((w) => credits.includes(w)) && saved && saved.beat === 'end';
+    // outside dialogue the task bar, tips and prompts must be on screen: a story camera may hide them for a moment, a camera
+    // the player plays in (train seat, bike, guitar) must not (it hid them for 63–85% of chapters 2–4 before RC2)
+    report.hudHiddenTooLong = Object.entries(stats.cineBy || {}).filter(([, v]) => v[1] >= 10 && v[0] / v[1] > 0.2).map(([k, v]) => `${k}: ${Math.round(v[0] / v[1] * 100)}%`);
+    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && stats.missingText.size === 0 && want.every((w) => credits.includes(w)) && saved && saved.beat === 'end' && report.hudHiddenTooLong.length === 0;
   }
   }
 } catch (e) { report.error = String(e && e.stack ? e.stack : e).split('\n').slice(0, 6).join('\n'); }
