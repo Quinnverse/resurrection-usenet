@@ -4,9 +4,12 @@
 //   node tools/v5-bundle.mjs [--out dist/resurrection-v5-rc1]
 //
 // Writes into the output folder:
+//   Resurrection-V5-Start.html     the start page: six doors (game, continue, technical demo, music, key scenes, feedback)
 //   Resurrection-V5.html           the game
 //   Resurrection-V5-Playtest.html  the game with the playtest recorder on (see docs/playtest/)
+//   Resurrection-V5-Tech.html      the technical demo (archive → parse → manifest → restore → walkable floor)
 //   Resurrection-V5-Audio.html     the music and sound listening page
+//   feedback-form.html             the after-play questionnaire (saves a file on the player's computer, sends nothing)
 //   Resurrection-V5-RC.html        the RC1 review hub (key scenes, frame-time test, device and gamepad check)
 //   shots/                         screenshots used by the hub
 //
@@ -119,7 +122,10 @@ export function buildAll(outDir) {
   const mainTag = '<script type="module" src="/v5/main.js"></script>';
   write('Resurrection-V5.html', page('index.html', mainTag, 'frontend/v5/main.js', '', build));
   write('Resurrection-V5-Playtest.html', page('index.html', mainTag, 'frontend/v5/main.js', ' window.__V5_PLAYTEST__ = true;', build));
-  write('Resurrection-V5-Audio.html', page('audio.html', '<script type="module" src="/v5/audio-check.js"></script>', 'frontend/v5/audio-check.js', '', build, [['href="/v5/"', 'href="Resurrection-V5-RC.html"']]));
+  write('Resurrection-V5-Audio.html', page('audio.html', '<script type="module" src="/v5/audio-check.js"></script>', 'frontend/v5/audio-check.js', '', build, [['href="/v5/"', 'href="Resurrection-V5-Start.html"']]));
+  write('Resurrection-V5-Tech.html', page('tech.html', '<script type="module" src="/v5/tech.js"></script>', 'frontend/v5/tech.js', '', build, [['href="/v5/"', 'href="Resurrection-V5.html"']]));
+  write('Resurrection-V5-Start.html', page('home.html', '<script type="module" src="/v5/home.js"></script>', 'frontend/v5/home.js', '', build));
+  fs.copyFileSync(path.join(root, 'docs/playtest/feedback-form.html'), path.join(outDir, 'feedback-form.html'));
   write('Resurrection-V5-RC.html', page('rc.html', '<script type="module" src="/v5/rc.js"></script>', 'frontend/v5/rc.js', '', build));
   fs.cpSync(path.join(root, 'frontend/v5/rc/shots'), path.join(outDir, 'shots'), { recursive: true });
   return { build, files: fs.readdirSync(outDir) };

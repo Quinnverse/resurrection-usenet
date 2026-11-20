@@ -12,6 +12,7 @@ const withQuery = (base, q) => base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
 const $ = (s) => document.querySelector(s);
 function el(tag, attrs, kids) { const n = document.createElement(tag); Object.entries(attrs || {}).forEach(([k, v]) => { if (v === null || v === undefined) { return; } if (k === 'text') { n.textContent = v; } else if (k.startsWith('on')) { n.addEventListener(k.slice(2), v); } else { n.setAttribute(k, v); } }); (kids || []).forEach((c) => c && n.append(c)); return n; }
 
+$('#homelink').href = S ? 'Resurrection-V5-Start.html' : '/v5/home';
 $('#mode').textContent = S ? 'Standalone files opened from disk: no server and no network needed.' : 'Served from a local web server.';
 const link = (text, href, cls, id) => el('a', { class: 'btn' + (cls ? ' ' + cls : ''), href, text, 'data-testid': id });
 $('#links').append(

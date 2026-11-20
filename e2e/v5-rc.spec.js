@@ -152,6 +152,49 @@ test.describe('V5 RC1 review tooling', () => {
     expect(w.external, 'the single files never touch the network').toEqual([]); expect(w.issues).toEqual([]); await ctx.close();
   });
 
+  test('owner start page from disk: six doors, each leads to a working page, English and Chinese, no network', async ({ browser }, testInfo) => {
+    test.setTimeout(10 * 60 * 1000);
+    const { buildAll } = await import(pathToFileURL(path.join(__dirname, '..', 'tools', 'v5-bundle.mjs')).href);
+    const out = testInfo.outputPath('rc1'); buildAll(out); const url = (f, q) => pathToFileURL(path.join(out, f)).href + (q || '');
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }); const page = await ctx.newPage(); const w = watch(page);
+    // the page: six doors, nothing else in the grid, fits at desktop and phone width
+    await page.goto(url('Resurrection-V5-Start.html')); await expect.poll(() => page.evaluate(() => !!(window.V5Home && window.V5Home.ready))).toBe(true);
+    for (const id of ['home-start', 'home-continue', 'home-tech', 'home-audio', 'home-scenes', 'home-feedback']) { await expect(page.getByTestId(id), id).toBeVisible(); }
+    await expect(page.getByTestId('home-save')).toContainText('No save seen'); await expect(page.locator('#build')).toContainText('build');
+    expect(await page.locator('.grid > *').count()).toBe(6);
+    await attach(testInfo, 'start-desktop', await page.screenshot({ type: 'jpeg', quality: 70, fullPage: true }));
+    await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no sideways scrolling on a phone').toBe(true);
+    await attach(testInfo, 'start-phone', await page.screenshot({ type: 'jpeg', quality: 70, fullPage: true })); await page.setViewportSize({ width: 1280, height: 720 });
+    // 1 start the game: the game opens, plays, and the start page then finds the save
+    await page.getByTestId('home-start').click(); await expect(page.getByTestId('start')).toBeVisible({ timeout: 60000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play');
+    await page.goto(url('Resurrection-V5-Start.html')); await expect(page.getByTestId('home-save')).toContainText('Save found');
+    // 2 continue: the title offers Continue and it works
+    await page.getByTestId('home-continue').click(); await expect(page.getByTestId('continue')).toBeVisible({ timeout: 60000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).beat, { timeout: 15000 }).toBe('1.study');
+    // 3 the technical demo: restore changes the floor
+    await page.goto(url('Resurrection-V5-Start.html')); await page.getByTestId('home-tech').click(); await expect(page.getByTestId('fixture')).toBeVisible({ timeout: 60000 });
+    await expect.poll(() => page.evaluate(() => window.V5Tech && window.V5Tech.path2004), { timeout: 30000 }).toBe(false);
+    await page.getByTestId('restore').click(); expect(await page.evaluate(() => window.V5Tech.path2004)).toBe(true); await expect(page.getByTestId('restore-verdict')).toContainText('RESTORED');
+    await attach(testInfo, 'file-tech-restored', await page.screenshot({ type: 'jpeg', quality: 70, fullPage: true }));
+    // 4 music: the page loads and a music row plays on a click
+    await page.goto(url('Resurrection-V5-Start.html')); await page.getByTestId('home-audio').click(); await page.waitForFunction(() => window.V5AudioReady, null, { timeout: 60000 });
+    await page.getByTestId('loop-night').click(); await page.waitForTimeout(1500); expect(await page.getByTestId('scene-night').getAttribute('href')).toContain('Resurrection-V5.html?preview=4.porch');
+    await attach(testInfo, 'file-audio', await page.screenshot({ type: 'jpeg', quality: 70 }));
+    // 5 key scenes: the hub opens at the scenes
+    await page.goto(url('Resurrection-V5-Start.html')); await page.getByTestId('home-scenes').click(); await expect(page.getByTestId('scene-snow')).toBeVisible({ timeout: 60000 }); expect(page.url()).toContain('#scenes');
+    // 6 feedback: the playtest version and the form (the form saves a file, nothing else happens)
+    await page.goto(url('Resurrection-V5-Start.html')); await page.getByTestId('home-form').click(); await expect(page.locator('form#f')).toBeVisible({ timeout: 30000 });
+    await page.locator('input[name=tester]').fill('P00'); const dl = page.waitForEvent('download'); await page.getByRole('button', { name: /Save/ }).click(); const file = await dl;
+    const saved = JSON.parse(fs.readFileSync(await file.path(), 'utf8')); expect(saved.tester).toBe('P00'); expect(saved.form).toBe('v5-feedback-1');
+    await page.goto(url('Resurrection-V5-Start.html')); await page.getByTestId('home-playtest').click(); await expect(page.getByTestId('pt-tester')).toBeVisible({ timeout: 60000 });
+    // Chinese: the game opens in Chinese for a Chinese browser setting, and nothing was fetched from the network
+    await page.evaluate(() => localStorage.setItem('v5pt.prefs.v1', JSON.stringify({ lang: 'zh', quality: 'low' }))); await page.reload(); await expect(page.getByTestId('title')).toContainText(/[\u4e00-\u9fff]/, { timeout: 60000 });
+    await attach(testInfo, 'file-playtest-title-zh', await shot(page));
+    expect(w.external, 'no network').toEqual([]); expect(w.issues).toEqual([]); await ctx.close();
+  });
+
   // ---- touch layout on phone-sized screens, both orientations, with a rotation ---------------------------------------
   const inside = (b, vp) => !!b && b.x >= -1 && b.y >= -1 && b.x + b.width <= vp.width + 1 && b.y + b.height <= vp.height + 1;
   const overlap = (a, b) => !(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);

@@ -19,11 +19,12 @@ const args = process.argv.slice(2); const LAN = args.includes('--lan'); const OP
 const pi = args.indexOf('--port'); const PORT = Number(pi >= 0 ? args[pi + 1] : process.env.PORT) || 8090;
 const HOST = LAN ? '0.0.0.0' : '127.0.0.1';
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.png': 'image/png', '.txt': 'text/plain; charset=utf-8', '.spool': 'text/plain; charset=utf-8', '.mbox': 'text/plain; charset=utf-8' };
-const ALIAS = { '/': '/v5/rc.html', '/v5': '/v5/index.html', '/v5/': '/v5/index.html', '/v5/tech': '/v5/tech.html', '/v5/audio': '/v5/audio.html', '/v5/rc': '/v5/rc.html' };
+const ALIAS = { '/': '/v5/home.html', '/v5/home': '/v5/home.html', '/v5': '/v5/index.html', '/v5/': '/v5/index.html', '/v5/tech': '/v5/tech.html', '/v5/audio': '/v5/audio.html', '/v5/rc': '/v5/rc.html' };
 const build = (() => { try { return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch (e) { return 'unknown'; } })();
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'";
 
 export function fileFor(urlPath) {
+  if (urlPath === '/v5/feedback') { return path.join(root, 'docs', 'playtest', 'feedback-form.html'); }   // the questionnaire lives with the playtest documents
   const p = ALIAS[urlPath] || urlPath;
   let base;
   if (p.startsWith('/v5/')) { base = path.join(root, 'frontend'); } else if (p.startsWith('/p4/vendor/')) { base = path.join(root, 'frontend'); } else { return null; }
@@ -44,17 +45,18 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   server.on('error', (e) => { console.error(e.code === 'EADDRINUSE' ? `Port ${PORT} is already in use. Try: PORT=${PORT + 1} node tools/v5-serve.mjs` : String(e)); process.exit(1); });
   server.listen(PORT, HOST, () => {
     console.log(`Resurrection V5 (build ${build})`);
+    console.log(`  start page:   http://127.0.0.1:${PORT}/v5/home`);
     console.log(`  review hub:   http://127.0.0.1:${PORT}/v5/rc`);
     console.log(`  the game:     http://127.0.0.1:${PORT}/v5/`);
     console.log(`  music check:  http://127.0.0.1:${PORT}/v5/audio`);
     if (LAN) {
       const addrs = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);
-      console.log('  on the same Wi-Fi (phones, tablets):'); addrs.forEach((a) => console.log(`    http://${a}:${PORT}/v5/rc`));
+      console.log('  on the same Wi-Fi (phones, tablets):'); addrs.forEach((a) => console.log(`    http://${a}:${PORT}/v5/home`));
       if (!addrs.length) { console.log('    (no network address found)'); }
       console.log('  The server is open to your local network while it runs. Press Ctrl+C to stop it.');
     } else { console.log('  (this computer only; add --lan to test on a phone)'); }
     console.log('  Ctrl+C to stop.');
-    if (OPEN) { const url = `http://127.0.0.1:${PORT}/v5/rc`; const [cmd, a] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]]; execFile(cmd, a, () => {}); }
+    if (OPEN) { const url = `http://127.0.0.1:${PORT}/v5/home`; const [cmd, a] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]]; execFile(cmd, a, () => {}); }
   });
 }
 export { server };

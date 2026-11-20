@@ -133,7 +133,7 @@ test('bundle: the scripts compile as classic scripts and the html files open wit
   assert.ok(!/^\s*(import|export)\s/m.test(code.replace(/^__defs.*$/gm, '')), 'no module syntax left outside strings');
   const out = path.join(root, 'dist', '.test-bundle'); const r = buildAll(out);
   try {
-    ['Resurrection-V5.html', 'Resurrection-V5-Playtest.html', 'Resurrection-V5-Audio.html', 'Resurrection-V5-RC.html'].forEach((f) => {
+    ['Resurrection-V5.html', 'Resurrection-V5-Playtest.html', 'Resurrection-V5-Audio.html', 'Resurrection-V5-RC.html', 'Resurrection-V5-Start.html', 'Resurrection-V5-Tech.html'].forEach((f) => {
       assert.ok(r.files.includes(f), f); const html = fs.readFileSync(path.join(out, f), 'utf8');
       assert.ok(!/type="module"/.test(html), f + ' has no module script'); assert.ok(!/src="\/v5\//.test(html), f + ' does not load from /v5/');
       const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]); assert.equal(scripts.length, 1, f); assert.doesNotThrow(() => new vm.Script(scripts[0]), f);
@@ -141,7 +141,12 @@ test('bundle: the scripts compile as classic scripts and the html files open wit
     });
     const game = fs.readFileSync(path.join(out, 'Resurrection-V5.html'), 'utf8');
     assert.match(game, /\/v5\/data\/preview-saves\.json/); assert.match(game, /\/v5\/data\/skylark-backup\.spool/);
-    assert.ok(fs.existsSync(path.join(out, 'shots', 'end-1.jpg')));
+    assert.ok(fs.existsSync(path.join(out, 'shots', 'end-1.jpg'))); assert.ok(r.files.includes('feedback-form.html'));
+    // every page the start page, the hub and the audio page link to exists next to them
+    const linked = new Set(); ['home.js', 'rc.js', 'audio-check.js'].forEach((f) => { [...fs.readFileSync(path.join(root, 'frontend/v5', f), 'utf8').matchAll(/'((?:Resurrection-V5[A-Za-z-]*|feedback-form)\.html)/g)].forEach((m) => linked.add(m[1])); });
+    assert.ok(linked.size >= 6, [...linked].join()); linked.forEach((f) => assert.ok(fs.existsSync(path.join(out, f)), 'linked page exists: ' + f));
+    const start = fs.readFileSync(path.join(out, 'Resurrection-V5-Start.html'), 'utf8'); ['home-start', 'home-continue', 'home-tech', 'home-audio', 'home-scenes', 'home-feedback'].forEach((id) => assert.ok(start.includes('data-testid="' + id + '"'), id));
+    assert.ok(!/href="\/v5\//.test(fs.readFileSync(path.join(out, 'Resurrection-V5-Tech.html'), 'utf8')), 'the technical demo does not link back to a server path');
     assert.ok(!/https?:\/\/(?!www\.w3\.org|threejs\.org|github\.com\/mrdoob)/.test(game.replace(/<style>[\s\S]*?<\/style>/, '').split('__req("frontend/p4/vendor')[0]), 'no web addresses in the game code');
   } finally { fs.rmSync(out, { recursive: true, force: true }); }
 });
@@ -169,6 +174,23 @@ test('server: serves the game and the review pages read-only, nothing outside th
     assert.equal((await get('/v5/')).status, 200); assert.equal((await get('/v5/audio')).status, 200); assert.equal((await get('/v5/rc.js')).status, 200);
     assert.equal((await get('/v5/data/preview-saves.json')).status, 200); assert.equal((await get('/p4/vendor/three.module.min.js')).status, 200);
     assert.match(JSON.parse((await get('/v5/data/build.json')).body).build, /./);
+    const home = await get('/'); assert.equal(home.status, 200); assert.match(home.body, /home-start/); assert.equal((await get('/v5/home')).status, 200);
+    const form = await get('/v5/feedback'); assert.equal(form.status, 200); assert.match(form.body, /Resurrection V5/);
     assert.equal((await get('/backend/package.json')).status, 404); assert.equal((await get('/v5/core')).status, 404); assert.equal((await get('/v5/', 'POST')).status, 405);
   } finally { await new Promise((r) => server.close(r)); }
+});
+
+// ---- the feedback form and the privacy promises ---------------------------------------------------------------------
+test('feedback form: static page that saves a file on the player\'s computer and sends nothing', () => {
+  const f = fs.readFileSync(path.join(root, 'docs/playtest/feedback-form.html'), 'utf8');
+  assert.ok(!/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|<form[^>]*\saction=|<img|<script[^>]*\ssrc=|https?:\/\//i.test(f.replace(/<!--[\s\S]*?-->/g, '')), 'no network code and no web addresses');
+  assert.match(f, /Every question is optional/); assert.match(f, /do not enter your name/);
+});
+test('privacy: the game and the recorder contain no network sends', () => {
+  ['frontend/v5/playtest.js', 'frontend/v5/main.js', 'frontend/v5/home.js', 'frontend/v5/rc.js'].forEach((f) => {
+    const src = fs.readFileSync(path.join(root, f), 'utf8');
+    assert.ok(!/sendBeacon|XMLHttpRequest|WebSocket|navigator\.share|method:\s*['"]POST/i.test(src), f + ' sends nothing');
+    // the only fetches are for the game\'s own data files, the preview saves and the build id
+    [...src.matchAll(/fetch\(([^)]*)\)/g)].forEach((m) => assert.match(m[1], /\/v5\/data\//, f + ': ' + m[0]));
+  });
 });

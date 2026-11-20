@@ -3,11 +3,42 @@ name: Resurrection QA
 on:
   push:
   pull_request:
+  workflow_dispatch:   # run everything by hand (the heavy jobs also run for pull requests and when game files change)
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Did the game change? (decides whether the long browser jobs run)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      game: ${{ steps.diff.outputs.game }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare with the previous push
+        id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          # Only these paths can be changed without touching the game itself: documents, release files, the review and
+          # start pages, the build and server tools, their tests, and this workflow. Anything else runs every job.
+          LIGHT='^(docs/|release/|README\.md$|\.gitignore$|\.github/workflows/|tools/|test/v5-rc\.test\.mjs$|e2e/v5-rc\.spec\.js$|frontend/v5/(home|rc|rc-scenes|audio|audio-check|tech)\.(html|js)$|frontend/v5/rc/)'
+          game=true
+          if [ "$EVENT" = "push" ] && [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -Eq '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            other=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -Ev "$LIGHT" || true)
+            if [ -z "$other" ]; then game=false; fi
+            echo "changed outside the light paths:"; echo "${other:-none}"
+          fi
+          echo "game=$game" >> "$GITHUB_OUTPUT"
+          echo "game=$game"
+
   test:
     name: Authoritative suite (npm test)
     runs-on: ubuntu-latest
@@ -26,6 +57,8 @@ jobs:
 
   browser:
     name: Browser end-to-end (Playwright)
+    needs: changes
+    if: needs.changes.outputs.game == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -62,6 +95,8 @@ jobs:
 
   browser-p5:
     name: Browser end-to-end, P5 slice (Playwright)
+    needs: changes
+    if: needs.changes.outputs.game == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -95,6 +130,8 @@ jobs:
 
   browser-v5:
     name: Browser end-to-end, V5 full game (Playwright)
+    needs: changes
+    if: needs.changes.outputs.game == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 150   # the two whole-game tests take 29 to 38 minutes each, depending on the runner
     steps:
@@ -159,6 +196,9 @@ jobs:
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
 
+      - name: V5 shell harness (Node, no browser; includes the single-file build)
+        run: npm run test:v5-shell
+
       - name: Build the RC1 package and the playtest package (single html files)
         run: npm run v5:rc
 
@@ -188,6 +228,8 @@ jobs:
 
   browser-v5-devices:
     name: V5 whole game on one input device (${{ matrix.device }})
+    needs: changes
+    if: needs.changes.outputs.game == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 100
     strategy:
