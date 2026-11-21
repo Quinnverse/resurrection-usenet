@@ -150,6 +150,10 @@ test.describe('V5 RC2 — a first-time player', () => {
     if ((await snap(page)).mode !== 'play') { await page.keyboard.press('Escape'); }
     // 4 the box: open it, the first memory appears, the journal opens with J and shows it
     await walkTo(page, -0.4, 2.2, (s) => s.prompt && s.prompt.id === 'keepbox', 30000); expect(await walkTo(page, -1.1, 2.2, (s) => s.prompt && s.prompt.id === 'keepbox', 20000)).toBe(true);
+    // the walk stops when the prompt appears, but at a few frames per second the body slides on and can leave the box's
+    // range (CI run 44906603879: the prompt was 'Drawing' when E was pressed). Wait for it to stop, step back if needed.
+    for (let k = 0; k < 4; k++) { await page.waitForTimeout(600); const st = await snap(page); if (st.prompt && st.prompt.id === 'keepbox') { break; } await walkTo(page, -1.3, 1.9, (q) => q.prompt && q.prompt.id === 'keepbox', 10000); }
+    expect((await snap(page)).prompt, 'standing at the KEEP box').toMatchObject({ id: 'keepbox' });
     // RC3: the box also holds the folded photo, so its dialogue is longer (7 entries); press until it is over
     await page.keyboard.press('KeyE'); await page.waitForTimeout(300); for (let i = 0; i < 14 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(500); }
     await expect(page.getByTestId('mem-toast')).toBeVisible({ timeout: 8000 }); await expect(page.getByTestId('mem-toast')).toContainText('The folded photo'); await expect(page.getByTestId('mem-toast')).toContainText('The backup disk');
@@ -362,6 +366,76 @@ test.describe('V5 RC3 — after the owner playtest', () => {
     await page.waitForTimeout(1200); await attach(testInfo, 'rc3-05-duet-side-by-side', await shot(page));
     const s = await snap(page); expect(s.june && Math.abs(s.june.z - (-1.0)) < 0.3, 'June beside Elena, not across from her').toBe(true);
     expect(s.june.anim, 'June sits on her stool (she stood up before RC3)').toBe('sit');
+    expect(w.issues).toEqual([]);
+  });
+  test('photo dares with the real mouse: hold the right button, the frame turns gold on the lighthouse, click; then the kite', async ({ page }, testInfo) => {
+    test.setTimeout(10 * 60 * 1000);
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    await page.goto('/v5/?preview=2.train'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('2.train');
+    const vp = page.viewportSize(); const cx = vp.width / 2, cy = vp.height / 2; await page.mouse.move(cx, cy);
+    const skipTalk = async () => { for (let i = 0; i < 30 && (await snap(page)).dialog; i++) { await page.keyboard.press('Space'); await page.waitForTimeout(450); } };
+    // a free photo first (the dares start after one), with the real buttons: right held = camera up, left click = picture
+    await skipTalk(); await page.mouse.down({ button: 'right' }); await page.waitForTimeout(800); await page.mouse.down({ button: 'left' }); await page.mouse.up({ button: 'left' }); await page.mouse.up({ button: 'right' });
+    await expect.poll(async () => (await snap(page)).dare, { timeout: 60000 }).toBe(0);
+    const took = {};
+    for (const [n, name] of [[0, 'lighthouse'], [1, 'kite']]) {
+      await skipTalk(); const t0 = Date.now();
+      await page.mouse.down({ button: 'right' });   // camera up; no mouse movement: the view turns to the subject by itself
+      await expect.poll(async () => { const a = (await snap(page)).aimHelp; return !!(a && a.ready); }, { timeout: 120000, message: name + ': the frame says it is the moment' }).toBe(true);
+      await expect(page.getByTestId('aimframe')).toHaveClass(/ready/); await expect(page.getByTestId('aim-note')).toHaveText(/take it/i);
+      await attach(testInfo, `rc3-06-dare-${name}-ready`, await shot(page));
+      await page.mouse.down({ button: 'left' }); await page.mouse.up({ button: 'left' }); await page.mouse.up({ button: 'right' });
+      await expect.poll(async () => (await snap(page)).dare, { timeout: 30000 }).toBe(n + 1); took[name] = Math.round((Date.now() - t0) / 1000);
+      const ph = (await snap(page)).photos.find((p) => p.reaction === name); expect(ph, name + ' photo in the album').toBeTruthy();
+    }
+    console.log('V5_RC3_DARES ' + JSON.stringify(took));
+    expect(w.issues).toEqual([]);
+  });
+
+  test('mouse modes with the real mouse: a click captures the pointer (dot shown), Esc frees it and pauses; with Free pointer, dragging looks', async ({ page }, testInfo) => {
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
+    const vp = page.viewportSize(); await page.mouse.click(vp.width / 2, vp.height * 0.6);
+    const locked = await expect.poll(async () => page.evaluate(() => !!document.pointerLockElement), { timeout: 4000 }).toBe(true).then(() => true, () => false);
+    const out = { pointerLock: locked };
+    if (locked) {
+      await expect(page.getByTestId('lookdot')).toBeVisible(); await attach(testInfo, 'rc3-07-pointer-captured-dot', await shot(page));
+      await page.keyboard.press('Escape');
+      await expect.poll(async () => (await snap(page)).mode, { timeout: 8000 }).toBe('pause');
+      expect(await page.evaluate(() => !!document.pointerLockElement), 'the pointer is free in the pause menu').toBe(false);
+      await expect(page.getByTestId('lookdot')).toBeHidden();
+      await page.getByTestId('resume').click(); await expect.poll(async () => (await snap(page)).mode).toBe('play');
+    }
+    // free pointer: Settings > Mouse, then dragging turns the view and no capture happens
+    await page.keyboard.press('Escape'); if ((await snap(page)).mode !== 'pause') { await page.keyboard.press('Escape'); }
+    await page.getByTestId('settings').click(); await page.getByTestId('mouse-mode').click(); await page.getByTestId('resume').click().catch(async () => { await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); });
+    await expect.poll(async () => (await snap(page)).mode).toBe('play');
+    const yaw0 = await page.evaluate(() => window.V5Debug.guide().camYaw);
+    await page.mouse.move(vp.width * 0.4, vp.height * 0.6); await page.mouse.down(); for (let i = 1; i <= 12; i++) { await page.mouse.move(vp.width * 0.4 + i * 25, vp.height * 0.6); await page.waitForTimeout(60); } await page.mouse.up();
+    await page.waitForTimeout(600);
+    out.freeNoLock = !(await page.evaluate(() => !!document.pointerLockElement));
+    out.yawTurned = Math.abs((await page.evaluate(() => window.V5Debug.guide().camYaw)) - yaw0);
+    expect(out.freeNoLock, 'Free pointer: a click on the scene does not capture it').toBe(true);
+    expect(out.yawTurned, 'Free pointer: dragging turns the view').toBeGreaterThan(0.05);
+    console.log('V5_RC3_MOUSE ' + JSON.stringify(out));
+    expect(w.issues).toEqual([]);
+  });
+
+  test('Shift: the speed-up tip appears on the first longer walk and goes away when Shift is held while walking', async ({ page }, testInfo) => {
+    test.setTimeout(6 * 60 * 1000);
+    const tips = Object.assign({}, TIPS_DONE); delete tips.sprint;
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: tips });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
+    // walk back and forth across the study with the real keys until the tip appears
+    const tip = page.getByTestId('tut'); let seen = false;
+    for (let k = 0; k < 16 && !seen; k++) { await page.keyboard.down(k % 2 ? 'KeyS' : 'KeyW'); for (let i = 0; i < 6 && !seen; i++) { await page.waitForTimeout(500); seen = (await tip.isVisible()) && (await tip.getAttribute('data-id')) === 'sprint'; } await page.keyboard.up(k % 2 ? 'KeyS' : 'KeyW'); }
+    expect(seen, 'the sprint tip appeared').toBe(true); await expect(tip).toContainText(/speed up/i);
+    await attach(testInfo, 'rc3-08-shift-tip', await shot(page));
+    await page.keyboard.down('ShiftLeft'); await page.keyboard.down('KeyW'); await page.waitForTimeout(2500); await page.keyboard.up('KeyW'); await page.keyboard.up('ShiftLeft');
+    await expect.poll(async () => page.evaluate(() => (JSON.parse(localStorage.getItem('v5.prefs.v1')).tut || {}).sprint), { timeout: 15000 }).toBe(1);
+    expect(await tip.getAttribute('data-id') !== 'sprint' || !(await tip.isVisible())).toBe(true);
     expect(w.issues).toEqual([]);
   });
 });

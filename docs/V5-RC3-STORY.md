@@ -1,85 +1,135 @@
-# Resurrection V5 — RC3: story analysis, changes, pacing
+# Resurrection V5 — RC3: story and play, what changed and why
 
-Written after the Owner's RC2 playtest. The Owner's words, which this answers: the mother's study works as a prologue;
-after that you suddenly meet someone, then switch and switch, and none of it registers; the train is more fun; the
-player is led by the nose; as a novel it would not flow; an outsider cannot get into it.
+Written after the Owner's RC2 playtest. The Owner's words: the mother's study works as a prologue; after that you
+suddenly meet someone, then switch and switch, and none of it registers; the train is more fun; the player is led by the
+nose; as a novel it would not flow; an outsider cannot get into it.
 
-The competition theme stays the centre: **Resurrection**. The game brings a dead woman's unfinished game back from
-USENET archive copies, and the act of restoring is the act of finding out what she did and to whom.
+The competition theme stays the centre: **Resurrection**. A dead woman's unfinished game is brought back from USENET
+archive copies, and restoring it is how her daughter finds out what she did, and to whom.
 
-## 1 · Diagnosis: why an outsider stays outside
+**How to read the "experience" column.** Every entry there is a design expectation. **None of it has been confirmed by a
+person.** What a machine has checked is listed separately in `V5-RC3-REPORT.md`.
 
-| Question | Before RC3 (as the script stood in RC2) |
+## 1 · Why an outsider stayed outside (the RC2 script, audited)
+
+The full RC2 script of all seven chapters (every line, trigger, choice and transition) was extracted from the code and
+read beat by beat. The questions and the answers for RC2:
+
+| Question | RC2 |
 |---|---|
-| What does the player know when the past opens? | That Mom made a game and kept a backup. Nothing about June. The only hint, a photo on the shelf, was an optional look. |
-| Whom does the player care about, and why? | No one yet. Mara's grief is stated in one line ("…I'm asking, Mom"), but there is no question to carry. |
-| Why does the scene change (study → town)? | Because the computer finished loading. The town opens on a stranger (Theo) calling out. |
-| What does each character want at that moment? | Theo: the bridge, then the pier. Mara: whatever the task bar says. |
-| What do the player's actions change? | Floors: a bridge, a pier. They are presented as puzzles about which year has which floor. |
-| Which lines only explain a task? | Most of chapter 1 after the study: Theo's "Press Tab", "walk out in one, switch", the deck-end remarks. |
-| Where is the setup missing? | Before Elena and June appear (the player becomes a 17-year-old with no warning), and before the pier switches (they meant nothing). |
+| What does the player know when the past opens? | That Mom made a game and kept a backup. Nothing about June; the only hint, a photo on the shelf, was an optional look. |
+| Whom does the player care about, and why? | No one yet. Mara's grief was one line ("…I'm asking, Mom"). There was no question to carry. |
+| Why does each scene change? | Because a task ended. Study → town when the disk loaded; pier → memory when the post was touched; carve → train because "the train!"; train → bikes with no mention of bikes. |
+| What does each character want? | Theo wanted a bridge and a pier; June wanted the next activity done. |
+| What do the player's actions change? | Floors. The pier switches were a puzzle about which year has which planks. |
+| Lines that only explain a task | Most of chapter 1 after the study, the ride hints, much of chapter 7's Theo. |
+| Where is the set-up missing? | Before Elena and June appear (the player suddenly *is* a 17-year-old), before the pier, before the bikes. |
+| Where is Mara? | Gone from the end of chapter 1 until chapter 7: six chapters without the person whose question it is. |
 
-The core problem: **events without emotional cause between them.** Each scene happens because the previous task ended,
-not because someone wanted something.
+**The central finding: events without emotional cause between them**, and the archive, the thing that makes this a
+*Resurrection* game, invisible during the story.
 
-## 2 · What RC3 changes in the story (chapter 1, where the Owner stopped caring)
+## 2 · The structural change: the archive tells the story between the memories
 
-| # | Before | After (RC3) | Why |
-|---|---|---|---|
-| 1 | The KEEP box gives the disk and a note "For M., when she asks." | It also holds a **photo folded in half, so only Mom shows**. Mara unfolds it: a girl with a camera, laughing at her. On the back: *"junebug & me. The end of the old pier, summer '98. Don't let me forget."* Mara: *"She never once said the word junebug."* | The player now enters the past with a question (who is she, and why fold her away?). Folding her out is exactly what Elena later did to June's name on the game. |
-| 2 | The computer: "skylark & junebug, 1998." → "Show me what you made." | Mara connects it: *"skylark was Mom's name online. And junebug… is the girl in the photo."* → *"Show me what you **two** made."* | The archive screen confirms the photo; the game is now about two people. |
-| 3 | Theo: "A visitor! I'm Theo. I keep the lighthouse. The lighthouse is almost ready." | *"Two girls made me, one summer."* Mara: *"Two girls. Mom… and junebug."* Theo: *"Then they stopped coming. The lighthouse has been almost ready ever since."* | Theo is no longer a random stranger: he is the one who remembers them, and his joke now has a sad reason. |
-| 4 | Mara: "June made these." (she could not know the name) | Mara: *"junebug made these."* Theo: *"June. Her name was June. She drew my beard too…"* | A character inside the game gives the missing girl her name back: a small resurrection before the big one. |
-| 5 | Three pier switches explained as floors ("the summer pier has a hole…"). | Theo: *"June built the old pier. Your mother rebuilt the middle, years later, on her own. Neither one reaches the end alone."* Each switch has its own line: *"1998. Her planks, every one a bit wonky, on purpose."* / *"2004. Mom rebuilt this middle part by herself. It's very straight."* / *"June's again. Neither version gets to the end. Together they do."* | The switches now tell the whole story in miniature (June's work, Elena's solo rebuild, only together do they reach the end) before the player knows it. |
-| 6 | The memory opens with "Carve it." The card says "Summer 1998 · a dramatised reconstruction". | The memory opens with **June taking that photo**: *"Wait, don't move. Stand by the post. And don't make the face."* / *"I don't have a face."* / *"You have exactly one face and you're making it. …Got it. That one's mine."* The card: *"You are Elena, Mara's mother, at seventeen. The girl with the camera is June. A reconstruction, not a recording."* | The information gap: the player has seen the photo folded; now it is being taken, unfolded and happy, and they do not know yet what will happen. And the player is told plainly who they are. |
-| 7 | Chapter 7: the drafts, then the town. | After the drafts, whichever choice: *"I unfold the photo and stand it against the screen. Both of them, this time."* | Closes the question the study opened. |
+The fictional archive in the game already contained the whole story in the posts' own words (`frontend/v5/data`):
+"I cannot draw a seagull. Anyone?" / "I can draw you the whole town"; "sky will hate it. sky will build it"; "june is
+going away at the end of the month"; the 2004 public build crediting only skylark, the summer build "cancelled by its
+author", and June's reply "My name is not on it any more"; "please do not make her stay". The game parsed these posts
+but never showed them.
 
-Kept as they were (the Owner liked them or they already carry the relationship): the train (photos, the sketch, "you're
-the view", the tunnel hand), the lighthouse they finish together, the boat drawing, the stars, the parting on the
-platform, 2004 at the cottage and the beach (no reconciliation), the unsent drafts, restoring both names, Iris's ending,
-the first snow made new.
+In RC3, **each memory opens with the post it is rebuilt from**, quoted exactly, with one line from Mara reading it. This
+keeps Mara present through the chapters, gives every scene change a reason (the next post), shows the player what is
+being resurrected, and creates the information gap the Owner asked for: the player often knows more than Elena does.
+Chapter 2 has no matching post and stays as it was.
 
-## 3 · What RC3 changes in play (the Owner's blockers)
+## 3 · Seven chapters: problem → change → expected experience
 
-| Owner's report | Cause found | Change |
+Priority was chapters 1 and 2 (the first ten minutes), as asked.
+
+### Chapter 1 · Catch the Summer (the most changed)
+
+| RC2 problem | RC3 change (in the game now) | Expected experience (not verified) |
 |---|---|---|
-| Stuck at the bike chain | The bike never moved the player's body, so the "Hold E · Fix the chain" prompt was drawn at the start of the road, behind the camera: **not on screen for 60 of 60 checks**. The task bar said "by her bike", but the player cannot walk while the bike is stopped. | Prompt and marker at June's bike; the text says no walking is needed; the hints at 30/60/90 s are about the chain; after 100 s untouched June fixes it herself ("Some mechanic you are." / "I was supervising."). |
-| The mouse can't be used; no pointer | One click captured the pointer for good; nothing said so; Esc was inconsistent. | Exploring: captured pointer, a small dot where you look, a click uses what is named. Esc always frees the pointer **and** pauses. Menus and the journal show the pointer. Settings › Mouse: free pointer (drag to look). The look tip says all this. |
-| The lighthouse never showed up for the photo | It was in the windows 16 s of every 55 s, the view started away from it, and the frame that counted was smaller than the frame drawn. | Slower, shorter loop (20 s of every 43 s) and coming into view when the dare starts; the view turns toward each dare's subject; what counts is exactly the drawn frame; the frame turns gold when a picture would count, an arrow points to a subject outside it, and it says when to wait for June. |
-| Photographing June meant turning round and round | The seat view started facing away from her. | The view turns to June when her dare starts; the frame says "wait until she looks out of the window". |
-| Models go through each other | The duet: face to face 1.0–1.5 m apart, seated legs 0.85 m each, so the legs crossed. | Side by side, turned toward a point in front of them; feet ≥ 0.5 m apart even after "closer". Other clipping: **not audited** (no real-GPU review here). |
-| Shift could say "speed up" | No teaching; called "sprint/冲刺". | A tip on the first longer walk; called "speed up" / "加速" everywhere. |
+| The player has no question to carry into the past | The KEEP box holds the disk **and a photo folded in half so only Mom shows**. Mara unfolds it: a girl with a camera, laughing at her. On the back: *"junebug & me. The end of the old pier, summer '98. Don't let me forget."* Mara: *"She never once said the word junebug."* The folded photo is now a memory in the journal (it was an optional look) | Curiosity: who is she, and why fold her away? |
+| The past opens on nothing | While the disk is read, the first two posts appear: Mom asking a newsgroup for someone to draw a seagull, and junebug replying the next morning *"I can draw you the whole town… Theo needs a beard."* Mara: *"That's how they met. Mom asked a newsgroup for a seagull, and somebody offered her a town."* Then: *"Show me what you **two** made."* | The relationship begins before the player meets either of them; the USENET archive is on screen from the first minute |
+| Theo is a random stranger | *"Two girls made me, one summer."* / *"Two girls. Mom… and junebug."* / *"Then they stopped coming. The lighthouse has been almost ready ever since."* Later: *"June. Her name was June. She gave me this beard: 'Theo needs a beard,' she said."* | Theo is a witness who misses them; a character in the game gives the missing girl her name back |
+| The three pier switches are a floor puzzle | Theo: *"June built the old pier. Your mother rebuilt the middle, years later, on her own. Neither one reaches the end alone."* Each switch has its own line: *"1998. Her planks — every one a bit wonky, on purpose."* / *"2004. Mom rebuilt this middle part by herself. It's very straight."* / *"June's again. Neither version gets to the end. Together they do."* | The switches tell the whole story in miniature before the player knows it; each Tab means something |
+| Suddenly the player *is* someone else | The memory opens with **June taking that photo** at the post: *"Wait — don't move… don't make the face." / "I don't have a face." / "You have exactly one face and you're making it. …Got it. That one's mine."* The card says: *"You are Elena, Mara's mother, at seventeen. The girl with the camera is June."* | The player sees the folded photo being taken, unfolded and happy, and knows something the girls do not |
+| June waits to be pressed | If Elena hesitates at the post, June starts carving herself: *"Fine, I'll start. …There. J. Your turn — and try to make the E straight for once."* | June has her own will |
+| "The train!" from nowhere | *"The 4:10 to the coast! Miss it and we never see a real lighthouse, and ours stays a white tube."* | A reason to run, and a set-up for the lighthouse dare and chapter 3 |
+| The post was just out of reach where the memory starts | Reach widened | No step forward needed to see the prompt |
+| Hard cut from the platform into the train | A fade | — |
 
-## 4 · The seven chapters: pacing after RC3
+### Chapter 2 · You Are the View (kept, as the Owner liked it)
 
-Bot time = the scripted player's game time with dialogue skipped as fast as possible (Node shell, `perBeat`). **It is
-not human time**; a person reading every line and looking around will take several times longer. No human timing
-exists yet.
+| RC2 problem | RC3 change | Expected experience |
+|---|---|---|
+| The lighthouse never showed up; June meant turning round and round | The lighthouse is slower and on a shorter loop and is coming into view when the dare starts; the view turns to each subject; what counts is exactly the drawn frame; the frame turns gold when a picture would count, an arrow points at a subject outside it, and it says "wait until she looks out of the window" for June | The dares become moments with June instead of a search |
+| The bikes come from nowhere | June, waking: *"Next stop's ours. Grandma left the bikes at the station. Last one to the real lighthouse fixes the bridge."* | The race starts from a promise |
+| The checklist sits over the scene | In the memories the "Next" line shows for 10 s when something changes, then fades; it returns with the help (30 s without progress), after H, or with "Show steps" | Less "led by the nose", without losing the safety net |
+| — | Script otherwise unchanged | — |
 
-| Ch | Beats (bot time) | What the player feels for | The interaction that carries it | RC3 |
-|---|---|---|---|---|
-| 1 Catch the Summer | study 12 s, town 24 s, pier 15 s, carve 7 s, chase 9 s | a folded photo → who was she? → the two of them, happy, unaware | unfolding the photo; giving the bridge back; the pier that only reaches the end in both versions; carving E + J; catching her hand | opening rewritten (§2) |
-| 2 You Are the View | train 47 s | playful attraction, being seen | June's photo dares; holding still for her sketch; reaching for her hand in the tunnel | framing fixed (§3), script kept |
-| 3 Our Lighthouse | ride 63 s, yard 28 s, beam 13 s, cliff 13 s | making something together | the race and the chain; fitting her crooked window; finding her with the beam | chain fixed |
-| 4 A Song Only for You | cottage 13 s, duet 49 s, porch 11 s | closeness, the near-confession | drawing the boat she guides; the duet; the window of stars; "June, I—" / "I know." | duet seating fixed |
-| 5 Don't Leave Yourself Here | depart 53 s, alone 14 s | loss, her choice | carrying her suitcase; the choice of last words; the same bench six years later, alone | unchanged |
-| 6 You Remember, So Do I | cottage 16 s, beach 46 s | the harm, no forgiveness | carrying her boxes; the letter that cost her the job; walking beside her while she speaks | unchanged |
-| 7 Let Summer End | study 3 s, town 96 s | responsibility, letting go | the unsent drafts; putting her name back; Iris's ending; the lamp restored; snow made new; walking the new planks | photo unfolded at the drafts |
+### Chapter 3 · Our Lighthouse
 
-Total bot time: 8.9 min. The Owner's target is 35–45 min of real play; whether RC3 is in that range is **unknown**
-until a person plays it with the playtest recorder (`Resurrection-V5-Playtest.html` records chapter times locally).
+| RC2 problem | RC3 change | Expected experience |
+|---|---|---|
+| Stuck at the chain | The prompt was off screen behind the camera. It is now at June's bike, says hold E with no need to move, the hints are about the chain, and June fixes it herself after 100 s (*"Some mechanic you are." / "I was supervising."*) | No dead end; a joke if you wait |
+| The ride hints were spoken by Elena but said "my chain" | June speaks them | — |
+| Fixing a lighthouse with no context | The yard opens with June's post *"the lighthouse gets one crooked window. sky will hate it. sky will build it."* and Mara: *"Mom's reply, nine days later: 'built it. it is still crooked.' This is the day it went in."* | The window becomes their running joke and a promise, before June hands it over |
+| The glide line named Space whatever the controls | Uses the player's jump control | — |
 
-## 5 · What RC3 does not do yet (honest)
+### Chapter 4 · A Song Only for You
 
-1. **Chapters 2–7 were not rewritten.** The analysis in §1 applies to them too in places: Theo's and Iris's lines in
-   chapter 7 are still mostly instructions, and the 2004 chapters lean on long talks.
-2. **Characters still mostly wait to be used.** June leads in the ride and on the beach, but nobody acts on their own
-   between prompts (no idle life, no small reactions to where the player looks). This is the largest remaining gap
-   against "characters with their own wants".
-3. **The photo dares are now easy.** They were a search; they are now a moment. Making the photo a choice about which
-   memory to keep (as the Owner's brief suggests) would be new gameplay and is not in RC3.
-4. **The pier still needs three switches.** RC3 gave each one a meaning instead of removing them: the floor layout is
-   archive data that several tests and the chapter 7 ending depend on. If the Owner still feels switched around, the
-   next step is to let the 1998 pier reach further so one switch is enough.
-5. **No human has read the new lines.** Whether the folded photo makes an outsider care is the question for the
-   Owner's next play.
+| RC2 problem | RC3 change | Expected experience |
+|---|---|---|
+| The duet: legs through each other | Side by side on a stool beside her; June stays seated facing forward (she used to stand up and turn into Elena) | — |
+| The song has no history | The cottage opens with skylark's post *"wrote a melody for the lighthouse. it does not end properly yet."* Mara: *"She never finished it. I've heard her hum the first half my whole life."* | The porch line *"It still doesn't have an ending"* now lands on both the song and the two of them |
+
+### Chapter 5 · Don't Leave Yourself Here
+
+| RC2 problem | RC3 change | Expected experience |
+|---|---|---|
+| June's news is a surprise to everyone, including the player | The station opens with the summer-build post: *"…june is going away at the end of the month."* Mara: *"She knew. She wrote it down like a bug report."* | Dramatic irony: the player watches the last afternoon knowing it is the last |
+
+### Chapter 6 · You Remember, So Do I
+
+| RC2 problem | RC3 change | Expected experience |
+|---|---|---|
+| The 2004 confrontation starts cold | The cottage opens with the 2004 posts: the public build credited only to skylark, *"The pier is closed. The lighthouse is finished."*, the summer build "cancelled by its author", and June's reply *"The window is mine. Iris is mine. Half of this town is mine. My name is not on it any more."* Mara: *"Four days later. Then Mom drove out to the cottage."* | The player arrives knowing the harm; June's coldness is understood, not unexplained |
+
+### Chapter 7 · Let Summer End
+
+| RC2 problem | RC3 change | Expected experience |
+|---|---|---|
+| Restoring Iris was a task | After the drafts, June's own post: *"Iris bakes all summer and then she gets on the boat. that is her ending. please do not make her stay."* Mara: *"And in 2004 Mom made her stay. That I can give back too."* | Giving Iris her ending is keeping June's wish |
+| The opening question is never closed | *"I unfold the photo and stand it against the screen. Both of them, this time."* (whichever choice about the drafts) | The folded photo, the first image of the game, is the last act before the town |
+| Theo's lines in this chapter are still mostly instructions | **Not changed** | — |
+
+## 4 · Pacing
+
+Bot time is the scripted player's game time, with dialogue skipped as fast as possible. **It is not human time.**
+
+| Ch | Beats (bot time, RC3 final) | Carrying interaction |
+|---|---|---|
+| 1 | study 13 s, town 24 s, pier 15 s, carve 7 s, chase 9 s | unfold the photo; read how they met; give the bridge back; the pier that only reaches the end in both versions; the photo, the carving; catch her hand |
+| 2 | train 47 s | the dares with June; holding still for her sketch; her hand in the tunnel |
+| 3 | ride 63 s, yard 30 s, beam 13 s, cliff 13 s | the race and the chain; her crooked window; finding her with the beam |
+| 4 | cottage 15 s, duet 49 s, porch 11 s | the boat she guides; the duet; the stars; "June, I—" / "I know." |
+| 5 | depart 54 s, alone 14 s | her suitcase; the last words; the same bench, alone |
+| 6 | cottage 19 s, beach 46 s | her boxes; the letter; walking beside her |
+| 7 | study 5 s, town 96 s | the drafts; her name back; Iris's ending; the lamp; snow made new; the new planks |
+
+Total bot time 9.0 min (the bot skips every line at once, so the new archive lines barely show here). The Owner's target is 35–45 min of real play. Whether RC3 reaches it is **unknown** until a
+person plays it (the playtest page records chapter times locally).
+
+## 5 · What RC3 still does not do
+
+1. **No person has read any of it.** Whether the folded photo and the posts make an outsider care is the question for
+   the Owner's next play.
+2. **Characters still mostly wait.** June now starts the carving on her own and fixes her chain if left alone, but in
+   most scenes nobody acts between prompts. This is the largest remaining gap.
+3. **The photo dares are now easy.** They were a search; they are a moment. A photo as a choice of which memory to keep
+   would be new gameplay and is not in RC3.
+4. **The pier still needs three switches.** Each now has a meaning; the layout itself was not changed.
+5. **Chapter 7's Theo and the 2004 talks are unchanged.**
+6. **Model clipping was fixed only where the Owner saw it (the duet).** No full audit on a real GPU.

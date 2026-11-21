@@ -168,3 +168,39 @@ test('duet: June stays seated and keeps facing forward while waiting (she stood 
   assert.equal(g.rt.june.anim, 'sit'); assert.ok(Math.abs(Math.atan2(Math.sin(g.rt.june.facing - want), Math.cos(g.rt.june.facing - want))) < 0.05, 'facing the point in front');
   const st = LAYOUTS.cottage.juneSeat; for (const closer of [false, true]) { const j = Gm.duetPlaces(closer).june; assert.ok(Math.hypot(j.x - st.x, j.z - st.z) < 0.2, 'on the stool (' + (closer ? 'closer' : 'apart') + ')'); }
 });
+
+// ---- the whole story: the archive post each memory is rebuilt from is read before it, and every scene change has a reason
+test('story: each chapter opens with the archive post it is rebuilt from, in the right beat, in play order', async () => {
+  const g = Gm.createGame(ar); const heard = []; let last = null;
+  await playThrough(g, { step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); const k = s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] !== 'pause' ? s.dialog.line[1] : null; if (k && k !== last) { heard.push({ k, beat: s.beat }); } last = k; return ev; } });
+  const where = (k) => { const h = heard.find((x) => x.k === k); return h ? h.beat : null; }; const at = (k) => heard.findIndex((x) => x.k === k);
+  const want = { 'arch.met.ask': '1.study', 'arch.met.reply': '1.study', 'arch.window.body': '3.yard', 'arch.song.body': '4.cottage', 'arch.manifest.body': '5.depart', 'arch.public.body': '6.cottage', 'arch.reply.body': '6.cottage', 'arch.iris.body': '7.study' };
+  for (const [k, b] of Object.entries(want)) { assert.equal(where(k), b, k); }
+  const order = Object.keys(want); for (let i = 1; i < order.length; i++) { assert.ok(at(order[i - 1]) < at(order[i]), order[i - 1] + ' before ' + order[i]); }
+  // the posts come before the scene's first line, so the player knows what is being rebuilt
+  assert.ok(at('arch.window.body') < at('c3.june.ta') && at('arch.song.body') < at('c4.june.arrive') && at('arch.manifest.body') < at('c5.june.platform') && at('arch.reply.body') < at('c6.june.found'));
+  assert.ok(at('arch.met.reply') < at('c1.theo.beard'), 'Theo’s beard line pays off June’s reply');
+  assert.ok(at('arch.iris.body') < at('c7.iris.harbor'), 'June’s words about Iris come before Iris leaves');
+  // reasons for the moves: the train (to see a real lighthouse), the bikes (Grandma left them at the station)
+  assert.ok(at('c1.june.train') >= 0 && at('c2.june.bikes') >= 0 && where('c2.june.bikes') === '2.train');
+});
+
+test('story: June does not wait to be told at the post: she starts the carving if Elena hesitates', async () => {
+  const g = await from('1.carve'); advanceDialog(g); const caps = [];
+  for (let i = 0; i < 30 * 9; i++) { const ev = Gm.tick(g, 1 / 30, {}); ev.filter((e) => e.type === 'caption').forEach((e) => caps.push(e.key)); }
+  assert.ok(caps.includes('c1.june.startJ'), JSON.stringify(caps));
+  const h = await from('1.carve'); advanceDialog(h); const caps2 = [];
+  for (let i = 0; i < 30 * 9; i++) { const ev = Gm.tick(h, 1 / 30, { useHeld: true }); ev.filter((e) => e.type === 'caption').forEach((e) => caps2.push(e.key)); }
+  assert.ok(!caps2.includes('c1.june.startJ'), 'not when Elena is carving');
+});
+
+test('ride: the hints are spoken by June (they say “my chain”), not by Elena', async () => {
+  const g = await from('3.ride'); const who = [];
+  for (let i = 0; i < 30 * 35; i++) { const s = Gm.snapshot(g); const ev = Gm.tick(g, 1 / 30, { advance: !!s.dialog, autoHelp: true }); ev.filter((e) => e.type === 'caption' && /^hint\./.test(e.key)).forEach((e) => who.push(e.who)); }
+  assert.ok(who.length > 0 && who.every((w) => w === 'june'), JSON.stringify(who));
+});
+
+test('carve: the post is in reach where the memory starts (the player had to step forward to see the prompt)', async () => {
+  const g = await from('1.carve'); advanceDialog(g); Gm.tick(g, 1 / 30, {});
+  assert.equal(Gm.snapshot(g).prompt && Gm.snapshot(g).prompt.id, 'post');
+});

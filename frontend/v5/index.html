@@ -135,6 +135,7 @@
     .quest .qdone { margin-top:5px; font-size:.82rem; color:#9be39b; }
     .qsteps { margin:6px 0 0; padding-left:0; list-style:none; font-size:.8rem; line-height:1.55; }
     .qsteps li { color:rgba(255,246,234,.75); } .qsteps li.done { color:#9be39b; } .qsteps li.now { color:var(--ink); font-weight:600; } .qsteps li.opt { opacity:.75; font-style:italic; }
+    .quest .qnext { transition:opacity .8s ease, max-height .8s ease; max-height:6em; } .quest .qnext.quiet { opacity:0; max-height:0; overflow:hidden; }
     .quest .qtoggle { pointer-events:auto; margin-top:6px; background:transparent; border:0; color:var(--dim); font-size:.72rem; padding:2px 0; cursor:pointer; text-decoration:underline dotted; }
     #app.touch .quest { top:max(104px, calc(env(safe-area-inset-top) + 90px)); max-width:min(300px, 42vw); padding:7px 10px 8px; }
     #app.touch .quest .qgoal { font-size:.88rem; } #app.touch .quest .qnext { font-size:.78rem; } #app.touch .quest .qch { font-size:.6rem; }

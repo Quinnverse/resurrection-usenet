@@ -40,7 +40,7 @@ export function createGuide(c) {
   const qnew = el('span', { class: 'qnew', text: '' }), qhelp = el('span', { class: 'qhelp', 'data-testid': 'quest-help' });
   bar.append(qch, qgoal, qnext, qdone, qsteps, qtoggle); qch.append(qchT, qnew); qgoal.append(qgoalT, qprog); qnext.append(qnextL, qnextT, qhelp);
   app.appendChild(bar);
-  let expanded = false, sig = '', lastGoal = null, lastDone = null, doneT = 0, newT = 0;
+  let expanded = false, sig = '', lastGoal = null, lastDone = null, doneT = 0, newT = 0, nextSig = '', nextT = 0, askT = 0;
 
   // ---- help markers: an arrow at the edge of the screen, a beacon in the world -----------------------------------
   const arrow = el('div', { class: 'assist-arrow', 'data-testid': 'assist-arrow', hidden: '' }, [el('span', { text: '➜' })]); app.appendChild(arrow);
@@ -70,6 +70,7 @@ export function createGuide(c) {
     (evs || []).forEach((e) => {
       if (e.type === 'use' && tut && tut.id === 'use') { finishTut(); }
       if (e.type === 'use') { markTut('use'); }
+      if (e.type === 'caption' && /^hint\./.test(e.key || '')) { askT = 12; }   // H or the automatic help spoke: show the next step again
       if (e.type === 'tab') { markTut('tab'); if (tut && tut.id === 'tab') { finishTut(); } }
       if ((e.type === 'restored' || e.type === 'carved' || e.type === 'lens' || e.type === 'lit') && tut && tut.id === 'hold') { finishTut(); }
       if (e.type === 'restored' || e.type === 'carved') { markTut('hold'); }
@@ -118,6 +119,13 @@ export function createGuide(c) {
         qsteps.hidden = !expanded; qtoggle.textContent = expanded ? T('hud.less') : T('hud.more'); qtoggle.hidden = o.steps.length < 2;
       }
       if (!cine) { newT = Math.max(0, newT - dt); doneT = Math.max(0, doneT - dt); }   // the notes wait until the dialogue is over
+      // RC3: in the memories (the player is Elena) the story leads, not the checklist. The "Next" line shows for 10 s
+      // when the goal or the step changes, then fades; it comes back with the help (30 s without progress), after H,
+      // or with "Show steps". In the present (Mara) and in the train chase it always stays.
+      const ns = [o.goal, o.nextKey, nowDone.join('')].join('|'); if (ns !== nextSig) { nextSig = ns; nextT = 0; }
+      if (!cine) { nextT += dt; } askT = Math.max(0, askT - dt);
+      const memory = s.player === 'elena' && s.beat !== '1.chase';
+      qnext.classList.toggle('quiet', memory && nextT > 10 && help < 1 && !expanded && askT <= 0 && c.prefs.quietGuide !== false);
       bar.classList.toggle('new', newT > 0); qnew.hidden = !(newT > 0); qdone.hidden = !(doneT > 0);
     }
     // ---- help markers

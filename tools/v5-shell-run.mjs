@@ -187,6 +187,8 @@ function check() {
     ['quest-goal', 'quest-next', 'quest-chapter', 'tut', 'mem-toast'].forEach((id) => { const e = byTestId(id); if (e) { const tx = e.textContent; if (raw.test(tx) || tx.split(/\s+/).some((w) => raw.test(w))) { stats.missingText.add(id + ': ' + tx.slice(0, 80)); } } });
     if (dbg.mode === 'play') { stats.questChecks = (stats.questChecks || 0) + 1; if (byTestId('quest-goal')) { stats.questShown = (stats.questShown || 0) + 1; } }
     const o = window.V5Debug.objective && window.V5Debug.objective(); if (o) { (stats.goals = stats.goals || new Set()).add(o.beat); }
+    // RC3: the task bar's Next line may fade in the memories (Elena), never in the present (Mara)
+    { const qn = all.find((e) => e.attrs['data-testid'] === 'quest-next'); if (qn && dbg.mode === 'play' && !appEl.classList.contains('cine')) { const q = [qn, qn.parent].some((e) => e && (e.className || '').split(/\s+/).includes('quiet')); const who = dbg.player === 'elena' ? 'elena' : 'mara'; const r = (stats.quiet = stats.quiet || { elena: [0, 0], mara: [0, 0] })[who]; r[1] += 1; if (q) { r[0] += 1; } } }
     const cineNow = appEl.classList.contains('cine'); if (dbg.mode === 'play') { const bb = (stats.cineBy = stats.cineBy || {}); const r = bb[dbg.beat] = bb[dbg.beat] || [0, 0]; r[1] += 1; if (cineNow && !dbg.dialog && !dbg.choice) {
       r[0] += 1; const grt = hook.game.rt;
       // a story camera may hide the HUD: a timed shot (a photo moment) or the chapter 7 seasons sequence before the beam;
@@ -266,7 +268,7 @@ try {
       creditsHave: want.map((w) => [w, credits.includes(w)]), albumPhotos: album ? album.children.length : 0, photosWithThumb: hook.game.s.photos.filter((p) => p.thumb).length, photos: hook.game.s.photos.length,
       savedBeat: saved && saved.beat, promptFrames: stats.promptFrames, promptNotShown: stats.promptOff, playerOffscreenFrames: stats.offscreen,
       perBeat: Object.fromEntries(Object.entries(stats.beats).map(([k, v]) => [k, { world: v.world, frames: v.frames, off: v.off, promptOff: v.promptOff || 0, samples: v.samples, camDist: v.maxDist ? [+v.minDist.toFixed(2), +v.maxDist.toFixed(2)] : null }])),
-      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenByCamera: stats.cineShots || {}, promptPinned: stats.promptPinned || {}, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
+      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenByCamera: stats.cineShots || {}, quietNext: stats.quiet || null, promptPinned: stats.promptPinned || {}, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
     });
     if (SHOTS) { // contact sheets, 3 x 4 previews each
       const W = 480, H = 270, C = 3, R = 4;
@@ -292,6 +294,8 @@ try {
       'task bar shown in play': report.questShownShare >= 0.99,
       'player never off screen': report.playerOffscreenFrames === 0,
       'prompt shown when there is one (a beat change may skip one frame)': report.promptNotShown <= 2,
+      'the Next line never fades in the present (Mara)': !!report.quietNext && report.quietNext.mara[0] === 0,
+      'the Next line fades in the memories when nothing changes': !!report.quietNext && report.quietNext.elena[0] > 0,
       'every photo has its picture in the album': report.photos > 0 && report.photosWithThumb === report.photos && report.albumPhotos === report.photos
     };
     report.failedChecks = Object.keys(checks).filter((k) => !checks[k]);

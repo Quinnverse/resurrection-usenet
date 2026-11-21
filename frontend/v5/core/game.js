@@ -55,7 +55,8 @@ export const DIALOGS = {
   'c1.noDisk': [L('mara', 'c1.mara.never'), L('screen', 'c1.screen.noDisk'), L('mara', 'c1.mara.disk')],
   // RC3: the folded photo is the first question the player carries into the past (who is the girl, why fold her away?)
   'c1.disk': [L('mara', 'c1.mara.found'), L('mara', 'c1.mara.note'), L('mara', 'c1.mara.folded'), pause(0.8), L('mara', 'c1.mara.unfold'), L('screen', 'c1.photo.back'), L('mara', 'c1.mara.neverSaid')],
-  'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'c1.screen.title'), L('mara', 'c1.mara.junebug'), L('mara', 'c1.mara.open')],
+  // RC3: the first two posts in the archive are how they met; the player reads them before the game opens
+  'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'arch.met.ask'), L('screen', 'arch.met.reply'), L('mara', 'c1.mara.met'), L('screen', 'c1.screen.title'), L('mara', 'c1.mara.junebug'), L('mara', 'c1.mara.open')],
   'c1.theo1': [L('theo', 'c1.theo.hello', 'theo'), L('mara', 'c1.mara.twoGirls'), L('theo', 'c1.theo.almost', 'theo'), L('mara', 'c1.mara.howLong'), L('theo', 'c1.theo.dontAsk', 'theo'), L('theo', 'c1.theo.bridge', 'theo')],
   'c1.theo2': [L('theo', 'c1.theo.planks', 'theo'), L('mara', 'c1.mara.june'), L('theo', 'c1.theo.beard', 'theo'), L('theo', 'c1.theo.pier', 'theo'), L('theo', 'c1.theo.tab', 'theo'), L('theo', 'c1.theo.pierHow', 'theo')],
   'c1.memory': [L('mara', 'c1.mara.carved'), L('mara', 'c1.mara.show')],
@@ -79,11 +80,13 @@ export const DIALOGS = {
   'c2.tunnelHand': [L('june', 'c2.june.coldHand'), L('elena', 'c2.elena.coldHand')],
   'c2.tunnelOut': [L('june', 'c2.june.wish', 'june'), L('elena', 'c2.elena.wish'), L('june', 'c2.june.wishBack', 'june')],
   'c2.sleep': [pause(1.0, 'seat'), L('june', 'c2.june.yawn', 'june'), L('june', 'c2.june.wakeMe', 'june')],
-  'c2.wakeShot': [L('june', 'c2.june.wokeShot', 'june'), L('elena', 'c2.elena.no'), L('june', 'c2.june.liar', 'june')],
-  'c2.wake': [L('june', 'c2.june.woke', 'june'), L('elena', 'c2.elena.ferry'), L('june', 'c2.june.ferry', 'june')],
+  'c2.wakeShot': [L('june', 'c2.june.wokeShot', 'june'), L('elena', 'c2.elena.no'), L('june', 'c2.june.liar', 'june'), L('june', 'c2.june.bikes', 'june')],
+  'c2.wake': [L('june', 'c2.june.woke', 'june'), L('elena', 'c2.elena.ferry'), L('june', 'c2.june.ferry', 'june'), L('june', 'c2.june.bikes', 'june')],
   'c2.backs': [L('screen', 'c2.back.june', 'photoback'), L('screen', 'c2.back.elena', 'photoback')],
   // chapter 3
   'c3.chain': [L('june', 'c3.june.chain', 'june'), L('elena', 'c3.elena.chain'), L('june', 'c3.june.chainHold', 'june')],
+  // RC3: ch3 opens at the yard with June's window post (the ride itself starts at once: the Owner liked moving)
+  'arch.yard': [L('screen', 'arch.window.head'), L('screen', 'arch.window.body'), L('mara', 'arch.window.mara')],
   'c3.chainSelf': [L('june', 'c3.june.chainSelf', 'june'), L('elena', 'c3.elena.chainSelf')],
   'c3.chainFixed': [L('june', 'c3.june.fixed', 'june'), L('elena', 'c3.elena.grease'), L('june', 'c3.june.grease', 'june')],
   'c3.window': [L('june', 'c3.june.ta', 'window'), L('elena', 'c3.elena.crooked'), L('june', 'c3.june.yes'), L('elena', 'c3.elena.whyCrooked'), L('june', 'c3.june.because')],
@@ -94,7 +97,7 @@ export const DIALOGS = {
   'c3.found': [L('june', 'c3.june.found', 'beamctl'), L('elena', 'c3.elena.found'), L('june', 'c3.june.cottage', 'beamctl')],
   'c3.beamDone': [L('elena', 'c3.elena.cottage', 'beamctl'), L('june', 'c3.june.jump', 'beamctl')],
   // chapter 4
-  'c4.arrive': [L('june', 'c4.june.arrive', 'june'), L('elena', 'c4.elena.ceiling'), L('june', 'c4.june.grandma', 'june')],
+  'c4.arrive': [L('screen', 'arch.song.head'), L('screen', 'arch.song.body'), L('mara', 'arch.song.mara'), L('june', 'c4.june.arrive', 'june'), L('elena', 'c4.elena.ceiling'), L('june', 'c4.june.grandma', 'june')],
   'c4.sketches': [L('elena', 'c4.elena.sketches'), L('june', 'c4.june.portfolio', 'june'), L('june', 'c4.june.studioDream', 'june'), L('elena', 'c4.elena.theyllWant', 'elena'), L('june', 'c4.june.notForYou', 'june')],
   'c4.boat': [L('june', 'c4.june.boat', 'june'), L('elena', 'c4.elena.cantDraw'), L('june', 'c4.june.guide', 'june')],
   'c4.boatDone': [L('june', 'c4.june.boatDone', 'june'), L('elena', 'c4.elena.boatDone'), L('june', 'c4.june.keepIt', 'june')],
@@ -107,14 +110,14 @@ export const DIALOGS = {
   'c4.porch': [L('june', 'c4.june.stars', 'june'), L('june', 'c4.june.connect', 'june')],
   'c4.porchEnd': [L('june', 'c4.june.window', 'june'), pause(1.4, 'twoshot'), L('june', 'c4.june.poemIntro', 'june'), L('june', 'c4.june.poem', 'june'), L('screen', 'c4.poem.credit'), L('elena', 'c4.elena.almost', 'elena'), pause(1.6, 'twoshot'), L('june', 'c4.june.know', 'june'), L('elena', 'c4.elena.dots', 'elena')],
   // chapter 5
-  'c5.arrive': [L('june', 'c5.june.platform', 'june'), L('elena', 'c5.elena.early'), L('june', 'c5.june.early', 'june')],
+  'c5.arrive': [L('screen', 'arch.manifest.head'), L('screen', 'arch.manifest.body'), L('mara', 'arch.manifest.mara'), L('june', 'c5.june.platform', 'june'), L('elena', 'c5.elena.early'), L('june', 'c5.june.early', 'june')],
   'c5.walk': [L('june', 'c5.june.walk', 'june'), L('elena', 'c5.elena.walk')],
   'c5.news': [L('june', 'c5.june.letter', 'june'), L('june', 'c5.june.studio', 'june'), L('elena', 'c5.elena.thatsGood'), L('june', 'c5.june.chose', 'june'), C('parting', ['c5.choice.stay', 'c5.choice.miss'])],
   'c5.stay': [L('elena', 'c5.elena.stay', 'elena'), pause(1.4, 'june'), L('june', 'c5.june.cantStay', 'june'), L('june', 'c5.june.missMe', 'june'), L('june', 'c5.june.dontStay', 'june')],
   'c5.miss': [L('elena', 'c5.elena.miss', 'elena'), L('june', 'c5.june.smileMiss', 'june'), L('june', 'c5.june.missMe', 'june'), L('june', 'c5.june.dontStay', 'june')],
   'c5.alone': [pause(1.8, 'bench'), L('elena', 'c5.elena.years', 'bench'), L('elena', 'c5.elena.stayed', 'bench'), pause(1.4, 'bench')],
   // chapter 6
-  'c6.arrive': [pause(1.0, 'june'), L('june', 'c6.june.found', 'june'), L('elena', 'c6.elena.selling'), L('june', 'c6.june.someone', 'june'), L('june', 'c6.june.boxes', 'june')],
+  'c6.arrive': [L('screen', 'arch.public.head'), L('screen', 'arch.public.body'), L('screen', 'arch.cancel'), L('screen', 'arch.reply.head'), L('screen', 'arch.reply.body'), L('mara', 'arch.reply.mara'), pause(1.0, 'june'), L('june', 'c6.june.found', 'june'), L('elena', 'c6.elena.selling'), L('june', 'c6.june.someone', 'june'), L('june', 'c6.june.boxes', 'june')],
   'c6.box1': [L('june', 'c6.june.books', 'june'), L('elena', 'c6.elena.books'), L('june', 'c6.june.twelve', 'june')],
   'c6.box2': [L('june', 'c6.june.residency', 'june'), L('elena', 'c6.elena.residency'), L('june', 'c6.june.myself', 'june')],
   'c6.walk': [L('june', 'c6.june.walk', 'june'), L('elena', 'c6.elena.walk')],
@@ -131,8 +134,8 @@ export const DIALOGS = {
   'c6.leave': [pause(1.2, 'june'), L('june', 'c6.june.careful', 'june'), pause(1.0, 'elena')],
   // chapter 7
   'c7.letter': [L('mara', 'c7.mara.drafts'), L('mara', 'c7.mara.unsent'), C('letter', ['c7.choice.read', 'c7.choice.close'])],
-  'c7.read': [L('screen', 'c7.screen.draft'), L('mara', 'c7.mara.notMine'), L('mara', 'c7.mara.unfolded')],
-  'c7.close': [L('mara', 'c7.mara.close'), L('mara', 'c7.mara.notMine'), L('mara', 'c7.mara.unfolded')],
+  'c7.read': [L('screen', 'c7.screen.draft'), L('mara', 'c7.mara.notMine'), L('screen', 'arch.iris.head'), L('screen', 'arch.iris.body'), L('mara', 'arch.iris.mara'), L('mara', 'c7.mara.unfolded')],
+  'c7.close': [L('mara', 'c7.mara.close'), L('mara', 'c7.mara.notMine'), L('screen', 'arch.iris.head'), L('screen', 'arch.iris.body'), L('mara', 'arch.iris.mara'), L('mara', 'c7.mara.unfolded')],
   'c7.theo': [L('theo', 'c7.theo.back', 'theo'), L('mara', 'c7.mara.names'), L('theo', 'c7.theo.ok', 'theo')],
   'c7.creditsNeed': [L('mara', 'c7.mara.oneName'), L('mara', 'c7.mara.original')],
   'c7.credits98': [L('mara', 'c7.mara.read98'), L('mara', 'c7.mara.back04')],
@@ -269,7 +272,7 @@ const SETUP = {
     if (!g.s.flags.called) { g.s.flags.called = true; say(g, 'theo', 'c1.theo.call', 4); }
   },
   '1.pier': (g) => { g.rt.theo = Co.newCompanion(THEO_TOWN.post.x, THEO_TOWN.post.z, 0); Co.wait(g.rt.theo); irisSetup(g); g.s.flags.tab = true; },
-  '1.carve': (g) => { g.rt.june = Co.newCompanion(0.75, 23.7, -Math.PI / 2); Co.wait(g.rt.june, null, 'grin'); irisSetup(g); if (!seen(g, 'c1.carveIntro')) { dialog(g, 'c1.carveIntro'); } },
+  '1.carve': (g) => { g.rt.june = Co.newCompanion(0.75, 23.7, -Math.PI / 2); Co.wait(g.rt.june, null, 'grin'); irisSetup(g); const armJ = () => later(g, 7, () => juneStartsJ(g)); if (!seen(g, 'c1.carveIntro')) { dialog(g, 'c1.carveIntro', armJ); } else { armJ(); } },
   '1.chase': (g) => {
     const tr = LAYOUTS.station.train;
     g.rt.train = { x: tr.startX, v: 0, moving: false, caught: false, tries: g.rt.train ? g.rt.train.tries : 0 };
@@ -287,6 +290,7 @@ const SETUP = {
   '3.ride': (g) => { g.rt.ride = Toys.newRide(); g.rt.ride.gates = []; g.rt.ride.bells = 0; g.rt.baseShot = 'ride'; say(g, 'june', 'c3.june.race', 3); },
   '3.yard': (g) => {
     const c = LAYOUTS.coast.cart; g.rt.june = Co.newCompanion(c.x + 0.4, c.z - 1.3, 0);
+    if (!g.s.flags.archYard) { dialog(g, 'arch.yard', () => { g.s.flags.archYard = true; }); }
     if (!g.s.window.placed) { Co.invite(g.rt.june, null, 'grin'); }
     else { juneOnGallery(g); }
   },
@@ -370,7 +374,7 @@ function points(g) {
     if (th && !rt.theoPier && !(s.flags.beamPier && !s.edition.pier_walk)) { const across = th.z > 11.6 && rt.body.z < 8.4; add('theo', th.x, th.z, across ? 4.9 : 1.9, { verb: 'verb.talk', moving: true, priority: beat === '1.town' && !seen(g, 'c1.theo1') ? 4 : 0 }); }
     if (beat === '1.town' && !s.restored.bridge && s.era === 2004) { at('gap', { verb: 'verb.restore', hold: true }); }
     if (beat === '1.pier' && s.era === 1998) { at('pierEnd', { verb: 'verb.touch' }); }
-    if (beat === '1.carve' && !s.flags.carved) { const q = p('pierEnd'); add('post', q.x, q.z, 1.4, { verb: 'verb.carve', hold: true }); }
+    if (beat === '1.carve' && !s.flags.carved) { const q = p('pierEnd'); add('post', q.x, q.z, 1.75, { verb: 'verb.carve', hold: true }); }
     const ir = rt.iris;
     if ((beat === '1.town' || beat === '1.pier') && ir && !ir.leaving) { add('irisTalk', ir.x, ir.z, 1.7, { verb: 'verb.talk', optional: true }); }
     if (beat === '7.town') {
@@ -467,7 +471,7 @@ function use(g, p) {
     case 'road': { const go = () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '7.study'); }; if (!s.flags.toldCareful) { Co.react(rt.june, 'quiet', 'idle', 4); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; go(); }); } else { go(); } return; }
     case 'hand':
       rt.train.caught = true; ev.push({ type: 'caught' }); Co.react(rt.june, 'grin', 'reach', 2);
-      dialog(g, 'c1.hand', () => { s.flags.chased = true; enterBeat(g, '2.train'); }); return;
+      dialog(g, 'c1.hand', () => { s.flags.chased = true; g.rt.ev.push({ type: 'fade' }); enterBeat(g, '2.train'); }); return;
     // chapter 3
     case 'cart':
       if (!seen(g, 'c3.window')) { dialog(g, 'c3.window', () => { rt.carry = 'window'; g.rt.ev.push({ type: 'carry', what: 'window' }); }); } else { rt.carry = 'window'; ev.push({ type: 'carry', what: 'window' }); }
@@ -607,6 +611,12 @@ function tryTab(g) {
   if (s.beat === '7.town' && !s.flags.c7tab) { s.flags.c7tab = true; say(g, 'mara', to === 1998 ? 'c7.mara.tab98' : 'c7.mara.tab04', 4); }
 }
 
+// RC3: June does not wait to be told at the post. If Elena hesitates, she starts carving herself (once)
+function juneStartsJ(g) {
+  const rt = g.rt; if (g.s.beat !== '1.carve' || g.s.flags.carved || g.s.flags.juneJ) { return; }
+  if (rt.dialog || rt.choice || rt.hold.post > 0) { later(g, 3, () => juneStartsJ(g)); return; }
+  Co.react(rt.june, 'grin', 'idle', 2.4); say(g, 'june', 'c1.june.startJ', 4.5); g.s.flags.juneJ = true;
+}
 // RC3: on the old pier every switch says whose work you are standing on (June's 1998 pier, the middle Elena rebuilt alone
 // in 2004), so the three switches are the first telling of the story instead of a puzzle about floors
 function pierTabLine(g, to) {
@@ -791,7 +801,7 @@ export function tick(g, dt, input0) {
   return rt.ev;
 }
 function nudge(g) {
-  const rt = g.rt; const who = rt.june && rt.scene !== 'train' ? 'june' : (rt.theo ? 'theo' : (rt.scene === 'train' ? 'june' : rt.player));
+  const rt = g.rt; const who = rt.scene === 'ride' ? 'june' : rt.june && rt.scene !== 'train' ? 'june' : (rt.theo ? 'theo' : (rt.scene === 'train' ? 'june' : rt.player));
   // stopped at the slipped chain, the ride's general hints (pedal, sprint) would be wrong: say what to do here
   if (rt.ride && rt.ride.stop === 'chain') { say(g, 'june', 'hint.3.ride.chain', 4.5); return; }
   say(g, who, 'hint.' + g.s.beat + '.' + Math.max(1, Math.min(3, rt.hintLevel)), 4.5);
