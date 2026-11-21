@@ -164,14 +164,15 @@ export function createGuide(c) {
     if (knownFound === null) { knownFound = cn; }
     if (cn > knownFound) {
       const f = fragments(g).filter((x) => x.found); const last = newest(g, f); knownFound = cn; toastT = 4.2;
-      toast.textContent = ''; toast.append(el('span', { class: 'ml', text: T('jr.new') }), el('span', { class: 'mt', text: last ? T('mem.' + last.id + '.t') : '' }), el('span', { class: 'mk', text: label('journal') }));
+      toast.textContent = ''; toast.append(el('span', { class: 'ml', text: T('jr.new') }), el('span', { class: 'mt', text: last.map((x) => T('mem.' + x.id + '.t')).join(' · ') }), el('span', { class: 'mk', text: label('journal') }));
       c.play('found');
     }
     if (!cine) { toastT = Math.max(0, toastT - dt); } toast.hidden = !(toastT > 0) || !!cine;   // a memory found during a dialogue is announced after it
   }
   // the fragment most recently found: the one of the latest chapter and position in the list
   let seenIds = null;
-  function newest(g, found) { const ids = found.map((x) => x.id); const prev = seenIds || []; seenIds = ids; const fresh = found.filter((x) => prev.indexOf(x.id) < 0); return fresh[fresh.length - 1] || found[found.length - 1]; }
+  // every memory found since the last note (the KEEP box gives two at once in RC3: the disk and the folded photo)
+  function newest(g, found) { const ids = found.map((x) => x.id); const prev = seenIds || []; seenIds = ids; const fresh = found.filter((x) => prev.indexOf(x.id) < 0); return fresh.length ? fresh : [found[found.length - 1]].filter(Boolean); }
   function resetForGame() { knownFound = null; seenIds = null; lastGoal = null; sig = ''; tut = null; const g = c.game(); if (g) { seenIds = fragments(g).filter((x) => x.found).map((x) => x.id); } }
 
   // ---- the journal panel ------------------------------------------------------------------------------------------

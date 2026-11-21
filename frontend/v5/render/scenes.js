@@ -280,7 +280,7 @@ export function buildCottage(opts) {
   const table = new THREE.Group(); table.position.set(1.3, 0, -0.1); scene.add(table); table.add(box(1.4, 0.06, 1.0, PAL.woodL, 0, 0.72, 0), box(0.06, 0.72, 0.06, PAL.woodD, -0.62, 0, -0.42), box(0.06, 0.72, 0.06, PAL.woodD, 0.62, 0, 0.42), box(0.06, 0.72, 0.06, PAL.woodD, -0.62, 0, 0.42), box(0.06, 0.72, 0.06, PAL.woodD, 0.62, 0, -0.42));
   const sketches = new THREE.Group(); table.add(sketches); for (let i = 0; i < 5; i++) { sketches.add(box(0.3, 0.005, 0.22, 0xfff6e0, -0.4 + i * 0.2, 0.76, (R() - 0.5) * 0.3, { ry: R() - 0.5, cast: false })); }
   const shelf = new THREE.Group(); shelf.position.set(3.25, 0, 1.95); scene.add(shelf); shelf.add(box(1.2, 1.8, 1.8, PAL.woodD, 0, 0, 0)); for (let i = 0; i < 8; i++) { shelf.add(box(0.2, 0.3, 0.06, [0xd6443c, 0x3f7cc4, 0xe0a83a, 0x4fa36b][i % 4], -0.4 + (i % 4) * 0.25, 0.3 + Math.floor(i / 4) * 0.6, 0.92)); }
-  const chair = box(0.5, 0.45, 0.5, PAL.woodL, -1.4, 0, -1.0); scene.add(chair); const stool = cyl(0.22, 0.2, 0.45, 8, PAL.woodL, 0, 0, -1.6); scene.add(stool);
+  const chair = box(0.5, 0.45, 0.5, PAL.woodL, -1.4, 0, -1.0); scene.add(chair); const stool = cyl(0.22, 0.2, 0.45, 8, PAL.woodL, LAYOUTS.cottage.juneSeat.x, 0, LAYOUTS.cottage.juneSeat.z); scene.add(stool);   // June's seat for the duet (RC3: beside Elena)
   const lampStand = new THREE.Group(); lampStand.position.set(-2.4, 0, -0.4); scene.add(lampStand); lampStand.add(cyl(0.03, 0.03, 1.6, 5, 0x2a2a30, 0, 0, 0), cone(0.25, 0.3, 8, 0xffe0a8, 0, 1.6, 0, { mat: { emissive: 0xffb860, ei: 0.8 } }));
   // 2004: dust sheets and a suitcase by the door
   const sheets = new THREE.Group(); scene.add(sheets);

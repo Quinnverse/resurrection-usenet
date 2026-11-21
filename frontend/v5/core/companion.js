@@ -54,7 +54,9 @@ export function tick(c, dt, player) {
       break;
     }
     case 'WAIT':
-      c.anim = 'idle'; if (d < 7) { facePlayer(4); }
+      // a seated companion (the duet) stays seated and keeps the way she sits; turning to the player would put her
+      // legs through Elena's (RC3)
+      if (c.seated) { c.anim = 'sit'; } else { c.anim = 'idle'; if (d < 7) { facePlayer(4); } }
       if (c.idleT > 14 && c.nudges < 3) { c.idleT = 0; c.nudges += 1; ev.push({ type: 'june-say', key: 'june.idle' + c.nudges }); }
       break;
     case 'PLAY':

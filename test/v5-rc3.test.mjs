@@ -161,3 +161,10 @@ test('RC3 texts: every key in both languages, and the memory card says who the p
   assert.match(dictionaries.en['ui.memoryNote'], /Elena/); assert.match(dictionaries.en['ui.memoryNote'], /June/); assert.match(dictionaries.en['ui.memoryNote'], /not a recording/);
   assert.match(dictionaries.zh['ui.memoryNote'], /埃莱娜/); assert.match(dictionaries.zh['ui.memoryNote'], /琳/);
 });
+
+test('duet: June stays seated and keeps facing forward while waiting (she stood up and turned into Elena before)', async () => {
+  const g = await from('4.duet'); const want = Gm.duetPlaces(!!g.s.choices.closer).june.yaw;
+  for (let i = 0; i < 30 * 8; i++) { const s = Gm.snapshot(g); Gm.tick(g, 1 / 30, { advance: !!s.dialog }); }
+  assert.equal(g.rt.june.anim, 'sit'); assert.ok(Math.abs(Math.atan2(Math.sin(g.rt.june.facing - want), Math.cos(g.rt.june.facing - want))) < 0.05, 'facing the point in front');
+  const st = LAYOUTS.cottage.juneSeat; for (const closer of [false, true]) { const j = Gm.duetPlaces(closer).june; assert.ok(Math.hypot(j.x - st.x, j.z - st.z) < 0.2, 'on the stool (' + (closer ? 'closer' : 'apart') + ')'); }
+});

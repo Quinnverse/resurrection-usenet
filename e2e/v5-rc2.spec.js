@@ -150,8 +150,9 @@ test.describe('V5 RC2 — a first-time player', () => {
     if ((await snap(page)).mode !== 'play') { await page.keyboard.press('Escape'); }
     // 4 the box: open it, the first memory appears, the journal opens with J and shows it
     await walkTo(page, -0.4, 2.2, (s) => s.prompt && s.prompt.id === 'keepbox', 30000); expect(await walkTo(page, -1.1, 2.2, (s) => s.prompt && s.prompt.id === 'keepbox', 20000)).toBe(true);
-    await page.keyboard.press('KeyE'); await page.waitForTimeout(300); for (let i = 0; i < 4 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(500); }
-    await expect(page.getByTestId('mem-toast')).toBeVisible({ timeout: 8000 }); await expect(page.getByTestId('mem-toast')).toContainText('The backup disk');
+    // RC3: the box also holds the folded photo, so its dialogue is longer (7 entries); press until it is over
+    await page.keyboard.press('KeyE'); await page.waitForTimeout(300); for (let i = 0; i < 14 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(500); }
+    await expect(page.getByTestId('mem-toast')).toBeVisible({ timeout: 8000 }); await expect(page.getByTestId('mem-toast')).toContainText('The folded photo'); await expect(page.getByTestId('mem-toast')).toContainText('The backup disk');
     o = await obj(page); expect(o.next).toBe('load'); await expect(page.getByTestId('quest-next')).toContainText('computer');
     await attach(testInfo, 'rc2-04-first-memory', await shot(page));
     await page.keyboard.press('KeyJ'); await expect(page.getByTestId('journal-memories')).toBeVisible(); await expect(page.getByTestId('mem-disk')).toContainText('For M., when she asks');
@@ -343,9 +344,11 @@ test.describe('V5 RC3 — after the owner playtest', () => {
       await bot.go('keepbox', -1.1, 2.2); await bot.use('keepbox'); h.unvirtualize();
     });
     const seen = [];
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 20; i++) {
       const s = await snap(page); if (!s.dialog) { break; }
-      const line = Array.isArray(s.dialog.line) ? s.dialog.line[1] : null; if (line && seen[seen.length - 1] !== line) { seen.push(line); await page.waitForTimeout(700); await attach(testInfo, `rc3-04-study-${String(seen.length).padStart(2, '0')}-${line}`, await shot(page)); }
+      // a pause entry (['pause', secs]) runs out by itself: wait, do not press (a press would skip the line after it)
+      if (Array.isArray(s.dialog.line) && s.dialog.line[0] === 'pause') { await page.waitForTimeout(1100); continue; }
+      const line = Array.isArray(s.dialog.line) ? s.dialog.line[1] : null; if (typeof line === 'string' && seen[seen.length - 1] !== line) { seen.push(line); await page.waitForTimeout(700); await attach(testInfo, `rc3-04-study-${String(seen.length).padStart(2, '0')}-${line}`, await shot(page)); }
       await page.keyboard.press('Space'); await page.waitForTimeout(500);
     }
     expect(seen).toEqual(expect.arrayContaining(['c1.mara.folded', 'c1.mara.unfold', 'c1.photo.back', 'c1.mara.neverSaid']));
@@ -358,6 +361,7 @@ test.describe('V5 RC3 — after the owner playtest', () => {
     for (let i = 0; i < 6 && (await snap(page)).dialog; i++) { await page.keyboard.press('Space'); await page.waitForTimeout(600); }
     await page.waitForTimeout(1200); await attach(testInfo, 'rc3-05-duet-side-by-side', await shot(page));
     const s = await snap(page); expect(s.june && Math.abs(s.june.z - (-1.0)) < 0.3, 'June beside Elena, not across from her').toBe(true);
+    expect(s.june.anim, 'June sits on her stool (she stood up before RC3)').toBe('sit');
     expect(w.issues).toEqual([]);
   });
 });

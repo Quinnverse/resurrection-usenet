@@ -302,7 +302,7 @@ const SETUP = {
   },
   '4.duet': (g) => {
     const jp = duetJune(!!g.s.choices.closer);
-    g.rt.june = Co.newCompanion(jp.x, jp.z, jp.yaw); Co.wait(g.rt.june, null, 'smile'); g.rt.june.anim = 'sit';
+    g.rt.june = Co.newCompanion(jp.x, jp.z, jp.yaw); Co.wait(g.rt.june, null, 'smile'); g.rt.june.anim = 'sit'; g.rt.june.seated = true;
     g.rt.body.x = LAYOUTS.cottage.guitarSeat.x; g.rt.body.z = LAYOUTS.cottage.guitarSeat.z; g.rt.seated = true; g.rt.baseShot = 'duet';
     g.rt.duetN = g.s.flags.duet1 ? 1 : 0;
     if (!g.s.flags.c4intro) { dialog(g, 'c4.intro', () => { g.s.flags.c4intro = true; }); }
