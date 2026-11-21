@@ -52,8 +52,8 @@ function el(tag, attrs, kids) { const n = document.createElement(tag); Object.en
 const ui = {
   chapter: el('div', { class: 'chapter', 'data-testid': 'chapter' }), era: el('button', { class: 'era', type: 'button', 'data-testid': 'era', hidden: '' }),
   prompt: el('div', { class: 'prompt', 'data-testid': 'prompt', hidden: '' }), subs: el('div', { class: 'subs', 'data-testid': 'subs' }), choice: el('div', { class: 'choices', 'data-testid': 'choices', hidden: '' }),
-  banner: el('div', { class: 'banner', 'data-testid': 'banner' }), tip: el('div', { class: 'tip', 'data-testid': 'tip' }), fade: el('div', { class: 'fade' }), aim: el('div', { class: 'aimframe', hidden: '' }),
-  meter: el('div', { class: 'meter', hidden: '', 'data-testid': 'meter' }), paper: el('canvas', { class: 'paper', width: '520', height: '360', hidden: '', 'data-testid': 'paper' }), reticle: el('div', { class: 'reticle', hidden: '' }), act: el('div', { class: 'act', 'data-testid': 'act' }),
+  banner: el('div', { class: 'banner', 'data-testid': 'banner' }), tip: el('div', { class: 'tip', 'data-testid': 'tip' }), fade: el('div', { class: 'fade' }), aim: el('div', { class: 'aimframe', hidden: '', 'data-testid': 'aimframe' }, [el('div', { class: 'aimnote', 'data-testid': 'aim-note' })]),
+  meter: el('div', { class: 'meter', hidden: '', 'data-testid': 'meter' }), paper: el('canvas', { class: 'paper', width: '520', height: '360', hidden: '', 'data-testid': 'paper' }), reticle: el('div', { class: 'reticle', hidden: '' }), lookdot: el('div', { class: 'lookdot', 'data-testid': 'lookdot' }), act: el('div', { class: 'act', 'data-testid': 'act' }),
   panel: el('div', { class: 'panel', hidden: '', role: 'dialog', 'data-testid': 'panel' }), overlay: el('div', { class: 'overlay', hidden: '' }), saved: el('div', { class: 'saved' }), source: el('button', { class: 'source', type: 'button', hidden: '', 'data-testid': 'source' })
 };
 ui.subs.append(el('div', { class: 'who' }), el('div', { class: 'line' }), el('div', { class: 'next' }));
@@ -80,7 +80,8 @@ const cast = {};
 // the on-screen guide: task bar, tips, help markers, memory journal (guide.js)
 const guide = createGuide({
   app, el, T: (k, v) => T(k, v), prefs, savePrefs: () => write(PREF_KEY, prefs), keys, keyLabel: (code) => keyLabel(code), device: () => lastDev,
-  snap: () => Gm.snapshot(g), game: () => g, mode: () => mode, camera, THREE, scene: () => (world ? world.scene : null), play: (n) => A.play(n), camYaw: () => cam.yaw
+  snap: () => Gm.snapshot(g), game: () => g, mode: () => mode, camera, THREE, scene: () => (world ? world.scene : null), play: (n) => A.play(n), camYaw: () => cam.yaw,
+  sprinting: () => down.has(keys.sprint) || down.has('ShiftRight') || (pad && (pad.btn(4) || pad.btn(5) || pad.btn(10))), pointerLocked: () => locked
 });
 fillKeys = guide.fill;
 const cam = { yaw: 0, pitch: 0.38, dist: 4.5, pos: new THREE.Vector3(), look: new THREE.Vector3(), shotT: 0 };
@@ -205,7 +206,17 @@ cv.addEventListener('mousedown', (e) => {
 });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) { mouse.left = false; } if (e.button === 2) { mouse.right = false; } });
 window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } if (locked || mouse.left || mouse.right) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; } });
-document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
+// Mouse modes. Exploring: after a click on the scene the pointer is captured; moving the mouse looks around, a dot in the
+// middle shows where you look, a click uses what is named. Menus, the journal and the pause screen: the pointer is free and
+// visible. Esc (the browser releases the pointer on Esc) always pauses, so the cursor and the menu arrive together; Resume
+// and one click on the scene capture it again. Settings › Mouse can keep the pointer free (drag to look) instead.
+let ownUnlock = false;
+const releasePointer = () => { if (document.pointerLockElement) { ownUnlock = true; document.exitPointerLock(); } };
+document.addEventListener('pointerlockchange', () => {
+  const was = locked; locked = document.pointerLockElement === cv; app.classList.toggle('locked', locked);
+  if (was && !locked && !ownUnlock && mode === 'play' && g) { openPause(); }
+  ownUnlock = false;
+});
 const reduceLockPref = () => !!prefs.noLock;
 // touch: left half moves, right half looks, double tap acts
 const touch = { move: null, look: null };
@@ -285,7 +296,7 @@ function collectInput(dt) {
     use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || P.edge(2), useHeld: k('use') || P.btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
     tab: p('tab') || P.edge(3) || tpad.tab, hint: p('hint') || P.edge(8) || tpad.hint, autoHelp: prefs.autoHelp !== false,
     aim: mouse.right || k('aim') || P.btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || P.btn(6))) || (p('use') && (mouse.right || k('aim'))) || P.edge(7) || (tpad.shoot && tpad.aim),
-    aimDX: mouse.dx, aimDY: mouse.dy, advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen) || !!(P.edge(1) && s.dialog && s.dialog.seen), choose: rt.choose
+    aimDX: mouse.dx, aimDY: mouse.dy, aspect: window.innerWidth / Math.max(1, window.innerHeight), advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen) || !!(P.edge(1) && s.dialog && s.dialog.seen), choose: rt.choose
   };
   // choices with a pad: D-pad moves the highlight, A or X picks it
   if (ch && P.gp) {
@@ -295,7 +306,7 @@ function collectInput(dt) {
   }
   if (!ch) { rt.padChoice = 0; }
   [...ui.choice.querySelectorAll('.copt')].forEach((b, i) => b.classList.toggle('focus', !!(P.gp && ch) && i === rt.padChoice));
-  if (P.edge(9) && mode === 'play') { if (document.pointerLockElement) { document.exitPointerLock(); } openPause(); }   // Start always pauses (B skips a seen line)
+  if (P.edge(9) && mode === 'play') { releasePointer(); openPause(); }   // Start always pauses (B skips a seen line)
   // the camera follows the mouse unless the camera is in someone's hands
   if (s.scene !== 'train' && !s.shot) { cam.yaw -= mouse.dx * 0.0028; cam.pitch = Math.max(0.05, Math.min(1.0, cam.pitch + mouse.dy * 0.0022)); }
   rt.inputSeen = Math.abs(input.mx) + Math.abs(input.mz) > 0.1 || input.use || input.useHeld || input.jump || input.tab || input.aim || input.advance || Math.abs(mouse.dx) + Math.abs(mouse.dy) > 2 || input.choose !== null && input.choose !== undefined;
@@ -498,7 +509,7 @@ function syncCast(dt) {
     showProp(me, 'suitcase', s.carry === 'suitcase'); showProp(me, 'box', !!(s.carry && s.carry.startsWith('box')));
     if (s.carry && s.carry.startsWith('box') && !s.seated) { animate(me, rt.t, me.userData.phase || 0, Math.hypot(b.vx, b.vz), 'carry', reduce()); }
     if (s.tuning) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = 0.5; animate(me, rt.t, 0, 0, 'guitar', reduce()); }
-    if (s.beat === '4.duet' && s.seated) { me.position.set(LAYOUTS.cottage.guitarSeat.x, 0.1, LAYOUTS.cottage.guitarSeat.z); me.rotation.y = s.june ? Math.atan2(s.june.x - me.position.x, s.june.z - me.position.z) : 0.5; }
+    if (s.beat === '4.duet' && s.seated) { const dp = Gm.duetPlaces(Math.abs((s.june ? s.june.x : 0) - LAYOUTS.cottage.guitarSeat.x) < (LAYOUTS.cottage.duet.apart + LAYOUTS.cottage.duet.closer) / 2); me.position.set(dp.elena.x, 0.1, dp.elena.z); me.rotation.y = dp.elena.yaw; }
   }
   if (s.june && s.scene !== 'ride') {
     const jn = person(juneId()); const j = g.rt.june;
@@ -529,7 +540,7 @@ function syncCast(dt) {
   }
   if (worldId === 'station' && g.rt.train) { world.setTrain(g.rt.train.x, !g.rt.train.gone && (s.beat !== '5.alone' || g.rt.train.moving)); }
   if (worldId === 'station') { world.setSuitcase(s.beat !== '5.depart' ? 'none' : s.carry === 'suitcase' ? 'carried' : (g.s.flags.suitcase ? (g.rt.boarding ? 'none' : 'door') : 'bench')); }
-  if (worldId === 'train') { world.setOutside(g.rt.photoT || 0); }
+  if (worldId === 'train') { world.setOutside(g.rt.outsideT || 0); }
   if (worldId === 'coast') { world.setLens(g.rt.hold.pulley || 0, !!g.s.flags.lens); world.setBeamAngle(s.beam ? s.beam.a : null); world.setStars(s.stars ? s.stars.linked.length : 0); }
   if (worldId === 'town') { world.setBeamAngle(s.beam ? s.beam.a : null); world.setRope(!(s.iris && s.iris.boarded)); world.setNewPier(s.era === 2004 ? (g.s.edition.pier_walk ? 1 : (g.rt.hold.newPier || 0)) : 0); }
   if (worldId === 'cottage') { const st = {}; ['boxA', 'boxB'].forEach((k) => { st[k] = s.carry === k ? 'carried' : (g.s.flags[k] ? 'placed' : 'floor'); }); world.setBoxes(st); }
@@ -584,12 +595,19 @@ function renderHud() {
   ui.era.hidden = !showEra; if (showEra) { ui.era.textContent = T(s.era === 1998 ? 'ui.era.1998' : (Object.keys(g.s.restored).length ? 'ui.era.2004r' : 'ui.era.2004')) + '  ·  Tab'; }
   ui.source.hidden = !(rt.sourceProv && mode === 'play' && !cine && s.scene === 'town'); ui.source.textContent = T('ui.source');
   ui.aim.hidden = !(s.scene === 'train' && s.aim);
+  // the viewfinder says what it sees: gold when a picture now would count, an arrow toward the subject when it is out of
+  // the frame, and for June's candid shot, when to wait
+  const ah = s.scene === 'train' && s.aim ? s.aimHelp : null;
+  ui.aim.classList.toggle('ready', !!(ah && ah.ready)); ui.aim.classList.toggle('left', !!(ah && ah.side === 'left')); ui.aim.classList.toggle('right', !!(ah && ah.side === 'right'));
+  const an = !ah ? '' : ah.ready ? T('ui.aim.now') : ah.inFrame && ah.id === 'june' ? T('ui.aim.waitJune') : ah.inFrame && !ah.seen ? T('ui.aim.waitWindow') : ah.side ? T('ui.aim.' + ah.side) : '';
+  const noteEl = ui.aim.firstChild; if (noteEl && noteEl.textContent !== an) { noteEl.textContent = an; }
   if (s.scene === 'train' && !s.aim && !cine && mode === 'play' && !g.s.flags.juneSnap) { if (!ui.tip.classList.contains('on')) { tip(T('ui.aimHint'), 0.1); ui.tip.classList.add('on'); } } else if (s.scene === 'train' && (cine || s.aim)) { ui.tip.classList.remove('on'); }
   if (s.duet && s.duet.cueIn !== null && s.duet.cueIn !== undefined) { app.classList.toggle('cue', Math.abs(s.duet.cueIn) < 0.45); } else { app.classList.remove('cue'); }
   // activity overlays: only while the activity runs
   ui.meter.hidden = !(s.tuning && !s.dialog);
   if (s.tuning) { ui.meter.querySelector('.needle').style.left = (50 + s.tuning.needle * 46) + '%'; ui.meter.querySelector('.mid').classList.toggle('in', Math.abs(s.tuning.needle) < 0.2); ui.meter.querySelector('.strings').textContent = ['E', 'A', 'D'].map((n, i) => (i < s.tuning.string ? n + '✓' : n)).join('  '); }
   ui.paper.hidden = !s.pen; if (s.pen) { drawPaper(s.pen); }
+  app.classList.toggle('noDot', s.scene === 'porch' || s.scene === 'train' || s.scene === 'ride' || !!s.tuning || !!s.pen || !!s.duet);   // these have their own frame, reticle or none
   ui.reticle.hidden = !(s.scene === 'porch' && !s.dialog); ui.reticle.classList.toggle('on', !!(s.stars && s.stars.onStar));
   const act = s.dialog || s.choice ? '' : s.tuning ? T('ui.tune') : s.pen ? T('ui.pen') : s.sketch ? T('ui.sketch') : (s.scene === 'porch' && s.stars && s.stars.i < 5) ? T('ui.stars') : (s.beam && s.beam.ready && !s.beam.done) ? T('ui.beam') : (s.scene === 'ride' && s.ride && s.ride.s < 40) ? T('ui.ride') : '';
   if (ui.act.textContent !== act) { ui.act.textContent = act; ui.act.classList.toggle('on', !!act); }
@@ -674,13 +692,14 @@ function onEscape() {
   if (mode === 'panel') { closePanel(); return; }
   if (mode === 'pause') { closePanel(); return; }
   if (mode !== 'play' || !g) { return; }
-  const s = Gm.snapshot(g); if (s.dialog && s.dialog.seen) { rt.skip = true; return; }
-  if (document.pointerLockElement) { document.exitPointerLock(); }
+  // with the pointer captured the browser releases it on Esc and that pauses (pointerlockchange); otherwise Esc skips a seen line
+  const s = Gm.snapshot(g); if (s.dialog && s.dialog.seen && !locked) { rt.skip = true; return; }
+  releasePointer();
   openPause();
 }
 function openJournal() {
   PT.pause(); mode = 'pause'; rt.journalOpen = true; ui.panel.hidden = false; down.clear();
-  if (document.pointerLockElement) { document.exitPointerLock(); }
+  releasePointer();
   guide.journal(ui.panel);
   const close = el('button', { type: 'button', class: 'btn', text: T('jr.close') + '  (' + guide.label('journal') + ')', 'data-testid': 'journal-close', onclick: closePanel });
   ui.panel.append(close); close.focus();
@@ -707,6 +726,7 @@ function renderSettings() {
     row(T('ui.motion'), [btn(prefs.reduce ? T('ui.motionReduced') : T('ui.motionFull'), 'motion', () => setP('reduce', !prefs.reduce))]),
     row(T('ui.tutorial'), [btn(prefs.tips === false ? T('ui.off') : T('ui.on'), 'tips', () => { if (prefs.tips === false) { prefs.tut = {}; } setP('tips', prefs.tips === false); })]),
     row(T('ui.autoHelp'), [btn(prefs.autoHelp === false ? T('ui.off') : T('ui.on'), 'auto-help', () => setP('autoHelp', prefs.autoHelp === false))]),
+    row(T('ui.mouse'), [btn(prefs.noLock ? T('ui.mouse.free') : T('ui.mouse.capture'), 'mouse-mode', () => setP('noLock', !prefs.noLock))]),
     row(T('ui.subs'), [btn(prefs.subs === 'large' ? T('ui.subsLarge') : T('ui.subsNormal'), 'subs', () => setP('subs', prefs.subs === 'large' ? 'normal' : 'large'))]),
     row(T('ui.language'), [btn(T('ui.lang'), 'lang', () => { setP('lang', prefs.lang === 'zh' ? 'en' : 'zh'); applyLang(); })]),
     row(T('ui.keys'), [kb, btn(T('ui.resetKeys'), 'reset-keys', () => { Object.assign(keys, DEFAULT_KEYS); write(KEYS_KEY, keys); rebinding = null; rt.keyNote = null; renderSettings(); })]),

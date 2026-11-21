@@ -105,15 +105,19 @@ export const REACTIONS = { missed: { expr: 'tease', anim: 'look' }, candid: { ex
 // Things outside the window, in carriage coordinates (the seat faces -z; +x is the sea side). They loop so a dare can
 // always be taken again. The renderer places its lighthouse and kite with the same function.
 export const DARES = ['lighthouse', 'kite', 'june'];
+// the stretch of the outside (carriage z) that the side windows show from the seat
+export const WINDOW_Z = [-18, 10];
 export function trainTarget(id, t) {
-  if (id === 'lighthouse') { return { x: 34, y: 5.5, z: -70 + ((t * 2.2) % 120) }; }
+  // RC3: slower and on a shorter loop, so it is in the windows for 20 s of every 43 s (it was 16 s of every 55 s)
+  if (id === 'lighthouse') { return { x: 34, y: 5.5, z: -30 + ((t * 1.4) % 60) }; }
   if (id === 'kite') { return { x: -12, y: 4.2 + Math.sin(t * 1.3) * 0.6, z: -46 + ((t * 4.0) % 70) }; }
   return null;
 }
 // Is target `id` in this photo? June is judged by takePhoto; outside things by framing and distance.
 export function dareShot(cam, id, t) {
   const p = trainTarget(id, t); if (!p) { return { ok: false }; }
-  const f = frame(cam, p); return { ok: f.inFrame && Math.abs(f.nx) < 0.75 && Math.abs(f.ny) < 0.75, f };
+  // inside the drawn viewfinder (the middle 80% of the view), with the camera's real aspect
+  const f = frame(cam, p); return { ok: f.inFrame && Math.abs(f.nx) < 0.8 && Math.abs(f.ny) < 0.8, f };
 }
 
 // ---- tuning the guitar (chapter 4) ----------------------------------------------------------------------------

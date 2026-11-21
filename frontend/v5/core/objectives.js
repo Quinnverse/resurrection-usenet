@@ -8,6 +8,8 @@
 // Text keys: 'obj.<beat>' is the goal, 'step.<beat>.<id>' the step, 'do.<beat>.<id>' how to do it (may contain {k:action}
 // tokens that the interface turns into the player's own keys, pad buttons or touch buttons).
 import { LAYOUTS, point } from './layout.js';
+import { ridePose } from './toys.js';
+const juneBike = (r) => { const p = ridePose(r, r.june.s, r.june.d); return { x: p.x, z: p.z }; };
 
 const chapterOf = (beat) => (beat === 'end' ? 7 : parseInt(beat, 10));
 const pt = (scene, id) => { const p = point(scene, id); return p ? { x: p.x, z: p.z } : null; };
@@ -93,8 +95,9 @@ const BEATS = {
     return { steps, target: null, ctx };
   },
   '3.ride': (g) => {
+    // the slipped chain: the marker and the help arrow point at June's bike
     const r = g.rt.ride || {}; const ctx = r.stop === 'chain' ? 'do.3.ride.chainNow' : null;
-    return { steps: [{ id: 'ride', done: !!(r.stop === 'chain' || r.chainDone) }, { id: 'chain', done: !!r.chainDone }, { id: 'arrive', done: false }, { id: 'ribbons', done: !!(r.gates && r.gates.some((x) => x === 'in')), optional: true }], target: null, ctx };
+    return { steps: [{ id: 'ride', done: !!(r.stop === 'chain' || r.chainDone) }, { id: 'chain', done: !!r.chainDone }, { id: 'arrive', done: false }, { id: 'ribbons', done: !!(r.gates && r.gates.some((x) => x === 'in')), optional: true }], target: r.stop === 'chain' && r.road ? juneBike(r) : null, ctx };
   },
   '3.yard': (g) => {
     const s = g.s, rt = g.rt; const has = rt.carry === 'window' || s.window.placed;

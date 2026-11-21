@@ -34,6 +34,8 @@ const BEAT_YEAR = { '1.carve': 1998, '4.porch': 1998, '6.beach': 2004, '1.chase'
 const PLAYER = { study: 'mara', town: 'mara', station: 'elena', train: 'elena', ride: 'elena', coast: 'elena', cottage: 'elena', porch: 'elena' };
 const BEAT_PLAYER = { '1.carve': 'elena' };
 export const chapterOf = (beat) => (beat === 'end' ? 7 : parseInt(beat, 10));
+// seconds stopped at the slipped chain without touching it before June fixes it herself (the help speaks at 30/60/90 s first)
+export const CHAIN_SELF_FIX = 100;
 export const HOLD = { bridge: 4.0, crank: 3.2, pulley: 3.0, chain: 2.0, credits: 2.5, rope: 2.0, seasons: 3.0, post: 2.5, lampRestore: 3.0, newPier: 4.0 };
 const MAX_PHOTOS = 10;
 
@@ -80,6 +82,7 @@ export const DIALOGS = {
   'c2.backs': [L('screen', 'c2.back.june', 'photoback'), L('screen', 'c2.back.elena', 'photoback')],
   // chapter 3
   'c3.chain': [L('june', 'c3.june.chain', 'june'), L('elena', 'c3.elena.chain'), L('june', 'c3.june.chainHold', 'june')],
+  'c3.chainSelf': [L('june', 'c3.june.chainSelf', 'june'), L('elena', 'c3.elena.chainSelf')],
   'c3.chainFixed': [L('june', 'c3.june.fixed', 'june'), L('elena', 'c3.elena.grease'), L('june', 'c3.june.grease', 'june')],
   'c3.window': [L('june', 'c3.june.ta', 'window'), L('elena', 'c3.elena.crooked'), L('june', 'c3.june.yes'), L('elena', 'c3.elena.whyCrooked'), L('june', 'c3.june.because')],
   'c3.listen': [L('elena', 'c3.elena.complain'), L('june', 'c3.june.dontListen', 'twoshot'), pause(0.9, 'elena'), L('elena', 'c3.elena.wantTo', 'elena'), pause(1.2, 'june'), L('june', 'c3.june.lens', 'june')],
@@ -296,9 +299,8 @@ const SETUP = {
     if (!g.s.flags.c4arrive) { dialog(g, 'c4.arrive', () => { g.s.flags.c4arrive = true; Co.wait(g.rt.june, null, 'smile'); }); }
   },
   '4.duet': (g) => {
-    const near = g.s.choices.closer ? -0.55 : 0;
-    const js = LAYOUTS.cottage.juneSeat, gs = LAYOUTS.cottage.guitarSeat;
-    g.rt.june = Co.newCompanion(js.x + near, js.z, Math.atan2(gs.x - js.x - near, gs.z - js.z)); Co.wait(g.rt.june, null, 'smile'); g.rt.june.anim = 'sit';
+    const jp = duetJune(!!g.s.choices.closer);
+    g.rt.june = Co.newCompanion(jp.x, jp.z, jp.yaw); Co.wait(g.rt.june, null, 'smile'); g.rt.june.anim = 'sit';
     g.rt.body.x = LAYOUTS.cottage.guitarSeat.x; g.rt.body.z = LAYOUTS.cottage.guitarSeat.z; g.rt.seated = true; g.rt.baseShot = 'duet';
     g.rt.duetN = g.s.flags.duet1 ? 1 : 0;
     if (!g.s.flags.c4intro) { dialog(g, 'c4.intro', () => { g.s.flags.c4intro = true; }); }
@@ -398,7 +400,7 @@ function points(g) {
   } else if (sc === 'train') {
     if (rt.tunnel && rt.tunnel.t > 1.2 && !s.flags.heldHand && !rt.dialog) { add('juneHand', 0.3, -0.1, 99, { verb: 'verb.reach' }); }
   } else if (sc === 'ride') {
-    if (rt.ride && rt.ride.stop === 'chain' && !rt.dialog) { add('chain', rt.body.x, rt.body.z, 99, { verb: 'verb.fixChain', hold: true }); }
+    if (rt.ride && rt.ride.stop === 'chain' && !rt.dialog) { const jp = Toys.ridePose(rt.ride, rt.ride.june.s, rt.ride.june.d); add('chain', jp.x, jp.z, 99, { verb: 'verb.fixChain', hold: true }); }
   } else if (sc === 'coast') {
     if (beat === '3.yard') {
       if (!s.window.placed && !rt.carry) { at('cart', { verb: 'verb.window' }); }
@@ -650,7 +652,43 @@ function addPhoto(g, p) {
 }
 
 // ---- Chapter 2: the camera on the train -------------------------------------------------------------------------
-const trainCam = (rt) => { const lay = LAYOUTS.train; return { x: lay.seat.x, y: lay.seat.y, z: lay.seat.z, yaw: rt.aimYaw, pitch: rt.aimPitch, fov: 40, aspect: 1.5 }; };
+// the camera of the photo dares. fov and aspect are the ones of the view on screen, so what the frame shows is what counts
+const trainCam = (rt) => { const lay = LAYOUTS.train; return { x: lay.seat.x, y: lay.seat.y, z: lay.seat.z, yaw: rt.aimYaw, pitch: rt.aimPitch, fov: 40, aspect: rt.aspect || 1.5 }; };
+const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+// the duet: June beside Elena (apart, or closer after the choice), both turned toward one point in front of them
+export function duetPlaces(closer) {
+  const gs = LAYOUTS.cottage.guitarSeat, D = LAYOUTS.cottage.duet; const sep = closer ? D.closer : D.apart;
+  const j = { x: gs.x + sep, z: gs.z }; const f = { x: gs.x + sep / 2, z: gs.z + D.focus };
+  return { elena: { x: gs.x, z: gs.z, yaw: Math.atan2(f.x - gs.x, f.z - gs.z) }, june: { x: j.x, z: j.z, yaw: Math.atan2(f.x - j.x, f.z - j.z) }, focus: f };
+}
+const duetJune = (closer) => duetPlaces(closer).june;
+// the drawn viewfinder is the middle 80% of the view (index.html .aimframe); a subject inside it counts
+export const FRAME_BOX = 0.8;
+// what the current dare wants in the picture, where it is, and whether a picture now would count
+function aimSubject(g) {
+  const rt = g.rt, lay = LAYOUTS.train;
+  if (rt.sleep && !rt.sleep.done) { return { id: 'june', p: { x: lay.june.x, y: 1.15, z: lay.june.z } }; }
+  if (rt.dare === 0 || rt.dare === 1) { const id = Toys.DARES[rt.dare]; return { id, p: Toys.trainTarget(id, rt.outsideT || 0) }; }
+  if (rt.dare === 2 && !rt.sketch) { return { id: 'june', p: { x: lay.june.x, y: 1.15, z: lay.june.z } }; }
+  return null;
+}
+function aimAt(p) { const lay = LAYOUTS.train; const dx = p.x - lay.seat.x, dy = p.y - lay.seat.y, dz = p.z - lay.seat.z; return { yaw: Math.atan2(-dx, -dz), pitch: -Math.atan2(dy, Math.hypot(dx, dz)) }; }
+function aimHelp(g) {
+  const rt = g.rt; const sub = aimSubject(g); if (!sub) { return null; }
+  const cam = trainCam(rt); const f = Toys.frame(cam, sub.p); const want = aimAt(sub.p);
+  const inFrame = f.depth > 0.05 && Math.abs(f.nx) < FRAME_BOX && Math.abs(f.ny) < FRAME_BOX;
+  const seen = sub.id === 'june' || (sub.p.z > Toys.WINDOW_Z[0] && sub.p.z < Toys.WINDOW_Z[1]);   // outside: only through a window
+  const ready = inFrame && seen && (sub.id !== 'june' || !!(rt.sleep && !rt.sleep.done) || Toys.juneMoodAt(rt.photoT) === 'window');
+  const dyaw = wrapA(want.yaw - rt.aimYaw), dpitch = want.pitch - rt.aimPitch;
+  return { id: sub.id, inFrame, seen, ready, side: inFrame ? null : (dyaw > 0 ? 'left' : 'right'), dyaw, dpitch };
+}
+// at the start of a dare: the subject comes into view soon, and the view turns toward it
+function startDareView(g) {
+  const rt = g.rt; const id = Toys.DARES[rt.dare];
+  if (id === 'lighthouse') { rt.outsideT = 10 / 1.4; }   // the lighthouse at z -20: just coming into the sea-side windows
+  if (id === 'kite') { rt.outsideT = 28 / 4.0; }         // the kite at z -18: just coming into the land-side windows
+  const sub = aimSubject(g); if (sub) { const a = aimAt(sub.p); rt.aimEase = { yaw: a.yaw, pitch: Math.max(-0.4, Math.min(0.5, a.pitch)), t: 1.4 }; }
+}
 function shootTrain(g) {
   const s = g.s, rt = g.rt, lay = LAYOUTS.train, cam = trainCam(rt);
   const free = s.photos.filter((q) => q.kind === 'free').length;
@@ -661,7 +699,7 @@ function shootTrain(g) {
     return;
   }
   let ok = false;
-  if (rt.dare === 0 || rt.dare === 1) { const id = Toys.DARES[rt.dare]; if (Toys.dareShot(cam, id, rt.photoT).ok) { Object.assign(p, { kind: 'dare', dare: id, reaction: id }); ok = true; } }
+  if (rt.dare === 0 || rt.dare === 1) { const id = Toys.DARES[rt.dare]; if (Toys.dareShot(cam, id, rt.outsideT || 0).ok) { Object.assign(p, { kind: 'dare', dare: id, reaction: id }); ok = true; } }
   else if (rt.dare === 2 && p.reaction === 'candid') { Object.assign(p, { kind: 'dare', dare: 'june' }); ok = true; }
   addPhoto(g, p); rt.ev.push({ type: 'photo', photo: p }); rt.ev.push({ type: 'save' });
   const rx = Toys.REACTIONS[p.reaction] || Toys.REACTIONS.smile; Co.react(rt.june, rx.expr, rx.anim, 2.2);
@@ -671,8 +709,8 @@ function shootTrain(g) {
 function dareDone(g, gaveUp) {
   const s = g.s, rt = g.rt; const n = rt.dare; s.flags['dare' + n] = true; rt.dare = n + 1; rt.dareT = 0;
   if (n === 2) { if (gaveUp) { dialog(g, 'c2.dareGive', () => juneSnap(g)); } else { juneSnap(g); } return; }
-  if (gaveUp) { dialog(g, 'c2.dareGive', () => (n === 0 ? dialog(g, 'c2.nextKite') : startSketch(g))); return; }
-  if (n === 0) { dialog(g, 'c2.dare1ok'); return; }
+  if (gaveUp) { dialog(g, 'c2.dareGive', () => (n === 0 ? dialog(g, 'c2.nextKite', () => startDareView(g)) : startSketch(g))); return; }
+  if (n === 0) { dialog(g, 'c2.dare1ok', () => startDareView(g)); return; }
   dialog(g, 'c2.dare2ok', () => startSketch(g));
 }
 function startSketch(g) { dialog(g, 'c2.sketch', () => { g.rt.sketch = { still: 0, resets: 0 }; g.rt.aim = false; Co.react(g.rt.june, 'tease', 'sketch', 999); }); }
@@ -741,6 +779,8 @@ export function tick(g, dt, input0) {
 }
 function nudge(g) {
   const rt = g.rt; const who = rt.june && rt.scene !== 'train' ? 'june' : (rt.theo ? 'theo' : (rt.scene === 'train' ? 'june' : rt.player));
+  // stopped at the slipped chain, the ride's general hints (pedal, sprint) would be wrong: say what to do here
+  if (rt.ride && rt.ride.stop === 'chain') { say(g, 'june', 'hint.3.ride.chain', 4.5); return; }
   say(g, who, 'hint.' + g.s.beat + '.' + Math.max(1, Math.min(3, rt.hintLevel)), 4.5);
 }
 
@@ -830,7 +870,7 @@ const TICK = {
   },
   train(g, dt, input, active) {
     const rt = g.rt, s = g.s;
-    rt.photoT += dt; if (rt.sleep) { rt.sleep.t += dt; }
+    rt.photoT += dt; rt.outsideT = (rt.outsideT || 0) + dt; if (rt.sleep) { rt.sleep.t += dt; }
     if (rt.tunnel) {
       if (!rt.dialog) { rt.tunnel.t += dt; }
       if (rt.tunnel.t > 9 && !rt.dialog) { rt.tunnel = null; rt.ev.push({ type: 'tunnel', on: false }); dialog(g, 'c2.tunnelOut', () => dialog(g, 'c2.sleep', () => { g.rt.sleep = { t: 0 }; Co.play(g.rt.june, 'sleep'); g.rt.ev.push({ type: 'save' }); })); }
@@ -844,21 +884,36 @@ const TICK = {
       if (moved) { if (rt.sketch.still > 0.6) { rt.sketch.resets += 1; say(g, 'june', 'c2.sketch.moved.' + Math.min(3, rt.sketch.resets), 2.4); } rt.sketch.still = 0; } else { rt.sketch.still += dt; }
       if (rt.sketch.still > 6 || (rt.sketch.resets >= 3 && rt.sketch.still > 2)) {
         rt.sketch = null; s.flags.sketched = true; addPhoto(g, { id: 'sketch', by: 'june', kind: 'sketch', reaction: 'sketch' }); rt.ev.push({ type: 'sketch-done' }); rt.ev.push({ type: 'save' });
-        Co.play(rt.june, 'window'); dialog(g, 'c2.sketchDone');
+        Co.play(rt.june, 'window'); dialog(g, 'c2.sketchDone', () => startDareView(g));
       }
       return;
     }
-    rt.aim = !!input.aim;
+    rt.aim = !!input.aim; if (input.aspect) { rt.aspect = input.aspect; }
+    const handMoved = Math.abs(input.aimDX || 0) + Math.abs(input.aimDY || 0);
+    // a new dare turns the view to where its subject is (or is coming from), so nobody has to search the carriage;
+    // any mouse movement of the player's own ends it at once
+    if (rt.aimEase) { if (handMoved > 3) { rt.aimEase = null; } else { const k = Math.min(1, dt * 3); rt.aimYaw += wrapA(rt.aimEase.yaw - rt.aimYaw) * k; rt.aimPitch += (rt.aimEase.pitch - rt.aimPitch) * k; rt.aimEase.t -= dt; if (rt.aimEase.t <= 0) { rt.aimEase = null; } } }
     rt.aimYaw -= (input.aimDX || 0) * 0.004; rt.aimPitch = Math.max(-0.5, Math.min(0.6, rt.aimPitch + (input.aimDY || 0) * 0.003));
+    // looking through the camera near the subject: the frame settles on it (a steady hand, not an auto-aim: it only
+    // pulls when the subject is already inside the frame and the player is not moving the mouse fast)
+    rt.aimHelp = aimHelp(g);
+    if (rt.aim && rt.aimHelp && rt.aimHelp.inFrame && handMoved < 6) { const a = rt.aimHelp; rt.aimYaw += a.dyaw * Math.min(1, dt * 2.2); rt.aimPitch = Math.max(-0.5, Math.min(0.6, rt.aimPitch + a.dpitch * Math.min(1, dt * 2.2))); }
     if (input.shoot && rt.aim) { shootTrain(g); if (rt.dialog || g.rt !== rt) { return; } }
     const free = s.photos.filter((p) => p.kind === 'free' || p.kind === 'dare').length;
-    if (rt.dare === null && s.flags.c2intro && (free >= 1 || rt.photoT > 12)) { s.flags.dares1 = true; rt.dare = 0; rt.dareT = 0; rt.aim = false; dialog(g, 'c2.dare1'); return; }
+    if (rt.dare === null && s.flags.c2intro && (free >= 1 || rt.photoT > 12)) { s.flags.dares1 = true; rt.dare = 0; rt.dareT = 0; rt.aim = false; dialog(g, 'c2.dare1', () => startDareView(g)); return; }
     if (rt.dare !== null && rt.dare < 3) { rt.dareT += dt; if (rt.dareT > 55) { dareDone(g, true); return; } }
     if (free === 0 && rt.photoT > 9 && !rt.nudged) { rt.nudged = true; say(g, 'june', 'c2.june.go', 3); }
     if (rt.sleep && !rt.sleep.done && rt.sleep.t > 16) { finishSleep(g); }
   },
   ride(g, dt, input, active) {
     const rt = g.rt, r = rt.ride, RL = LAYOUTS.coast.ride;
+    // the body follows the bike, so a prompt (the chain) is drawn where the bikes are, not at the start of the road
+    const bp = Toys.ridePose(r, r.s, r.d); rt.body.x = bp.x; rt.body.z = bp.z;
+    if (r.stop === 'chain' && active) {
+      // never a dead end: if the chain is not touched for a long while, June does it herself
+      r.stopT = (r.stopT || 0) + dt;
+      if (r.stopT > CHAIN_SELF_FIX && !(rt.hold.chain > 0)) { r.stop = null; r.chainDone = true; r.selfFixed = true; rt.ev.push({ type: 'sfx', name: 'chain' }); dialog(g, 'c3.chainSelf'); return; }
+    }
     if (!active || r.stop) { return; }
     const ev = Toys.tickRide(r, dt, { throttle: input.mz, steer: input.mx, sprint: input.sprint });
     ev.forEach((e) => { if (e.type === 'overtake') { say(g, 'june', 'c3.june.overtake', 2.6); rt.ev.push({ type: 'sfx', name: 'bell' }); } if (e.type === 'june-say') { say(g, 'june', e.key, 2.6); } if (e.type === 'arrive') { rt.ev.push({ type: 'fade' }); enterBeat(g, '3.yard'); } });
@@ -922,7 +977,7 @@ const TICK = {
         if (rt.duet.done) {
           const second = rt.duet.second; rt.duet = null; rt.duetN = 1; s.flags.duet1 = true; rt.shot = null;
           Co.react(rt.june, 'smile', 'sit', 1); rt.june.anim = 'sit';
-          if (!second) { branch(g, 'c4.again', 'closer', { 'c4.choice.scoot': 'c4.scoot', 'c4.choice.keep': 'c4.keep' }, () => { g.rt.june.x = LAYOUTS.cottage.juneSeat.x - 0.55; g.rt.ev.push({ type: 'closer' }); }); }
+          if (!second) { branch(g, 'c4.again', 'closer', { 'c4.choice.scoot': 'c4.scoot', 'c4.choice.keep': 'c4.keep' }, () => { const jp = duetJune(true); g.rt.june.x = jp.x; g.rt.june.z = jp.z; g.rt.june.facing = jp.yaw; g.rt.ev.push({ type: 'closer' }); }); }
           else { dialog(g, 'c4.after', () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '4.porch'); }); }
         }
       }
@@ -1043,7 +1098,7 @@ export function snapshot(g) {
     beam: rt.beam ? { a: rt.beam.a, target: rt.beam.target, targetA: rt.beam.targetA, onTarget: !!rt.beam.onTarget, ready: rt.beam.ready } : null,
     pen: rt.pen ? { x: rt.pen.x, y: rt.pen.y, i: rt.pen.i, trail: rt.pen.trail.slice(), done: rt.pen.done } : null, tunnel: rt.tunnel ? { t: rt.tunnel.t } : null,
     stars: rt.stars ? { i: rt.stars.i, linked: rt.stars.linked.slice(), onStar: !!rt.stars.onStar, aimYaw: rt.aimYaw, aimPitch: rt.aimPitch } : null, sketch: rt.sketch ? { still: rt.sketch.still, resets: rt.sketch.resets } : null, leg: rt.leg === undefined ? null : rt.leg,
-        dare: rt.dare === undefined ? null : rt.dare, sleep: rt.sleep ? { t: rt.sleep.t, done: !!rt.sleep.done } : null,
+        dare: rt.dare === undefined ? null : rt.dare, aimHelp: rt.aimHelp && rt.scene === 'train' ? Object.assign({}, rt.aimHelp) : null, sleep: rt.sleep ? { t: rt.sleep.t, done: !!rt.sleep.done } : null,
     aim: rt.aim, carry: rt.carry, seated: !!rt.seated, bridge: s.bridge, crank: s.crank, hold: Object.assign({}, rt.hold), restored: Object.keys(s.restored), edition: Object.assign({}, s.edition), window: Object.assign({}, s.window), photos: s.photos.map((p) => ({ id: p.id, reaction: p.reaction, kind: p.kind })),
     choices: Object.assign({}, s.choices), flags: Object.assign({}, s.flags), season: rt.season, assets: rt.graph ? [...rt.graph.assets] : [], credits: rt.graph ? rt.graph.credits : null, tab: !!s.flags.tab, hintLevel: rt.hintLevel, idleT: rt.idleT, assist: rt.assist ? rt.assist.level : 0, stuckT: rt.assist ? Math.round(rt.assist.t * 10) / 10 : 0
   };

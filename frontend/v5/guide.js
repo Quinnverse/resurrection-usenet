@@ -60,7 +60,7 @@ export function createGuide(c) {
   const tipBox = el('div', { class: 'tut', 'data-testid': 'tut', hidden: '' }); app.appendChild(tipBox);
   const tutDone = () => { c.prefs.tut = c.prefs.tut || {}; return c.prefs.tut; };
   const markTut = (id) => { if (!tutDone()[id]) { tutDone()[id] = 1; c.savePrefs(); } };
-  let tut = null, tutT = 0, moved = 0, looked = 0, lastYaw = null, lastPos = null, firstPromptSeen = false, sinceGoal = 0;
+  let tut = null, tutT = 0, moved = 0, walkedFar = 0, looked = 0, lastYaw = null, lastPos = null, firstPromptSeen = false, sinceGoal = 0;
 
   // ---- journal note ---------------------------------------------------------------------------------------------
   const toast = el('div', { class: 'memtoast', 'data-testid': 'mem-toast', hidden: '' }); app.appendChild(toast);
@@ -83,6 +83,8 @@ export function createGuide(c) {
     const done = tutDone(); const g = c.game();
     if (!done.move && s.scene !== 'train' && s.scene !== 'ride' && s.scene !== 'porch') { return { id: 'move' }; }
     if (!done.look && done.move && s.scene !== 'train' && s.scene !== 'ride' && s.scene !== 'porch') { return { id: 'look' }; }
+    // Shift: taught on the first longer walk (the owner found it by accident), and done when the player runs
+    if (!done.sprint && done.look && walkedFar > 10 && !s.prompt && (s.scene === 'study' || s.scene === 'town' || s.scene === 'station' || s.scene === 'coast') && c.device() !== 'touch') { return { id: 'sprint', secs: 9 }; }
     if (!done.use && s.prompt) { return { id: 'use' }; }
     if (!done.goal && done.use) { return { id: 'goal', secs: 7 }; }
     if (!done.hold && s.prompt && s.prompt.hold) { return { id: 'hold', secs: 12 }; }
@@ -140,7 +142,7 @@ export function createGuide(c) {
     }
     arrow.hidden = !arrowOn;
     // ---- tips
-    const pos = { x: s.x, z: s.z }; if (lastPos) { moved += Math.hypot(pos.x - lastPos.x, pos.z - lastPos.z); } lastPos = pos;
+    const pos = { x: s.x, z: s.z }; if (lastPos) { const st = Math.hypot(pos.x - lastPos.x, pos.z - lastPos.z); moved += st; if (st < 2) { walkedFar += st; } } lastPos = pos;
     const yaw = c.camYaw(); if (lastYaw !== null) { looked += Math.abs(yaw - lastYaw); } lastYaw = yaw;
     if (tutDone().goal) { sinceGoal += dt; }
     if (!tut || cine) {
@@ -149,11 +151,12 @@ export function createGuide(c) {
     }
     if (tut && !cine) {
       tutT += dt;
-      if (tut.id === 'move' && moved > 1.5) { finishTut(); } else if (tut && tut.id === 'look' && looked > 0.8) { finishTut(); }
+      if (tut.id === 'sprint' && c.sprinting && c.sprinting()) { tut.ran = (tut.ran || 0) + dt; if (tut.ran > 0.6) { finishTut(); } }
+      else if (tut.id === 'move' && moved > 1.5) { finishTut(); } else if (tut && tut.id === 'look' && looked > 0.8) { finishTut(); }
       else if (tut && tut.id === 'use' && !s.prompt && tutT > 6) { tut = null; }   // walked away: shown again at the next prompt
       else if (tut && tut.secs && tutT > tut.secs) { finishTut(); }
     }
-    if (tut && !cine) { const dk = 'tut.' + tut.id + '.' + c.device(); const dv = T(dk); const txt = dv !== dk ? dv : T('tut.' + tut.id); /* a wording of its own for the pad and the touch screen where one reads better */ const tsig = tut.id + c.device() + c.prefs.lang + Object.values(c.keys).join(','); if (tipBox.getAttribute('data-sig') !== tsig) { tipBox.setAttribute('data-sig', tsig); tipBox.textContent = ''; tipBox.append(el('span', { class: 'tt', text: txt })); if (!tutDone().first) { tipBox.append(el('span', { class: 'toff', text: T('tut.off') })); } } tipBox.hidden = false; tipBox.setAttribute('data-id', tut.id); }
+    if (tut && !cine) { const dk = 'tut.' + tut.id + '.' + (c.device() === 'kbm' && c.prefs.noLock ? 'free' : c.device()); const dv = T(dk); const txt = dv !== dk ? dv : T('tut.' + tut.id); /* a wording of its own for the pad and the touch screen where one reads better */ const tsig = tut.id + c.device() + (c.prefs.noLock ? 'f' : '') + c.prefs.lang + Object.values(c.keys).join(','); if (tipBox.getAttribute('data-sig') !== tsig) { tipBox.setAttribute('data-sig', tsig); tipBox.textContent = ''; tipBox.append(el('span', { class: 'tt', text: txt })); if (!tutDone().first) { tipBox.append(el('span', { class: 'toff', text: T('tut.off') })); } } tipBox.hidden = false; tipBox.setAttribute('data-id', tut.id); }
     else { tipBox.hidden = true; }
     if (tut && tut.id === 'move' && !tutDone().first) { tutDone().first = 1; }
     // ---- journal note

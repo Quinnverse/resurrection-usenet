@@ -92,7 +92,10 @@ export const LAYOUTS = {
     points: [{ id: 'guitar', x: -1.4, z: -1.0, r: 1.4, y: 1.0 }, { id: 'june', x: 1.4, z: -2.1, r: 1.6, y: 1.6, moving: true }, { id: 'door', x: 0, z: 2.8, r: 1.3, y: 1.4 },
       { id: 'sketches', x: 1.3, z: 0.75, r: 1.2, y: 1.0 }, { id: 'shelf', x: 2.3, z: 1.9, r: 1.2, y: 1.3 }, { id: 'window', x: 0, z: -2.5, r: 1.3, y: 1.5 },
       { id: 'boxA', x: -2.9, z: -0.9, r: 1.2, y: 0.6 }, { id: 'boxB', x: 2.3, z: -1.5, r: 1.2, y: 0.6 }, { id: 'drop', x: 1.2, z: 2.1, r: 1.2, y: 0.4 }, { id: 'gamebox', x: 2.3, z: 1.9, r: 0.95, y: 1.3 }, { id: 'letter', x: 1.3, z: 0.75, r: 0.95, y: 1.0 }],
-    guitarSeat: { x: -1.4, z: -1.0 }, juneSeat: { x: 0.0, z: -1.6 }, juneWindow: { x: 1.4, z: -2.3 }
+    guitarSeat: { x: -1.4, z: -1.0 }, juneSeat: { x: -0.2, z: -1.0 }, juneWindow: { x: 1.4, z: -2.3 },
+    // RC3: the duet side by side, both turned a little toward a point in front of them. Face to face at 1.5 m (1.0 m after
+    // "scoot closer") their seated legs (0.85 m each) went through each other.
+    duet: { apart: 1.2, closer: 0.85, focus: 2.5 }
   }
 };
 

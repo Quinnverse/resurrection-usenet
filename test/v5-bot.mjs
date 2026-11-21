@@ -72,7 +72,7 @@ export function makeBot(g, opts) {
   bot.shootAt = async (posFn) => {
     const seat = LAYOUTS.train.seat;
     for (let k = 0; k < 60; k++) {
-      const p = posFn(g.rt.photoT + DT); const dx = p.x - seat.x, dy = p.y - seat.y, dz = p.z - seat.z;
+      const p = posFn((g.rt.outsideT || 0) + DT); const dx = p.x - seat.x, dy = p.y - seat.y, dz = p.z - seat.z;
       const yaw = Math.atan2(-dx, -dz), pitch = Math.max(-0.5, Math.min(0.6, Math.atan2(-dy, Math.hypot(dx, dz))));
       const ey = wrap(yaw - g.rt.aimYaw), ep = pitch - g.rt.aimPitch;
       if (k >= 2 && Math.abs(ey) < 0.012 && Math.abs(ep) < 0.012) { break; }
@@ -127,7 +127,7 @@ export async function playThrough(g, opts) {
     const n = Toys.DARES.indexOf(id);
     for (let k = 0; k < 8 && bot.snap().dare === n; k++) {
       // wait until the target is roughly abeam (inside the window) and take it
-      await bot.until((s) => { const p = Toys.trainTarget(id, g.rt.photoT); return s.dare !== n || (p.z > -18 && p.z < 10); }, 70, { aim: true });
+      await bot.until((s) => { const p = Toys.trainTarget(id, g.rt.outsideT || 0); return s.dare !== n || (p.z > Toys.WINDOW_Z[0] && p.z < Toys.WINDOW_Z[1]); }, 70, { aim: true });
       if (bot.snap().dare !== n) { break; }
       await bot.shootAt((t) => Toys.trainTarget(id, t)); await bot.wait(0.3, { aim: true });
       await bot.talk();

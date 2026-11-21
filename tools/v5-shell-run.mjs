@@ -202,9 +202,14 @@ function check() {
   // every visible text must be a translation, never a raw key
   const subs = byTestId('subs'); if (subs && subs.children[1] && subs.attrs['data-key'] && subs.children[1].textContent === subs.attrs['data-key']) { stats.missingText.add(subs.attrs['data-key']); }
   const pr = byTestId('prompt');
-  if (dbg.prompt && dbg.mode === 'play' && !dbg.dialog && !dbg.shot && !dbg.choice) {
+  // a prompt the player can act on: also under the cameras the player plays in (train seat, bike, guitar), which the
+  // old condition (!dbg.shot) skipped entirely, so the bike's chain prompt was never looked at
+  if (dbg.prompt && dbg.mode === 'play' && !dbg.dialog && !dbg.choice && !appEl.classList.contains('cine')) {
     stats.promptFrames += 1; if (!pr) { stats.promptOff += 1; b.promptOff = (b.promptOff || 0) + 1; }
-    else { pr.children.forEach((c) => { if (/^(name|ui|verb)\./.test(c.textContent) || c.textContent.includes('.')) { if (/^[a-z]+\.[a-zA-Z.]+$/.test(c.textContent)) { stats.missingText.add(c.textContent); } } }); }
+    // pinned to the screen edge = the point it labels is off screen, so the player cannot see what it refers to
+    else {
+      const L = parseFloat(pr.style.left), T = parseFloat(pr.style.top); if (L <= 110 || L >= innerWidth - 110 || T <= 90 || T >= innerHeight - 160) { const k = dbg.beat + ':' + dbg.prompt.id; (stats.promptPinned = stats.promptPinned || {})[k] = (stats.promptPinned[k] || 0) + 1; }
+      pr.children.forEach((c) => { if (/^(name|ui|verb)\./.test(c.textContent) || c.textContent.includes('.')) { if (/^[a-z]+\.[a-zA-Z.]+$/.test(c.textContent)) { stats.missingText.add(c.textContent); } } }); }
   }
   // the player should be on screen whenever the camera is the follow camera
   const L = RENDER_LOG.last; const g = hook.game;
@@ -261,7 +266,7 @@ try {
       creditsHave: want.map((w) => [w, credits.includes(w)]), albumPhotos: album ? album.children.length : 0, photosWithThumb: hook.game.s.photos.filter((p) => p.thumb).length, photos: hook.game.s.photos.length,
       savedBeat: saved && saved.beat, promptFrames: stats.promptFrames, promptNotShown: stats.promptOff, playerOffscreenFrames: stats.offscreen,
       perBeat: Object.fromEntries(Object.entries(stats.beats).map(([k, v]) => [k, { world: v.world, frames: v.frames, off: v.off, promptOff: v.promptOff || 0, samples: v.samples, camDist: v.maxDist ? [+v.minDist.toFixed(2), +v.maxDist.toFixed(2)] : null }])),
-      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenByCamera: stats.cineShots || {}, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
+      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenByCamera: stats.cineShots || {}, promptPinned: stats.promptPinned || {}, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
     });
     if (SHOTS) { // contact sheets, 3 x 4 previews each
       const W = 480, H = 270, C = 3, R = 4;
