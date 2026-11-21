@@ -205,7 +205,10 @@ cv.addEventListener('mousedown', (e) => {
   if (e.button === 0) { mouse.left = true; mouse.click = true; } if (e.button === 2) { mouse.right = true; }
 });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) { mouse.left = false; } if (e.button === 2) { mouse.right = false; } });
-window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } if (locked || mouse.left || mouse.right) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; } });
+// Chromium reports one large jump on the first moves right after the pointer is captured (it flung the train camera to
+// the ceiling in the RC3 browser test): those are not the player's hand
+let skipMoves = 0;
+window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } if (skipMoves > 0) { skipMoves -= 1; return; } if (locked || mouse.left || mouse.right) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; } });
 // Mouse modes. Exploring: after a click on the scene the pointer is captured; moving the mouse looks around, a dot in the
 // middle shows where you look, a click uses what is named. Menus, the journal and the pause screen: the pointer is free and
 // visible. Esc (the browser releases the pointer on Esc) always pauses, so the cursor and the menu arrive together; Resume
@@ -213,7 +216,7 @@ window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } i
 let ownUnlock = false;
 const releasePointer = () => { if (document.pointerLockElement) { ownUnlock = true; document.exitPointerLock(); } };
 document.addEventListener('pointerlockchange', () => {
-  const was = locked; locked = document.pointerLockElement === cv; app.classList.toggle('locked', locked);
+  const was = locked; locked = document.pointerLockElement === cv; app.classList.toggle('locked', locked); if (locked && !was) { skipMoves = 2; }
   if (was && !locked && !ownUnlock && mode === 'play' && g) { openPause(); }
   ownUnlock = false;
 });
@@ -598,7 +601,7 @@ function renderHud() {
   // the viewfinder says what it sees: gold when a picture now would count, an arrow toward the subject when it is out of
   // the frame, and for June's candid shot, when to wait
   const ah = s.scene === 'train' && s.aim ? s.aimHelp : null;
-  ui.aim.classList.toggle('ready', !!(ah && ah.ready)); ui.aim.classList.toggle('left', !!(ah && ah.side === 'left')); ui.aim.classList.toggle('right', !!(ah && ah.side === 'right'));
+  ui.aim.classList.toggle('ready', !!(ah && ah.ready)); ['left', 'right', 'up', 'down'].forEach((d) => ui.aim.classList.toggle(d, !!(ah && ah.side === d)));
   const an = !ah ? '' : ah.ready ? T('ui.aim.now') : ah.inFrame && ah.id === 'june' ? T('ui.aim.waitJune') : ah.inFrame && !ah.seen ? T('ui.aim.waitWindow') : ah.side ? T('ui.aim.' + ah.side) : '';
   const noteEl = ui.aim.firstChild; if (noteEl && noteEl.textContent !== an) { noteEl.textContent = an; }
   if (s.scene === 'train' && !s.aim && !cine && mode === 'play' && !g.s.flags.juneSnap) { if (!ui.tip.classList.contains('on')) { tip(T('ui.aimHint'), 0.1); ui.tip.classList.add('on'); } } else if (s.scene === 'train' && (cine || s.aim)) { ui.tip.classList.remove('on'); }

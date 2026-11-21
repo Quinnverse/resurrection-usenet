@@ -380,8 +380,15 @@ test.describe('V5 RC3 — after the owner playtest', () => {
     const took = {};
     for (const [n, name] of [[0, 'lighthouse'], [1, 'kite']]) {
       await skipTalk(); const t0 = Date.now();
-      await page.mouse.down({ button: 'right' });   // camera up; no mouse movement: the view turns to the subject by itself
-      await expect.poll(async () => { const a = (await snap(page)).aimHelp; return !!(a && a.ready); }, { timeout: 120000, message: name + ': the frame says it is the moment' }).toBe(true);
+      // camera up, then do what the frame says: follow its arrow with the real mouse until it turns gold (CI run 44915549889:
+      // without moving, the view stayed where the pointer capture had flung it, and the arrow could only say left/right)
+      await page.mouse.down({ button: 'right' }); let mx = cx, my = cy; const moves = [];
+      await expect.poll(async () => {
+        const a = (await snap(page)).aimHelp; if (a && a.ready) { return true; }
+        if (a && a.side) { const st = 40; const dx = a.side === 'left' ? -st : a.side === 'right' ? st : 0, dy = a.side === 'up' ? -st : a.side === 'down' ? st : 0; mx += dx; my += dy; moves.push(a.side); await page.mouse.move(mx, my, { steps: 2 }); }
+        return false;
+      }, { timeout: 120000, intervals: [300], message: name + ': following the arrow, the frame turns gold' }).toBe(true);
+      console.log('V5_RC3_AIM ' + name + ' ' + JSON.stringify(moves.slice(0, 40)));
       await expect(page.getByTestId('aimframe')).toHaveClass(/ready/); await expect(page.getByTestId('aim-note')).toHaveText(/take it/i);
       await attach(testInfo, `rc3-06-dare-${name}-ready`, await shot(page));
       await page.mouse.down({ button: 'left' }); await page.mouse.up({ button: 'left' }); await page.mouse.up({ button: 'right' });

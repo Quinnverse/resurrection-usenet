@@ -703,7 +703,10 @@ function aimHelp(g) {
   const seen = sub.id === 'june' || (sub.p.z > Toys.WINDOW_Z[0] && sub.p.z < Toys.WINDOW_Z[1]);   // outside: only through a window
   const ready = inFrame && seen && (sub.id !== 'june' || !!(rt.sleep && !rt.sleep.done) || Toys.juneMoodAt(rt.photoT) === 'window');
   const dyaw = wrapA(want.yaw - rt.aimYaw), dpitch = want.pitch - rt.aimPitch;
-  return { id: sub.id, inFrame, seen, ready, side: inFrame ? null : (dyaw > 0 ? 'left' : 'right'), dyaw, dpitch };
+  // which way to turn: the larger miss, measured against the frame's own half-width and half-height
+  const th = Math.tan(20 * Math.PI / 180) * FRAME_BOX; const ex = Math.abs(dyaw) / Math.atan(th * cam.aspect), ey = Math.abs(dpitch) / Math.atan(th);
+  const side = inFrame ? null : ex >= ey ? (dyaw > 0 ? 'left' : 'right') : (dpitch < 0 ? 'up' : 'down');
+  return { id: sub.id, inFrame, seen, ready, side, dyaw, dpitch };
 }
 // at the start of a dare: the subject comes into view soon, and the view turns toward it
 function startDareView(g) {

@@ -204,3 +204,15 @@ test('carve: the post is in reach where the memory starts (the player had to ste
   const g = await from('1.carve'); advanceDialog(g); Gm.tick(g, 1 / 30, {});
   assert.equal(Gm.snapshot(g).prompt && Gm.snapshot(g).prompt.id, 'post');
 });
+
+test('photo dares: the frame’s arrow can say up and down too, and following it always reaches the subject', async () => {
+  const g = await from('2.train');
+  for (let i = 0; i < 30 * 60 && g.rt.dare !== 0; i++) { const s = Gm.snapshot(g); Gm.tick(g, 1 / 30, { advance: !!s.dialog, aim: !s.dialog, shoot: !s.dialog && i % 60 === 0 }); }
+  advanceDialog(g);
+  // fling the view to the ceiling and far to the side, then follow only what the frame says
+  g.rt.aimEase = null; g.rt.aimPitch = -0.5; g.rt.aimYaw += 2.2; let first = null, ready = false;
+  for (let i = 0; i < 30 * 40 && !ready; i++) { Gm.tick(g, 1 / 30, { aim: true }); const a = Gm.snapshot(g).aimHelp; if (!a) { continue; } if (!first && a.side) { first = a.side; } ready = a.ready; if (!ready && a.side) { const dx = a.side === 'left' ? -12 : a.side === 'right' ? 12 : 0, dy = a.side === 'up' ? -12 : a.side === 'down' ? 12 : 0; Gm.tick(g, 1 / 30, { aim: true, aimDX: dx, aimDY: dy }); } }
+  assert.ok(ready, 'following the arrow reaches the lighthouse');
+  const sides = new Set(); for (const [yaw, pitch] of [[0.0, -0.5], [0.0, 0.6]]) { g.rt.aimYaw = Math.atan2(-(34 + 0.55), -(Toys.trainTarget('lighthouse', g.rt.outsideT).z - 0.6)) + yaw; g.rt.aimPitch = pitch; Gm.tick(g, 1 / 30, { aim: true, aimDX: 9, aimDY: 9 }); const a = Gm.snapshot(g).aimHelp; if (a && a.side) { sides.add(a.side); } }
+  assert.ok(sides.has('down') || sides.has('up'), 'a vertical miss says up or down: ' + [...sides]);
+});
