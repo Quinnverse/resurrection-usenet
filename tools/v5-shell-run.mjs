@@ -173,7 +173,14 @@ function check() {
     ['quest-goal', 'quest-next', 'quest-chapter', 'tut', 'mem-toast'].forEach((id) => { const e = byTestId(id); if (e) { const tx = e.textContent; if (raw.test(tx) || tx.split(/\s+/).some((w) => raw.test(w))) { stats.missingText.add(id + ': ' + tx.slice(0, 80)); } } });
     if (dbg.mode === 'play') { stats.questChecks = (stats.questChecks || 0) + 1; if (byTestId('quest-goal')) { stats.questShown = (stats.questShown || 0) + 1; } }
     const o = window.V5Debug.objective && window.V5Debug.objective(); if (o) { (stats.goals = stats.goals || new Set()).add(o.beat); }
-    const cineNow = appEl.classList.contains('cine'); if (dbg.mode === 'play') { const bb = (stats.cineBy = stats.cineBy || {}); const r = bb[dbg.beat] = bb[dbg.beat] || [0, 0]; r[1] += 1; if (cineNow && !dbg.dialog && !dbg.choice) { r[0] += 1; } }
+    const cineNow = appEl.classList.contains('cine'); if (dbg.mode === 'play') { const bb = (stats.cineBy = stats.cineBy || {}); const r = bb[dbg.beat] = bb[dbg.beat] || [0, 0]; r[1] += 1; if (cineNow && !dbg.dialog && !dbg.choice) {
+      r[0] += 1; const grt = hook.game.rt;
+      // a story camera may hide the HUD: a timed shot (a photo moment) or the chapter 7 seasons sequence before the beam;
+      // anywhere else the player is in control and must see the task bar, tips and prompts
+      const story = !!grt.shotUntil || (!!grt.seasonRun && !grt.beam);
+      const sh = (stats.cineShots = stats.cineShots || {}); const key = dbg.beat + ':' + (dbg.shot || 'none') + (story ? ' (story camera)' : ' (PLAY)'); sh[key] = (sh[key] || 0) + 1;
+      if (!story) { stats.hudHiddenInPlay = (stats.hudHiddenInPlay || 0) + 1; }
+    } }
     const qd = cineNow ? null : byTestId('quest-done'); if (!cineNow) { const txt = qd ? qd.textContent : null; stats.doneRun = qd && txt === stats.doneTxt ? (stats.doneRun || 0) + 1 : (qd ? 1 : 0); stats.doneTxt = txt; }
     // the same note, shown for more than ~5 s of play
     if (qd && stats.doneRun > 15) { stats.missingText.add('quest-done note stays on screen: ' + qd.textContent.slice(0, 60)); }
@@ -239,7 +246,7 @@ try {
       creditsHave: want.map((w) => [w, credits.includes(w)]), albumPhotos: album ? album.children.length : 0, photosWithThumb: hook.game.s.photos.filter((p) => p.thumb).length, photos: hook.game.s.photos.length,
       savedBeat: saved && saved.beat, promptFrames: stats.promptFrames, promptNotShown: stats.promptOff, playerOffscreenFrames: stats.offscreen,
       perBeat: Object.fromEntries(Object.entries(stats.beats).map(([k, v]) => [k, { world: v.world, frames: v.frames, off: v.off, promptOff: v.promptOff || 0, samples: v.samples, camDist: v.maxDist ? [+v.minDist.toFixed(2), +v.maxDist.toFixed(2)] : null }])),
-      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
+      heard: window.V5Debug.snapshot().heard, stuck: bot.stuck, shots: shotLog, hudHiddenByCamera: stats.cineShots || {}, hudHiddenOutsideDialogue: Object.fromEntries(Object.entries(stats.cineBy || {}).map(([k, v]) => [k, Math.round(v[0] / v[1] * 100) + '%'])), questShownShare: stats.questChecks ? Math.round((stats.questShown || 0) / stats.questChecks * 100) / 100 : 0, goalsSeen: stats.goals ? [...stats.goals] : [], journal: window.V5Debug.journal()
     });
     if (SHOTS) { // contact sheets, 3 x 4 previews each
       const W = 480, H = 270, C = 3, R = 4;
@@ -251,10 +258,24 @@ try {
     }
     const outDir = path.join(root, 'test-results', 'v5-shell'); fs.mkdirSync(outDir, { recursive: true });
     Object.entries(stats.saves).forEach(([beat, raw]) => fs.writeFileSync(path.join(outDir, `save-${LANG}${ALT ? '-alt' : ''}-${beat}.json`), raw));
-    // outside dialogue the task bar, tips and prompts must be on screen: a story camera may hide them for a moment, a camera
-    // the player plays in (train seat, bike, guitar) must not (it hid them for 63–85% of chapters 2–4 before RC2)
-    report.hudHiddenTooLong = Object.entries(stats.cineBy || {}).filter(([, v]) => v[1] >= 10 && v[0] / v[1] > 0.2).map(([k, v]) => `${k}: ${Math.round(v[0] / v[1] * 100)}%`);
-    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && stats.missingText.size === 0 && want.every((w) => credits.includes(w)) && saved && saved.beat === 'end' && report.hudHiddenTooLong.length === 0;
+    // outside dialogue and choices the task bar, tips and prompts must be on screen while the player is in control. Story
+    // cameras (above) may hide them, so cut-scenes are never required to show the HUD. Before RC2 the train seat, bike and
+    // guitar cameras hid them for 63–85% of those beats. Checked every 10 frames; at most 2 checks for a camera change.
+    report.hudHiddenInPlayChecks = stats.hudHiddenInPlay || 0;
+    report.hudHiddenTooLong = report.hudHiddenInPlayChecks > 2 ? Object.entries(stats.cineShots || {}).filter(([k]) => k.endsWith('(PLAY)')).map(([k, v]) => `${k}: ${v} checks`) : [];
+    // values that were measured and printed but never failed a run before RC2 (all clean in every mode when added)
+    const jr = report.journal || {};
+    const checks = {
+      'no stuck moments': report.stuck.length === 0,
+      'all 20 beats visited': report.beatsVisited.length === 20,
+      'every memory found (this run also does the optional things)': jr.of > 0 && jr.found === jr.of,
+      'task bar shown in play': report.questShownShare >= 0.99,
+      'player never off screen': report.playerOffscreenFrames === 0,
+      'prompt shown when there is one (a beat change may skip one frame)': report.promptNotShown <= 2,
+      'every photo has its picture in the album': report.photos > 0 && report.photosWithThumb === report.photos && report.albumPhotos === report.photos
+    };
+    report.failedChecks = Object.keys(checks).filter((k) => !checks[k]);
+    report.ok = errors.length === 0 && RENDER_LOG.problems.length === 0 && stats.missingText.size === 0 && want.every((w) => credits.includes(w)) && saved && saved.beat === 'end' && report.hudHiddenTooLong.length === 0 && report.failedChecks.length === 0;
   }
   }
 } catch (e) { report.error = String(e && e.stack ? e.stack : e).split('\n').slice(0, 6).join('\n'); }

@@ -149,10 +149,13 @@ test.describe('V5 — The Summer We Never Finished', () => {
     await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(200);
     if ((await snap(page)).mode === 'pause') { await page.getByTestId('resume').click(); }
     const s0 = await snap(page);
-    await page.keyboard.press('Tab'); await page.waitForTimeout(600);
+    // the game reads a key on its next frame; on a software GPU one frame can take over a second (p95 0.9 s, worst 4.3 s
+    // on a slow runner), so wait for frames to pass instead of a fixed 600 ms, then check exactly as before
+    const framesPass = async (n) => { const f0 = (await snap(page)).frames; await expect.poll(async () => (await snap(page)).frames - f0, { timeout: 20000 }).toBeGreaterThanOrEqual(n); };
+    await page.keyboard.press('Tab'); await framesPass(3);
     const s1 = await snap(page); expect(s1.era).not.toBe(s0.era);
     await attach(testInfo, 'tab-' + s1.era, await shot(page));
-    await page.keyboard.press('Tab'); await page.waitForTimeout(600);
+    await page.keyboard.press('Tab'); await framesPass(3);
     expect((await snap(page)).era).toBe(s0.era);
     // walk to the end of the 1998 near deck: Tab to 2004 lands on the stub; walking on is blocked by water without it
     expect(w.issues).toEqual([]);

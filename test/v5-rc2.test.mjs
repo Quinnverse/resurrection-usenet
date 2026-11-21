@@ -220,3 +220,12 @@ test('saving halfway along the pier and loading it keeps every step already done
     assert.equal(b.next, a.next); assert.equal(b.nextKey, a.nextKey); assert.deepEqual(b.progress, a.progress);
   }
 });
+
+test('no line comment has swallowed code in the game, the tools or the tests (it silently disabled checks three times in RC2)', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  let out = ''; let code = 0;
+  try { out = execFileSync(process.execPath, [path.join(root, 'tools', 'v5-lint-swallowed.mjs')], { cwd: root }).toString(); } catch (e) { code = e.status; out = String(e.stdout || '') + String(e.stderr || ''); }
+  assert.equal(code, 0, out);
+  assert.match(out, /[1-9]\d* files checked, 0 line comment/);
+});

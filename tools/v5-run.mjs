@@ -60,7 +60,16 @@ const CI_REFERENCE_MIN = { 'chromium-main': 74, 'chromium-device-kbm': 36, 'chro
 
 // ---- small helpers -------------------------------------------------------------------------------------------------
 const now = () => new Date().toISOString();
-const alive = (pid) => { if (!pid) { return false; } try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+// a PID alone is not proof: after a reboot, or in another container, the number can belong to a different process.
+// The runner process of a run has "v5-run.mjs __run <id>" in its command line; check that when the system can tell.
+const alive = (pid, id) => {
+  if (!pid) { return false; }
+  try { process.kill(pid, 0); } catch (e) { if (e.code !== 'EPERM') { return false; } }
+  if (!id) { return true; }
+  let cmd = null;
+  try { cmd = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').replace(/\0/g, ' '); } catch (e) { try { cmd = execFileSync('ps', ['-p', String(pid), '-o', 'command='], { stdio: ['ignore', 'pipe', 'ignore'] }).toString(); } catch (e2) { cmd = null; } }
+  return cmd === null ? true : cmd.includes('v5-run.mjs') && cmd.includes(id);
+};
 const git = (...a) => { try { return execFileSync('git', a, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch (e) { return null; } };
 const readJSON = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
 const writeJSON = (f, v) => { const t = f + '.tmp'; fs.writeFileSync(t, JSON.stringify(v, null, 2)); fs.renameSync(t, f); };
@@ -70,7 +79,7 @@ const fmt = (s) => { if (s == null) { return '–'; } s = Math.round(s); const h
 const since = (iso, end) => (iso ? ((end ? new Date(end) : new Date()) - new Date(iso)) / 1000 : null);
 function allRuns() { if (!fs.existsSync(RUNS)) { return []; } return fs.readdirSync(RUNS).filter((d) => fs.existsSync(runFile(d))).sort().map((d) => readJSON(runFile(d), null)).filter(Boolean); }
 function liveState(r) {
-  if ((r.state === 'running' || r.state === 'starting') && !alive(r.pid) && (r.state === 'running' || since(r.createdAt) > 20)) { return 'crashed'; }   // the process is gone without recording an end
+  if ((r.state === 'running' || r.state === 'starting') && !alive(r.pid, r.id) && (r.state === 'running' || since(r.createdAt) > 20)) { return 'crashed'; }   // the process is gone without recording an end
   return r.state;
 }
 function pick(id) { const rs = allRuns(); if (id) { const r = rs.find((x) => x.id === id || x.id.startsWith(id)); if (!r) { die('no local run ' + id); } return r; } if (!rs.length) { die('no local runs yet. Start one: npm run test:full:local'); } return rs[rs.length - 1]; }
@@ -210,7 +219,7 @@ function logs(id, flags) {
 function stop(id) {
   const r = pick(id); const state = liveState(r);
   if (state !== 'running' && state !== 'crashed') { console.log(`run ${r.id} is not running (${state})`); return; }
-  if (alive(r.pid)) { process.kill(r.pid, 'SIGTERM'); console.log(`asked run ${r.id} (PID ${r.pid}) to stop; it stops its current step and records "stopped"`); return; }
+  if (alive(r.pid, r.id)) { process.kill(r.pid, 'SIGTERM'); console.log(`asked run ${r.id} (PID ${r.pid}) to stop; it stops its current step and records "stopped"`); return; }
   const st = r.steps.find((s) => s.state === 'running'); if (st && st.pgid) { try { process.kill(-st.pgid, 'SIGTERM'); } catch (e) { /* gone */ } }
   r.state = 'stopped'; r.endedAt = now(); if (st) { st.state = 'stopped'; } writeJSON(runFile(r.id), r); console.log(`run ${r.id}: the runner was already gone; its last step was stopped and the run marked stopped`);
 }

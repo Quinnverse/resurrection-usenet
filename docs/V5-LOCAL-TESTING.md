@@ -61,6 +61,16 @@ Each run is recorded in `test-runs/<id>/`:
 
 `test-runs/history.jsonl` keeps one line per finished run.
 
+If the runner process disappears without finishing (the Mac slept without `caffeinate`, a reboot, a killed process),
+`status` says **CRASHED** instead of RUNNING; it checks that the PID still belongs to this run's runner, not just that the
+number exists. `npm run v5:stop` then marks the run stopped and kills what is left of its last step.
+
+Verified so far (Linux sandbox, 2026-11-21): a `quick` run whose launching shell and process group were killed with
+SIGKILL kept running, and `status`, `logs` and `summary.md` read from new processes showed it pass in 56 s. In the agent's
+sandbox each command runs in its own short-lived container, so a run cannot outlive that one command there; it was
+reported as CRASHED, which is how this check was found. On a normal Mac or Linux machine a background run is an ordinary
+process and outlives the terminal.
+
 ## First time on a Mac (Apple silicon)
 
 1. `npm install` in the repository (installs `@playwright/test`; the runner uses `npx --no-install` and never
