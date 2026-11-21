@@ -14,6 +14,7 @@
 //   node tools/v5-shell-run.mjs --bench <tiers>                         the ?bench= measurement tour (tiers like low or low,medium); virtual
 //                                                                       frames, so it checks the logic and the report, not speed
 //   node tools/v5-shell-run.mjs --bundle                                run the single-file bundle (tools/v5-bundle.mjs) instead of the ES modules
+//   node tools/v5-shell-run.mjs --html <Resurrection-V5.html>           run the script of a SHIPPED single-file page (e.g. from an unzipped package)
 import { register } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,7 +24,7 @@ const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.res
 const args = process.argv.slice(2); const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? (args[i + 1] || true) : null; };
 const TECH = args.includes('--tech'); const DEVICE = opt('--device'); const SHOTS = opt('--shots');
 const LANG = opt('--lang') || 'en', ALT = args.includes('--alt'), QUIET = args.includes('--quiet'), CONT = opt('--continue');
-const PREVIEW_ID = opt('--preview'), BENCH_TIERS = opt('--bench'), BUNDLE = args.includes('--bundle');
+const PREVIEW_ID = opt('--preview'), BENCH_TIERS = opt('--bench'), BUNDLE = args.includes('--bundle'), HTML = typeof opt('--html') === 'string' ? opt('--html') : null;
 const navigated = [];
 if (PREVIEW_ID) { globalThis.location = { search: '?preview=' + PREVIEW_ID, pathname: '/v5/', replace: (u) => navigated.push(u) }; }
 if (BENCH_TIERS) { globalThis.location = { search: '?bench=' + (BENCH_TIERS === true ? 'low' : BENCH_TIERS) + '&beats=1.study,2.train&secs=1&warm=0&run=t1', pathname: '/v5/', replace: (u) => navigated.push(u) }; }
@@ -130,15 +131,28 @@ if (TECH) {
   console.log(JSON.stringify(r, null, 1)); process.exit(r.ok ? 0 : 1);
 }
 let RENDER_LOG, THREE;
-if (BUNDLE) {
+if (BUNDLE || HTML) {
   // the single-file bundle: three.js replaced by the shim, evaluated as one classic script (what a browser does with the HTML file)
-  const { bundleGame } = await import('./v5-bundle.mjs'); const code = bundleGame({ three: 'tools/v5-three-shim.mjs' });
-  const vm = await import('node:vm'); vm.runInThisContext(code, { filename: 'v5-bundle.js' });
+  const { bundleGame, bundleModules } = await import('./v5-bundle.mjs'); let code;
+  if (HTML) {
+    // the page that was shipped: its own script (game code, inlined story data, build id) from the file itself. Only the
+    // real three.js module is renamed and the shim takes its place (there is no WebGL in Node); nothing else is rebuilt.
+    const page = fs.readFileSync(path.resolve(HTML), 'utf8'); const m = /<script>\n(window\.__V5_STANDALONE__[\s\S]*?)<\/script>/.exec(page);
+    if (!m) { throw new Error('no game script in ' + HTML); }
+    const REAL_ID = 'frontend/p4/vendor/three.module.min.js'; const defKey = `__defs[${JSON.stringify(REAL_ID)}] = function`;
+    if (m[1].indexOf(defKey) < 0) { throw new Error('three.js module not found in ' + HTML); }
+    const sb = bundleModules('tools/v5-three-shim.mjs', {}); const s = sb.indexOf('__defs["tools/v5-three-shim.mjs"] = function'); const e = sb.lastIndexOf('\n__req("tools/v5-three-shim.mjs");');
+    const shimDef = sb.slice(s, e).split(`__req(${JSON.stringify(REAL_ID)})`).join('__req("REAL_THREE")').replace('__defs["tools/v5-three-shim.mjs"]', `__defs[${JSON.stringify(REAL_ID)}]`);
+    code = m[1].replace(defKey, '__defs["REAL_THREE"] = function'); const entryCall = '\n__req("frontend/v5/main.js");'; const at = code.lastIndexOf(entryCall);
+    if (at < 0) { throw new Error('game entry not found in ' + HTML); }
+    code = code.slice(0, at) + '\n' + shimDef + code.slice(at);
+  } else { code = bundleGame({ three: 'tools/v5-three-shim.mjs' }); }
+  const vm = await import('node:vm'); vm.runInThisContext(code, { filename: HTML ? path.basename(HTML) : 'v5-bundle.js' });
   ({ RENDER_LOG, REAL: THREE } = globalThis.__V5_SHIM__);
 } else { ({ RENDER_LOG, REAL: THREE } = await import(SHIM)); }
 const Gm = await import('../frontend/v5/core/game.js');
 const { t: tr } = await import('../frontend/v5/core/i18n.js');
-if (!BUNDLE) { await import('../frontend/v5/main.js'); }
+if (!BUNDLE && !HTML) { await import('../frontend/v5/main.js'); }
 
 const stats = { frames: 0, beats: {}, promptFrames: 0, promptOff: 0, offscreen: 0, missingText: new Set(), saves: {} };
 let curBeat = null; let preview = null; const shotLog = []; const shotRgb = []; const seenShot = new Set();
@@ -204,6 +218,7 @@ const click = (id) => { const e = byTestId(id); if (!e) { throw new Error('no vi
 const waitFor = (fn, secs, label) => { for (let i = 0; i < secs * 30; i++) { if (fn()) { return; } frameOnce({}); } throw new Error('timed out waiting for ' + label); };
 
 const report = { lang: LANG, alt: ALT, ok: false };
+if (HTML) { report.shippedPage = { file: path.basename(HTML), build: globalThis.__V5_BUILD__, standalone: globalThis.__V5_STANDALONE__ === true }; }
 try {
   if (PREVIEW_ID) {
     for (let i = 0; i < 20; i++) { await new Promise((r) => setImmediate(r)); }

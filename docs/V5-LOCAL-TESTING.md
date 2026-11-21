@@ -102,3 +102,19 @@ then in `run.json` and `history.jsonl`.
 A local PASS means the checks passed on that machine at the recorded commit (and the `dirty` flag says whether there were
 uncommitted changes). It is not a CI PASS. Before a release, one GitHub CI run on the pushed commit is still required,
 and reports quote both separately.
+
+## Building and checking the RC2 package
+
+| What | Command |
+|------|---------|
+| Build the single-file pages, the playtest folder and the RC2 zip, then check the zip | `npm run v5:rc2` (needs a clean tree: the build id in the pages is the commit hash) |
+| Check any package zip again | `node tools/v5-verify-package.mjs dist/resurrection-v5-rc2.zip --commit <short hash>` |
+| Play the script of one shipped page in the Node shell | `node tools/v5-shell-run.mjs --quiet --html path/to/Resurrection-V5.html [--lang zh --alt]` |
+
+`tools/v5-rc2-pack.mjs` takes the RC1 review build (`tools/v5-rc-pack.mjs`) and adds the RC2 report, this document,
+`START-HERE.txt` and `CHAPTER-1-RETEST.txt`; it writes `dist/resurrection-v5-rc2/` and `dist/resurrection-v5-rc2.zip`
+(`dist/` is git-ignored, the zip is not committed). `tools/v5-verify-package.mjs` unzips into a new temporary folder and
+checks only the extracted files: expected files, no request outside the folder, links between pages (including the ones
+the start page builds in script), inline scripts parse, one build id everywhere, and the extracted game page played from
+the title to the credits in English and in Chinese. It replaces only three.js's WebGL layer; it does not show that a
+browser draws the page. Opening the extracted `Resurrection-V5.html` in a real browser is still a manual step.

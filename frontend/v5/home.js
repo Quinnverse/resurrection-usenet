@@ -1,4 +1,4 @@
-// The owner's start page for RC1: six doors and nothing else. It only links; it changes nothing in the game and sends nothing.
+// The owner's start page for RC1 and RC2: six doors and nothing else. It only links; it changes nothing in the game and sends nothing.
 const S = !!window.__V5_STANDALONE__;   // the single-file build opened from disk
 const L = S
   ? { game: 'Resurrection-V5.html', tech: 'Resurrection-V5-Tech.html', audio: 'Resurrection-V5-Audio.html', hub: 'Resurrection-V5-RC.html', playtest: 'Resurrection-V5-Playtest.html', form: 'feedback-form.html' }
