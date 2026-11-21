@@ -53,12 +53,14 @@ const C = (id, options) => ({ choice: id, options });
 export const DIALOGS = {
   // chapter 1
   'c1.noDisk': [L('mara', 'c1.mara.never'), L('screen', 'c1.screen.noDisk'), L('mara', 'c1.mara.disk')],
-  'c1.disk': [L('mara', 'c1.mara.found'), L('mara', 'c1.mara.note')],
-  'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'c1.screen.title'), L('mara', 'c1.mara.open')],
-  'c1.theo1': [L('theo', 'c1.theo.hello', 'theo'), L('theo', 'c1.theo.almost', 'theo'), L('mara', 'c1.mara.howLong'), L('theo', 'c1.theo.dontAsk', 'theo'), L('theo', 'c1.theo.bridge', 'theo')],
+  // RC3: the folded photo is the first question the player carries into the past (who is the girl, why fold her away?)
+  'c1.disk': [L('mara', 'c1.mara.found'), L('mara', 'c1.mara.note'), L('mara', 'c1.mara.folded'), pause(0.8), L('mara', 'c1.mara.unfold'), L('screen', 'c1.photo.back'), L('mara', 'c1.mara.neverSaid')],
+  'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'c1.screen.title'), L('mara', 'c1.mara.junebug'), L('mara', 'c1.mara.open')],
+  'c1.theo1': [L('theo', 'c1.theo.hello', 'theo'), L('mara', 'c1.mara.twoGirls'), L('theo', 'c1.theo.almost', 'theo'), L('mara', 'c1.mara.howLong'), L('theo', 'c1.theo.dontAsk', 'theo'), L('theo', 'c1.theo.bridge', 'theo')],
   'c1.theo2': [L('theo', 'c1.theo.planks', 'theo'), L('mara', 'c1.mara.june'), L('theo', 'c1.theo.beard', 'theo'), L('theo', 'c1.theo.pier', 'theo'), L('theo', 'c1.theo.tab', 'theo'), L('theo', 'c1.theo.pierHow', 'theo')],
   'c1.memory': [L('mara', 'c1.mara.carved'), L('mara', 'c1.mara.show')],
-  'c1.carveIntro': [L('june', 'c1.june.carve', 'june'), L('elena', 'c1.elena.carveWhat'), L('june', 'c1.june.carveUs', 'june')],
+  // RC3: the photo from the KEEP box is being taken, unfolded and happy, before anything is asked of the player
+  'c1.carveIntro': [L('june', 'c1.june.photo', 'june'), L('elena', 'c1.elena.noFace'), L('june', 'c1.june.oneFace', 'june'), L('june', 'c1.june.carve', 'june'), L('elena', 'c1.elena.carveWhat'), L('june', 'c1.june.carveUs', 'june')],
   'c1.carved': [L('june', 'c1.june.crookedE', 'june'), L('elena', 'c1.elena.likeYou', 'elena'), L('june', 'c1.june.exactly', 'june'), L('june', 'c1.june.train', 'june')],
   'c1.hand': [L('june', 'c1.june.thought', 'hands'), L('elena', 'c1.elena.when', 'hands'), L('june', 'c1.june.remember', 'june'), L('elena', 'c1.elena.bag', 'elena'), L('june', 'c1.june.bag', 'june')],
   // chapter 2
@@ -129,8 +131,8 @@ export const DIALOGS = {
   'c6.leave': [pause(1.2, 'june'), L('june', 'c6.june.careful', 'june'), pause(1.0, 'elena')],
   // chapter 7
   'c7.letter': [L('mara', 'c7.mara.drafts'), L('mara', 'c7.mara.unsent'), C('letter', ['c7.choice.read', 'c7.choice.close'])],
-  'c7.read': [L('screen', 'c7.screen.draft'), L('mara', 'c7.mara.notMine')],
-  'c7.close': [L('mara', 'c7.mara.close'), L('mara', 'c7.mara.notMine')],
+  'c7.read': [L('screen', 'c7.screen.draft'), L('mara', 'c7.mara.notMine'), L('mara', 'c7.mara.unfolded')],
+  'c7.close': [L('mara', 'c7.mara.close'), L('mara', 'c7.mara.notMine'), L('mara', 'c7.mara.unfolded')],
   'c7.theo': [L('theo', 'c7.theo.back', 'theo'), L('mara', 'c7.mara.names'), L('theo', 'c7.theo.ok', 'theo')],
   'c7.creditsNeed': [L('mara', 'c7.mara.oneName'), L('mara', 'c7.mara.original')],
   'c7.credits98': [L('mara', 'c7.mara.read98'), L('mara', 'c7.mara.back04')],
@@ -601,7 +603,18 @@ function tryTab(g) {
   refreshWorld(g); irisSetup(g);
   if (rt.theo) { const ts = Ph.findSafe(rt.world, rt.theo.x, rt.theo.z, 0, 4, null); if (ts && ts.moved) { rt.theo.x = ts.x; rt.theo.z = ts.z; } }
   rt.ev.push({ type: 'tab', era: to, moved: spot.moved }); rt.ev.push({ type: 'save' });
+  if (s.beat === '1.pier') { pierTabLine(g, to); }
   if (s.beat === '7.town' && !s.flags.c7tab) { s.flags.c7tab = true; say(g, 'mara', to === 1998 ? 'c7.mara.tab98' : 'c7.mara.tab04', 4); }
+}
+
+// RC3: on the old pier every switch says whose work you are standing on (June's 1998 pier, the middle Elena rebuilt alone
+// in 2004), so the three switches are the first telling of the story instead of a puzzle about floors
+function pierTabLine(g, to) {
+  const s = g.s, b = g.rt.body; const f = s.flags; let key = null;
+  if (to === 1998 && b.z < 17.0 && !f.pierLine1) { f.pierLine1 = true; key = 'c1.mara.pier98'; }
+  else if (to === 2004 && b.z >= 16.5 && b.z < 21 && !f.pierLine2) { f.pierLine2 = true; key = 'c1.mara.pier04'; }
+  else if (to === 1998 && b.z >= 21 && !f.pierLine3) { f.pierLine3 = true; key = 'c1.mara.pierFar'; }
+  if (key) { say(g, 'mara', key, 4.2); }
 }
 
 // ---- Chapter 7: credit, Iris, seasons -------------------------------------------------------------------------------

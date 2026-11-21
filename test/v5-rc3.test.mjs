@@ -121,3 +121,43 @@ test('mouse and Shift: the new tips and settings exist in both languages with re
     assert.match(d['tut.sprint'], /\{k:sprint\}/);
   }
 });
+
+// ---- the chapter 1 story: what the player knows, in the order the game tells it ---------------------------------
+async function chapter1Lines() {
+  const { t } = await import('../frontend/v5/core/i18n.js');
+  const g = Gm.createGame(ar); const out = []; let last = null;
+  await playThrough(g, { step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); const k = s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] !== 'pause' ? s.dialog.line[1] : null; if (k && k !== last && ['1.study', '1.town', '1.pier', '1.carve'].includes(s.beat)) { out.push({ beat: s.beat, who: s.dialog.line[0], key: k, en: t('en', k) }); } last = k; ev.filter((e) => e.type === 'caption').forEach((e) => { if (['1.pier'].includes(s.beat)) { out.push({ beat: s.beat, who: 'caption', key: e.key, en: t('en', e.key) }); } }); return ev; } });
+  return { g, out };
+}
+
+test('chapter 1 story: the folded photo comes before the past, Theo gives June her name, every pier switch says whose part it is', async () => {
+  const { g, out } = await chapter1Lines(); const keys = out.map((x) => x.key); const at = (k) => keys.indexOf(k);
+  for (const k of ['c1.mara.folded', 'c1.photo.back', 'c1.mara.junebug', 'c1.mara.twoGirls', 'c1.theo.beard', 'c1.mara.pier98', 'c1.mara.pier04', 'c1.mara.pierFar', 'c1.june.photo']) { assert.ok(at(k) >= 0, 'heard ' + k); }
+  assert.ok(at('c1.mara.folded') < at('c1.screen.title'), 'the photo before the game opens');
+  assert.ok(at('c1.screen.title') < at('c1.mara.junebug') && at('c1.mara.junebug') < at('c1.theo.hello'), 'junebug is connected to the photo before the town');
+  assert.ok(at('c1.theo.beard') < at('c1.mara.pier98'), 'June is named before the pier lines use her name');
+  assert.ok(at('c1.mara.pier98') < at('c1.mara.pier04') && at('c1.mara.pier04') < at('c1.mara.pierFar'), 'the three pier lines in walking order');
+  assert.equal(keys.filter((k) => /^c1\.mara\.pier(98|04|Far)$/.test(k)).length, 3, 'each pier line once');
+  assert.ok(at('c1.june.photo') < at('c1.june.carve'), 'the photo is taken before June asks for anything');
+  // Mara does not call her "June" before Theo has said the name
+  const named = at('c1.theo.beard');
+  out.slice(0, named).filter((x) => x.who === 'mara').forEach((x) => assert.ok(!/\bJune\b/.test(x.en), `Mara says “June” too early: ${x.en}`));
+  // the folded photo is a memory on the way, not an optional look
+  const { fragments } = await import('../frontend/v5/core/journal.js');
+  const f = fragments(g).find((x) => x.id === 'platformPhoto'); assert.ok(f && f.found && !f.optional, 'the folded photo is a required memory');
+});
+
+test('chapter 7: the photo is unfolded at the end, whichever choice the player makes about the drafts', async () => {
+  for (const letter of [0, 1]) {
+    const g = Gm.createGame(ar); const heard = new Set();
+    await playThrough(g, { choices: { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter }, step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); if (s.dialog && Array.isArray(s.dialog.line)) { heard.add(s.dialog.line[1]); } return ev; } });
+    assert.ok(heard.has('c7.mara.unfolded'), `letter choice ${letter}`);
+  }
+});
+
+test('RC3 texts: every key in both languages, and the memory card says who the player is', async () => {
+  const { EN_RC3, ZH_RC3 } = await import('../frontend/v5/core/i18n-rc3.js');
+  assert.deepEqual(Object.keys(EN_RC3).sort(), Object.keys(ZH_RC3).sort());
+  assert.match(dictionaries.en['ui.memoryNote'], /Elena/); assert.match(dictionaries.en['ui.memoryNote'], /June/); assert.match(dictionaries.en['ui.memoryNote'], /not a recording/);
+  assert.match(dictionaries.zh['ui.memoryNote'], /埃莱娜/); assert.match(dictionaries.zh['ui.memoryNote'], /琳/);
+});

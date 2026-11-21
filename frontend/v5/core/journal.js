@@ -10,7 +10,8 @@ const prov = (g, id) => { const p = g.s.restored[id]; if (!p) { return null; } r
 
 export const FRAGMENTS = [
   { id: 'disk', chapter: 1, year: 1998, who: ['elena', 'mara'], when: (g) => !!g.s.flags.disk },
-  { id: 'platformPhoto', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.looked_photo, optional: true },
+  // RC3: the folded photo from the KEEP box (found with the disk; it was an optional look at the shelf before)
+  { id: 'platformPhoto', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.disk },
   { id: 'bridge', chapter: 1, year: 1998, who: ['june'], when: (g) => !!g.s.restored.bridge, prov: 'bridge' },
   { id: 'carving', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.carved },
   { id: 'trainHand', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.chased },
