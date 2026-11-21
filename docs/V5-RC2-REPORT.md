@@ -7,6 +7,80 @@ story. Branch `feature/resurrection-v5-complete`; nothing merged, deployed or su
 Status words as before: **AUTOMATED PASS** (a machine check), **MANUAL PASS** (a person on real hardware: none yet),
 **NOT TESTED**, **BLOCKED**.
 
+## 0 · This build, in one page (read this first)
+
+**What is delivered:** `resurrection-v5-rc2.zip`, built from the commit that contains this report. Its game code is identical to commit `4db8601`, the one GitHub CI ran in full; the commits after it change only documents, tools and the text of two start-page titles (`git diff 4db8601 HEAD -- frontend/v5` shows exactly that). No story or gameplay was added. Nothing was merged, deployed or submitted.
+
+### 0.1 · What was actually fixed (changes to the game)
+
+| # | Problem found | Fix | How it was found |
+|---|---|---|---|
+| 1 | Chapter 1: the computer needs a disk from the KEEP box; the line said only “that box” | the line names the box, the goal turns to “Find the backup disk”, a marker points at it | owner's first play; reproduced with `tools/v5-repro-ch1.mjs` |
+| 2 | Chapter 1 pier: nobody taught “switch years halfway out”; Theo and Iris repeated unrelated lines; help fired only after 22 s without *any* input, so a walking player never got it | Theo explains it; Mara says what each edge is; the task bar follows the player's position; help counts time *without progress* (30/60/90 s) | owner's first play; reproduced in the core |
+| 3 | A save made halfway along the pier showed “Switch to 1998” as not done | pier steps are monotone (a later step implies the earlier ones) | my own save/continue test |
+| 4 | Touch buttons jumped to the top right in the town (CSS class `era` collided with the year label) | class renamed `can-tab` | Chromium touch screenshots |
+| 5 | “✓ Done” and “New goal” notes stayed on screen for the rest of a beat | a `//` comment had swallowed the line that hides them (twice in `guide.js`); a done note is also cleared when the goal changes | whole-game Chromium check |
+| 6 | Pause menu: Settings had moved to third place when the journal entry was added | Settings back in second place, journal last (the pad and keyboard menu tests walk Resume → Settings) | CI run 44791668074 |
+| 7 | **The task bar, tips, aim hint and prompts were hidden in the train seat (68% of chapter 2 outside dialogue), on the bike (63%) and at the guitar (85% of the duet)** because those cameras were treated as cut-scenes | those three cameras count as play (`PLAY_SHOTS` in `main.js`) | whole-game Chromium check: “no step announced in chapter 2”; then measured in the Node shell |
+
+### 0.2 · What was fixed only in the tests (the game did not change)
+
+| Problem | Fix |
+|---|---|
+| The “note stays on screen” check in `tools/v5-shell-run.mjs` sat inside a `//` comment and never ran (third swallowed-comment case) | check restored; `tools/v5-lint-swallowed.mjs` plus a Node test now fail if any `//` has code after it (finds all four historic cases, none in the tree now) |
+| The whole-game check measured “notes in a row”, so two different notes in a row looked like one stuck note (limit 150 frames, limit now 100 frames per *same* note; a note lasts 84 frames) | the same note and the same goal's badge are measured separately; limit lowered, not raised |
+| The Node shell *printed* several values and never failed on them | now failing: stuck moments, all 20 beats, all 22 memories, task bar shown in play, player never off screen, prompts shown, every photo with its picture in the album, HUD visible in play. Shown to fail on a deliberate break: the task-bar check (task bar hidden), the memories check (chapter 3 memories removed) and the HUD check (old code). The other new checks were clean in every mode when added but were not broken on purpose |
+| The pier Tab test waited a fixed 600 ms; on a CI runner at 4 fps (worst frame 4.3 s) the game had not read the key yet (failed once, on `f27b347`) | waits until 3 frames have run, same assertions |
+| `status` could call a run RUNNING when its PID belonged to another process | a PID only counts as alive if it is this run's runner |
+
+### 0.3 · Test results
+
+**LOCAL = this sandbox (Linux, 8 cores). CI = GitHub Actions. They are separate records.**
+
+| Check | Result | Where / evidence |
+|---|---|---|
+| `npm run test:quick` (Node tests 260/260, Node-shell whole game EN + ZH, single-file bundle, previews, frame-time tour, kbm/pad/touch, guide audit) | **LOCAL PASS**, 56 s, last on the final tree | `test-runs/` (git-ignored) |
+| `npm run test:guide`, `npm run test:full:local` (real Chromium) | **NOT RUN here**: the sandbox has no Chromium and cannot install Playwright (npm and the Playwright CDN answer 403); the runner refuses to start and says so. **Not run on a Mac either** | `docs/V5-LOCAL-TESTING.md` |
+| The zip, unzipped into a fresh folder: files present, no external requests, links exist, scripts parse, one build id, and **the extracted game page played from the title to the credits in English and in Chinese** | **LOCAL PASS**, 35/35 checks | `node tools/v5-verify-package.mjs dist/resurrection-v5-rc2.zip` |
+| CI run `44876053433` on `4db8601` (the last run of the game code) | **9 of 10 jobs PASS; the old P5 job FAILS** (table below) | GitHub Actions |
+
+CI run `44876053433`, job by job:
+
+| Job | Result | What it ran | Time |
+|---|---|---|---|
+| Authoritative suite (npm test) | **PASS** | 260 Node tests | under 1 min |
+| Container smoke | **PASS** | build, health, restart recovery, no tokens in logs | 1 min |
+| Did the game change? | **PASS** | decides which long jobs run (game changed: yes) | 0 min |
+| V5 full game (Playwright) | **PASS**, 14/14 tests | the whole game in English and in Chinese with the task bar compared with the real state in every frame (12,039 and 12,037 checks, 0 mismatches, 0 marker errors, 98 uses of a marker, a step note in every one of the 7 chapters, journal opened and closed in every chapter), key remapping, touch, pad menus, keyboard menus, audio, tech demo, old pages still load | 56 min |
+| V5 RC1/RC2 review pages, first-time guide, packages | **PASS**, 15/15 tests | review tooling, single files opened from disk, owner start page, touch layout, chapter 1 path A and B, pier help at 30/60/90 s, save and continue halfway through a goal, Chinese guide, particles | 35 min |
+| V5 whole game, keyboard + mouse only | **PASS** | the whole game through one input device | 33 min |
+| V5 whole game, pad only (simulated) | **PASS** | same | 14 min |
+| V5 whole game, touch only (emulated) | **PASS** | same | 15 min |
+| Browser end-to-end (older pages) | **PASS** | the earlier browser suite | 24 min |
+| Browser end-to-end, P5 slice | **FAIL, old (not V5)** | the same 5 of 10 P5 tests with the same error types as in `docs/V5-P5-BASELINE.md` (tests 1, 2, 3, 7, 9); fails identically on the P5 branch itself, before V5 existed | 30 min |
+
+Workflow result: **failure**, caused only by the P5 job. No job was cancelled. **No V5 regression in this run; no infrastructure failure in this run.** P5 was not touched, because it is old code and outside this task.
+
+Runs before it, for the record: on `f27b347` the whole-game English and Chinese Chromium tests, the RC review job and all three device jobs passed (12,040 task-bar checks in English and 12,046 in Chinese, no mismatch, every step note gone within 84 frames); its one failure was the pier Tab test described in 0.2, fixed in `4db8601`. On `457f256` the keyboard job failed with “The runner has received a shutdown signal”, which is infrastructure, not the game. The P5 job fails in every run since before V5 (`docs/V5-P5-BASELINE.md`); it is old code that V5 does not touch.
+
+The commits made after `4db8601` (this report, the packer, the verifier, two titles) were pushed afterwards. They change no game file, so the long jobs are skipped for them by design; their light run is reported in the hand-over message, not here, because a report cannot contain the result of its own commit.
+
+### 0.4 · The two chapter 1 paths, the Tab dead end, the HUD, saves
+
+* **Two chapter 1 paths in real Chromium**: section 4.1 (CI run `44797009323`). Computer first reached the carving at 59 s; exploring first and then 95 s lost on the pier reached it at 160 s; neither had a stuck moment. Screenshots: `docs/v5-evidence/rc2/ch1-path-A-*`, `ch1-path-B-*`. The two videos are in that run's `resurrection-v5-rc-evidence` artifact (downloading artifacts is blocked from the sandbox, so they are not in the repository).
+* **Tab dead end**: root cause in 4.2 (no deadlock; an unexplained spatial puzzle plus a help system that never spoke to a walking player). Verified by the core tests, by path B (the help arrow, the spoken hint and the marker appear at 30, 60 and 90 s: `ch1-path-B-help-level-1/2/3`), and by the pier Tab test.
+* **HUD**: the task bar, tips and prompts must be visible whenever the player is in control. A cut-scene camera may hide them and is never required to show them: the three places that do (`5.depart` photo moment, `5.alone` platform photo, `7.town` seasons sequence) are exempt, and are listed in the Node-shell report as “story camera”. On the code before the fix the check fails (train 123, bike 117, guitar 8 + 124 checks); on the fixed code it finds 0.
+* **Save and continue**: a save made at each step of the pier shows the same goal and the same steps done (Node test `saving halfway along the pier…` and a Chromium test `save and continue halfway through a goal`, in the RC review job); journal entries survive save and load.
+
+### 0.5 · Known limits (what this does not show)
+
+1. **No person has played RC2.** Everything above is machine checking. Whether the tips and the help feel right is exactly what the Owner's replay of chapter 1 has to answer.
+2. **No real GPU, Safari, Firefox, real controller, real phone, real speakers.** CI uses Chromium with a software renderer at 4–10 frames per second.
+3. **The zip itself was not opened in a browser by me.** The package check plays the extracted page's own script in Node, with only three.js's WebGL layer replaced, so it proves the shipped file contains a complete, working game, but not that a given browser draws it. CI's review job builds the packages from the pushed commit with the same scripts and opens the single-file pages from disk in Chromium.
+4. **The local runner has never run a browser suite on a Mac**, and the software-GL flags used by the specs are unverified on macOS.
+5. **The playtest page (`Resurrection-V5-Playtest.html`) is only checked structurally here**; the game page was played in full.
+6. The pier is still a puzzle; chapters 2–7 got the task bar, help and journal but no content changes (section 5).
+
 ## 1 · What was actually wrong in chapter 1 (reproduced in the core)
 
 `node tools/v5-repro-ch1.mjs` plays the three situations in the real game core and prints what happened. Before the fix:
@@ -84,13 +158,13 @@ Memories found in this playthrough: 22 of 22 (3 optional).
 | Save in the middle of a goal and load it: same goal, same steps done | AUTOMATED PASS | `test/v5-rc2.test.mjs` |
 | Journal: found as the story records it, kept through save and load, never lost, never required | AUTOMATED PASS | `test/v5-rc2.test.mjs` |
 | Every goal, step and instruction exists in English and Chinese; every control token is a real control | AUTOMATED PASS | `test/v5-rc2.test.mjs`; the Node shell also checks the live task bar every 10 frames of the whole game |
-| Whole game with only keyboard and mouse / only a pad / only touch, with the new HUD | AUTOMATED PASS when the CI device jobs pass (see the run in the final report) | CI device jobs |
+| Whole game with only keyboard and mouse / only a pad / only touch, with the new HUD | AUTOMATED PASS (simulated pad, emulated touch) | CI jobs “V5 whole game on one input device” on `4db8601`, see 0.3 |
 | Particles before and after | screenshots | before: `docs/v5-evidence/rc1/` (RC1 run, study and snow); after: `rc2-13-study-dust-after`, `rc2-14-snow-after` |
 | A person who never saw the game understands the controls, the goal and the next step | **NOT TESTED** | needs the owner and other players |
 
 Screenshots are from GitHub Actions Chromium with software rendering, in `docs/v5-evidence/rc2/`.
 
-### 4.1 · Chapter 1 in real Chromium, two orders (CI run 44797009323, commit e8ac70e, job "V5 RC1/RC2 review pages")
+### 4.1 · Chapter 1 in real Chromium, two orders (screenshots from CI run 44797009323, commit e8ac70e; the same timeline was produced again on the final game code, run 44876053433, commit 4db8601: A 59 s, B 160 s, no stuck moment)
 
 Both paths are played with real key presses (`e2e/v5-rc2.spec.js`, “chapter 1, path A / path B”); the timeline is what the
 task bar said at each moment (game seconds on a virtual 30 fps clock, not human time). Video: `video.webm` of each test in
@@ -143,6 +217,8 @@ edge says what to try, the task bar follows the player's position, and help is b
 4. **Exploration is still thin.** RC2 gives goals, feedback and memories; it does not add new small events or reactions in the scenes (no new story, as asked). The memory journal is the first place to add meaning to looking around.
 5. **The marker is a simple floating diamond and ring.** It is clear but not beautiful; it should be restyled with the art pass.
 6. Real GPU, Safari, Firefox, a real controller and a real phone: still not tested (see `V5-RC1-BLOCKERS.md`).
+7. **Local browser runs are untested on the Owner's Mac** (`npm run test:guide`, `npm run test:full:local`): the runner, its timeouts, logs and `status`/`logs`/`stop` were verified on Linux only, with Node-only suites; browser steps there are refused because no Chromium can be installed.
+8. **Package verification is Node-only** (see 0.5 item 3).
 
 ## 6 · Art direction: what to do next (recommendation)
 
