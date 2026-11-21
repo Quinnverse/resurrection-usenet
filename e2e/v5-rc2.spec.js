@@ -293,3 +293,71 @@ test.describe('V5 RC2 — a first-time player', () => {
     expect(w.issues).toEqual([]);
   });
 });
+
+// RC3: the owner's RC2 playtest, in real Chromium with real keys: the chain prompt on screen, the mouse setting, the new
+// chapter 1 opening (screenshots of each line for the owner), the duet seated side by side
+test.describe('V5 RC3 — after the owner playtest', () => {
+  test('the bike chain: the prompt is on screen at the bikes, holding E fixes it', async ({ page }, testInfo) => {
+    test.setTimeout(8 * 60 * 1000);
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    await page.goto('/v5/?preview=3.ride'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('3.ride');
+    // advance June's line if any, then pedal with the real W key until the chain slips
+    const t0 = Date.now(); await page.keyboard.down('KeyW');
+    while (Date.now() - t0 < 5 * 60 * 1000) { const s = await snap(page); if (s.ride && s.ride.stop === 'chain') { break; } if (s.dialog) { await page.keyboard.press('Space'); } await page.waitForTimeout(250); }
+    await page.keyboard.up('KeyW');
+    for (let i = 0; i < 40 && (await snap(page)).dialog; i++) { await page.keyboard.press('Space'); await page.waitForTimeout(400); }
+    const s = await snap(page); expect(s.ride && s.ride.stop).toBe('chain');
+    const pr = page.getByTestId('prompt'); await expect(pr).toBeVisible({ timeout: 10000 });
+    const box = await pr.boundingBox(); const vp = page.viewportSize();
+    expect(box.x > 0 && box.y > 0 && box.x + box.width < vp.width && box.y + box.height < vp.height, 'the prompt is inside the screen').toBe(true);
+    // the game pins a prompt to left 110 / right width-110 / top 90 / bottom height-160 when its point is off screen
+    const pos = await page.evaluate(() => { const e = document.querySelector('[data-testid="prompt"]'); return { l: parseFloat(e.style.left), t: parseFloat(e.style.top), w: innerWidth, h: innerHeight }; });
+    expect(pos.l > 110 && pos.l < pos.w - 110 && pos.t > 90 && pos.t < pos.h - 160, 'not pinned to a screen edge: ' + JSON.stringify(pos)).toBe(true);
+    expect(await pr.textContent()).toMatch(/chain/i);
+    await attach(testInfo, 'rc3-01-chain-prompt', await shot(page));
+    await page.keyboard.down('KeyE'); await expect.poll(async () => (await obj(page)).steps.find((x) => x.id === 'chain').done, { timeout: 60000 }).toBe(true); await page.keyboard.up('KeyE');
+    await attach(testInfo, 'rc3-02-chain-fixed', await shot(page));
+    expect(w.issues).toEqual([]);
+  });
+
+  test('the mouse: Settings has a Mouse row that switches between captured and free pointer, and it is kept', async ({ page }, testInfo) => {
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(500);
+    await page.keyboard.press('Escape'); await page.getByTestId('settings').click();
+    const b = page.getByTestId('mouse-mode'); await expect(b).toBeVisible(); const before = await b.textContent();
+    await b.click(); await expect(b).not.toHaveText(before);
+    await attach(testInfo, 'rc3-03-settings-mouse', await shot(page));
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('v5.prefs.v1')).noLock)).toBe(true);
+    expect(w.issues).toEqual([]);
+  });
+
+  test('chapter 1 opening: the folded photo in the KEEP box, line by line (screenshots for the owner)', async ({ page }, testInfo) => {
+    test.setTimeout(8 * 60 * 1000);
+    const w = watch(page); await page.addInitScript(initHook); await serveBot(page);
+    await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
+    await page.evaluate(async () => {
+      const { makeBot } = await import('/v5-test/bot.mjs'); const h = window.__V5_TEST__; await h.virtualize(); const bot = makeBot(h.game, { step: (i) => h.step(i), optional: false });
+      await bot.go('keepbox', -1.1, 2.2); await bot.use('keepbox'); h.unvirtualize();
+    });
+    const seen = [];
+    for (let i = 0; i < 12; i++) {
+      const s = await snap(page); if (!s.dialog) { break; }
+      const line = Array.isArray(s.dialog.line) ? s.dialog.line[1] : null; if (line && seen[seen.length - 1] !== line) { seen.push(line); await page.waitForTimeout(700); await attach(testInfo, `rc3-04-study-${String(seen.length).padStart(2, '0')}-${line}`, await shot(page)); }
+      await page.keyboard.press('Space'); await page.waitForTimeout(500);
+    }
+    expect(seen).toEqual(expect.arrayContaining(['c1.mara.folded', 'c1.mara.unfold', 'c1.photo.back', 'c1.mara.neverSaid']));
+    expect(w.issues).toEqual([]);
+  });
+
+  test('the duet: Elena and June side by side, before and after "closer" (screenshots)', async ({ page }, testInfo) => {
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'medium', tut: TIPS_DONE });
+    await page.goto('/v5/?preview=4.duet'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('4.duet'); await page.waitForTimeout(2500);
+    for (let i = 0; i < 6 && (await snap(page)).dialog; i++) { await page.keyboard.press('Space'); await page.waitForTimeout(600); }
+    await page.waitForTimeout(1200); await attach(testInfo, 'rc3-05-duet-side-by-side', await shot(page));
+    const s = await snap(page); expect(s.june && Math.abs(s.june.z - (-1.0)) < 0.3, 'June beside Elena, not across from her').toBe(true);
+    expect(w.issues).toEqual([]);
+  });
+});

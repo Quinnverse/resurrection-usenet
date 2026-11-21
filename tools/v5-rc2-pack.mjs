@@ -17,11 +17,14 @@ if (build !== head) { console.error(`dist/ is from ${build}, HEAD is ${head}: ru
 // the build id in the pages is only the commit hash: a package made from a modified tree would look clean and not be
 const dirty = execFileSync('git', ['status', '--porcelain', '--', 'frontend', 'combined-server', 'docs', 'tools', 'test', 'e2e', 'package.json'], { cwd: root }).toString().trim();
 if (dirty) { console.error('uncommitted changes in the game, docs or tools; commit them first so the build id says what is inside:\n' + dirty); process.exit(1); }
-const out = path.join(root, 'dist', 'resurrection-v5-rc2');
+// --rc 3 builds the RC3 package the same way (dist/resurrection-v5-rc3/, its report docs/V5-RC3-REPORT.md)
+const RC = (() => { const i = process.argv.indexOf('--rc'); return i >= 0 ? String(process.argv[i + 1]) : '2'; })();
+const NAME = 'resurrection-v5-rc' + RC;
+const out = path.join(root, 'dist', NAME);
 fs.rmSync(out, { recursive: true, force: true });
 fs.cpSync(src, out, { recursive: true });
-['V5-RC2-REPORT.md', 'V5-LOCAL-TESTING.md'].forEach((d) => fs.copyFileSync(path.join(root, 'docs', d), path.join(out, 'docs', d)));
-fs.writeFileSync(path.join(out, 'START-HERE.txt'), `Resurrection V5 — RC2 playtest package (build ${build})
+['V5-RC2-REPORT.md', 'V5-LOCAL-TESTING.md'].concat(RC !== '2' ? ['V5-RC' + RC + '-REPORT.md', 'V5-RC' + RC + '-STORY.md'] : []).forEach((d) => fs.copyFileSync(path.join(root, 'docs', d), path.join(out, 'docs', d)));
+fs.writeFileSync(path.join(out, 'START-HERE.txt'), RC !== '2' ? startHere3(build) : `Resurrection V5 — RC2 playtest package (build ${build})
 
 What to do first: replay CHAPTER 1 as if you had never seen the game (about 5–10 minutes).
   1. Double-click  Resurrection-V5.html  (Chrome, Edge, Firefox or Safari on a computer; no install, no internet).
@@ -33,7 +36,7 @@ Everything else (as in RC1): Resurrection-V5-Start.html has the six doors (start
 scenes, feedback). docs/V5-RC2-REPORT.md says what changed, what passed and what is not tested.
 Phone or tablet: these files cannot be opened from a phone directly; in the repository run  npm run v5:lan.
 `);
-fs.writeFileSync(path.join(out, 'CHAPTER-1-RETEST.txt'), `Chapter 1 retest (RC2, build ${build})
+fs.writeFileSync(path.join(out, 'CHAPTER-1-RETEST.txt'), RC !== '2' ? retest3(build) : `Chapter 1 retest (RC2, build ${build})
 
 Before RC2 you got stuck twice: E at the computer did nothing useful, and after the first Tab you did not know where to go.
 Please play chapter 1 fresh and note, honestly, for each point: clear / took a while / stuck, and roughly how long.
@@ -54,6 +57,41 @@ Please play chapter 1 fresh and note, honestly, for each point: clear / took a w
 Optional: the playtest build (Resurrection-V5-Playtest.html) records your play on this computer only, if you agree on
 its first screen; you can download the record from the pause menu and send it.
 `);
-const zip = path.join(root, 'dist', 'resurrection-v5-rc2.zip'); fs.rmSync(zip, { force: true });
-try { execFileSync('zip', ['-qrX', zip, 'resurrection-v5-rc2'], { cwd: path.join(root, 'dist') }); console.log('wrote', path.relative(root, zip)); } catch (e) { console.log('zip not available; folder only'); }
+const zip = path.join(root, 'dist', NAME + '.zip'); fs.rmSync(zip, { force: true });
+try { execFileSync('zip', ['-qrX', zip, NAME], { cwd: path.join(root, 'dist') }); console.log('wrote', path.relative(root, zip)); } catch (e) { console.log('zip not available; folder only'); }
 console.log('wrote', path.relative(root, out), 'build', build);
+
+function startHere3(build) {
+  return `Resurrection V5 — RC3 playtest package (build ${build})
+
+RC3 answers your RC2 playtest: the chain stall, the mouse, the photo dares, the duet, Shift, and the chapter 1 story.
+  1. Double-click  Resurrection-V5.html  (Chrome, Edge, Firefox or Safari on a computer; no install, no internet).
+     If an old save is offered, choose New game: chapter 1 has changed.
+  2. Play at least until the bike ride reaches the lighthouse (chapters 1-3). Further if you like.
+  3. Then answer CHAPTER-1-RETEST.txt (it covers chapters 1-3).
+
+Mouse: click the scene to look around with the mouse (a dot shows where you look). Esc frees the pointer and pauses.
+If you prefer a visible pointer all the time: Settings > Mouse > Free pointer (drag to look).
+docs/V5-RC3-REPORT.md: what changed, what passed, what is not tested. docs/V5-RC3-STORY.md: the story analysis.
+`;
+}
+function retest3(build) {
+  return `RC3 retest (build ${build}) — please answer honestly, short is fine
+
+Story (the reason RC3 exists)
+ 1. After the study, did you want to know who the girl in the folded photo was? Did that carry you into the town?
+ 2. When Theo spoke, did you understand who he is and why he matters? Did meeting him still feel random?
+ 3. On the pier, did the switching mean anything to you this time (whose part of the pier is whose)?
+ 4. When you became Elena, was it clear who you were and who June was? Did you care about them by the train?
+ 5. Did you still feel led by the nose, or did it feel like their story? Where exactly did it feel like a task list?
+
+Things that blocked or annoyed you in RC2
+ 6. The bike chain: did you see what to do? (It now says hold E, no need to move; June fixes it herself after a while.)
+ 7. The mouse: was it clear when the mouse looks around and when you can click? Did Esc do what you expected?
+ 8. Photo dares: did you find the lighthouse and the kite? Did the gold frame / arrow help, or make it too easy?
+ 9. Did anything still look broken or go through something (the guitar duet was changed: they now sit side by side)?
+10. Shift: did you notice you can speed up?
+
+One sentence: is this closer to a story you would keep playing, or not yet? What would make you keep playing?
+`;
+}

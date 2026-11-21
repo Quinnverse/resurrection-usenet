@@ -33,7 +33,8 @@ execFileSync('unzip', ['-q', zip, '-d', dir]);
 const top = fs.readdirSync(dir); const base = top.length === 1 && fs.statSync(path.join(dir, top[0])).isDirectory() ? path.join(dir, top[0]) : dir;
 check('one top folder inside the zip', base !== dir, top.join(', '));
 
-const need = ['START-HERE.txt', 'CHAPTER-1-RETEST.txt', 'Resurrection-V5-Start.html', 'Resurrection-V5.html', 'Resurrection-V5-Playtest.html', 'Resurrection-V5-Tech.html', 'Resurrection-V5-Audio.html', 'Resurrection-V5-RC.html', 'feedback-form.html', 'docs/V5-RC2-REPORT.md', 'docs/V5-LOCAL-TESTING.md'];
+const rcN = (/resurrection-v5-rc(\d+)/.exec(path.basename(base)) || [])[1] || '2';
+const need = ['START-HERE.txt', 'CHAPTER-1-RETEST.txt', 'Resurrection-V5-Start.html', 'Resurrection-V5.html', 'Resurrection-V5-Playtest.html', 'Resurrection-V5-Tech.html', 'Resurrection-V5-Audio.html', 'Resurrection-V5-RC.html', 'feedback-form.html', 'docs/V5-RC2-REPORT.md', 'docs/V5-LOCAL-TESTING.md'].concat(rcN !== '2' ? ['docs/V5-RC' + rcN + '-REPORT.md', 'docs/V5-RC' + rcN + '-STORY.md'] : []);
 const missing = need.filter((f) => !fs.existsSync(path.join(base, f)));
 check('all expected files are in the folder', missing.length === 0, missing.length ? 'missing: ' + missing.join(', ') : `${need.length} files`);
 const shots = fs.existsSync(path.join(base, 'shots')) ? fs.readdirSync(path.join(base, 'shots')).length : 0;

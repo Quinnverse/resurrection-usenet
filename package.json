@@ -17,6 +17,7 @@
     "v5:bundle": "node tools/v5-bundle.mjs",
     "v5:rc": "node tools/v5-rc-pack.mjs && node tools/v5-playtest-pack.mjs",
     "v5:rc2": "node tools/v5-rc-pack.mjs && node tools/v5-playtest-pack.mjs && node tools/v5-rc2-pack.mjs && node tools/v5-verify-package.mjs dist/resurrection-v5-rc2.zip",
+    "v5:rc3": "node tools/v5-rc-pack.mjs && node tools/v5-playtest-pack.mjs && node tools/v5-rc2-pack.mjs --rc 3 && node tools/v5-verify-package.mjs dist/resurrection-v5-rc3.zip",
     "v5:previews": "node tools/v5-preview-saves.mjs",
     "test:quick": "node tools/v5-run.mjs start quick --fg",
     "test:guide": "node tools/v5-run.mjs start guide",
