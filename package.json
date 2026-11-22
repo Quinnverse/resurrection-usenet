@@ -30,7 +30,8 @@
     "test:r4": "node tools/r4-affected.mjs --run",
     "test:r4:plan": "node tools/r4-affected.mjs",
     "test:r4:quick": "npm test && node tools/v5-shell-run.mjs --quiet",
-    "test:r4:browser": "node tools/r4-browser.mjs"
+    "test:r4:browser": "node tools/r4-browser.mjs",
+    "v5:r4": "node tools/v5-rc-pack.mjs && node tools/v5-playtest-pack.mjs && node tools/v5-rc2-pack.mjs --rc 4 && node tools/v5-verify-package.mjs dist/resurrection-v5-rc4.zip"
   },
   "keywords": [
     "horror",

@@ -28,7 +28,8 @@ export const FRAGMENTS = [
   { id: 'duet', chapter: 4, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.duet1 },
   { id: 'stars', chapter: 4, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.stars },
   { id: 'news', chapter: 5, year: 1998, who: ['june', 'elena'], when: (g) => !!g.s.flags.c5talk },
-  { id: 'letter1999', chapter: 6, year: 1999, who: ['june'], when: (g) => seen(g, 'c6.letter'), optional: true },
+  { id: 'letter1999', chapter: 6, year: 2004,   // R4: dated March 2004, after the single-credit public build of 3 March (it said 1999, before that build existed)
+     who: ['june'], when: (g) => seen(g, 'c6.letter'), optional: true },
   { id: 'gamebox', chapter: 6, year: 2004, who: ['elena', 'june'], when: (g) => !!g.s.flags.looked_gamebox, optional: true },
   { id: 'answered', chapter: 6, year: 2004, who: ['elena', 'june'], when: (g) => !!g.s.flags.beachTalk1 },
   { id: 'careful', chapter: 6, year: 2004, who: ['june', 'elena'], when: (g) => !!g.s.flags.beachTalk3 },

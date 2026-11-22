@@ -13,7 +13,7 @@ export const THEMES = {
   ending: { where: 'Credits', want: 'Calm plucked melody with bells; an ending, not a fade-out.' }
 };
 export const EFFECTS = {
-  step: 'footstep (not used yet)', jump: 'jump', land: 'landing', click: 'pick up / carry', open: 'opening the KEEP box (Ch1)', blip: 'subtitle line appears', crtWake: 'old computer wakes (Ch1)',
+  step: 'footstep, one per stride on the ground (R4)', jump: 'jump', land: 'landing', click: 'pick up / carry', open: 'opening the KEEP box (Ch1)', blip: 'subtitle line appears', crtWake: 'old computer wakes (Ch1)',
   modem: 'archive rebuild screen (Ch1)', restoreStart: 'restore begins (bridge, Ch1)', plank: 'each bridge plank lands', restored: 'restore complete', to98: 'Tab to 1998', to04: 'Tab to 2004',
   denied: 'Tab refused / restore refused', whistle: 'train leaves (Ch1, Ch5)', caught: 'catching June\'s hand (Ch1)', shutter: 'camera shutter (Ch2, Ch5)', bell: 'bicycle bell (Ch3)',
   crank: 'lamp crank (Ch3)', lit: 'the lamp lights (Ch3)', door: 'doors', page: 'letter, sketch, drawing', choice: 'a choice is made', season: 'seasons created (Ch7)', credit: 'names restored (Ch7)',

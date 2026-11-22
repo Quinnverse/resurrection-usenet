@@ -23,8 +23,10 @@ const NAME = 'resurrection-v5-rc' + RC;
 const out = path.join(root, 'dist', NAME);
 fs.rmSync(out, { recursive: true, force: true });
 fs.cpSync(src, out, { recursive: true });
-['V5-RC2-REPORT.md', 'V5-LOCAL-TESTING.md'].concat(RC !== '2' ? ['V5-RC' + RC + '-REPORT.md', 'V5-RC' + RC + '-STORY.md'] : []).forEach((d) => fs.copyFileSync(path.join(root, 'docs', d), path.join(out, 'docs', d)));
-fs.writeFileSync(path.join(out, 'START-HERE.txt'), RC !== '2' ? startHere3(build) : `Resurrection V5 — RC2 playtest package (build ${build})
+const R4_DOCS = ['R4-REPORT.md', 'R4-SCRIPT.md', 'R4-CHARACTERS-TIMELINE.md', 'R4-CHAPTER-LINKS.md', 'R4-BLOCKER-FIXES.md', 'R4-TEST-STRATEGY.md', 'R4-SHA256.txt'];
+['V5-RC2-REPORT.md', 'V5-LOCAL-TESTING.md'].concat(RC === '4' ? R4_DOCS : RC !== '2' ? ['V5-RC' + RC + '-REPORT.md', 'V5-RC' + RC + '-STORY.md'] : []).forEach((d) => { const f = path.join(root, 'docs', d); if (fs.existsSync(f)) { fs.copyFileSync(f, path.join(out, 'docs', d)); } else if (RC !== '4') { throw new Error('missing ' + f); } });
+if (RC === '4') { fs.copyFileSync(path.join(root, 'RESURRECTION_THEME.md'), path.join(out, 'RESURRECTION_THEME.md')); if (fs.existsSync(path.join(root, 'docs', 'r4-evidence'))) { fs.cpSync(path.join(root, 'docs', 'r4-evidence'), path.join(out, 'evidence'), { recursive: true }); } }
+fs.writeFileSync(path.join(out, 'START-HERE.txt'), RC === '4' ? startHere4(build) : RC !== '2' ? startHere3(build) : `Resurrection V5 — RC2 playtest package (build ${build})
 
 What to do first: replay CHAPTER 1 as if you had never seen the game (about 5–10 minutes).
   1. Double-click  Resurrection-V5.html  (Chrome, Edge, Firefox or Safari on a computer; no install, no internet).
@@ -36,7 +38,7 @@ Everything else (as in RC1): Resurrection-V5-Start.html has the six doors (start
 scenes, feedback). docs/V5-RC2-REPORT.md says what changed, what passed and what is not tested.
 Phone or tablet: these files cannot be opened from a phone directly; in the repository run  npm run v5:lan.
 `);
-fs.writeFileSync(path.join(out, 'CHAPTER-1-RETEST.txt'), RC !== '2' ? retest3(build) : `Chapter 1 retest (RC2, build ${build})
+fs.writeFileSync(path.join(out, RC === '4' ? 'PLAYTEST-QUESTIONS.txt' : 'CHAPTER-1-RETEST.txt'), RC === '4' ? retest4(build) : RC !== '2' ? retest3(build) : `Chapter 1 retest (RC2, build ${build})
 
 Before RC2 you got stuck twice: E at the computer did nothing useful, and after the first Tab you did not know where to go.
 Please play chapter 1 fresh and note, honestly, for each point: clear / took a while / stuck, and roughly how long.
@@ -93,5 +95,45 @@ Things that blocked or annoyed you in RC2
 10. Shift: did you notice you can speed up?
 
 One sentence: is this closer to a story you would keep playing, or not yet? What would make you keep playing?
+`;
+}
+
+function startHere4(build) {
+  return `Resurrection V5 — R4 playable candidate (build ${build})
+
+THE WHOLE GAME, OFFLINE. Nothing to install, no internet, no server.
+  1. Double-click  Resurrection-V5.html  (Chrome, Edge, Firefox or Safari on a computer).
+     If an old save is offered, choose New game: the game now begins in the prologue.
+  2. Play from the beginning. The prologue (about 8-12 minutes by design), seven chapters and the epilogue.
+     The target is 45-60 minutes in all; nobody has timed a person yet (see docs/R4-REPORT.md).
+  3. Controls are taught as you go (W A S D, E, 1/2 for choices, Tab on the old pier, H for a hint, J for the journal).
+     Esc pauses; the Settings menu has English/Chinese, subtitles, mouse mode and key remapping.
+  4. Then answer PLAYTEST-QUESTIONS.txt (any file, or tell the developer).
+
+The restore tool in the prologue is an INVENTED screen in an INVENTED archive. No real posts or people.
+
+Read next: RESURRECTION_THEME.md (the competition theme and where it is in the game), docs/R4-REPORT.md (what changed, what passed,
+what nobody has verified), docs/R4-SCRIPT.md (the prologue and epilogue in English and Chinese), docs/R4-BLOCKER-FIXES.md.
+Resurrection-V5-Start.html has the doors (start, continue, technical demo, music, key scenes, feedback).
+`;
+}
+function retest4(build) {
+  return `R4 playtest (build ${build}) — please answer honestly, short is fine
+
+The beginning
+ 1. After the kitchen scene, did you understand Mara's situation: what she wanted, why she left, that this was the last time?
+ 2. In the empty house, did you understand that Mom has died, without being told in so many words? Did the answering machine land?
+ 3. Did you want to open the computer? What made you want to (or not)?
+ 4. The restore tool: did you know what to do at each step? Did the repair feel like something you did, or something that happened?
+ 5. When you met June on the pier: who did you think she was? Did you want to follow her?
+The middle
+ 6. Did you care about June and Elena by the train? By the lighthouse? When June left?
+ 7. The beam (chapter 3): could you find June and then the cottage without help? How long did it take?
+ 8. Did anything block you, hide something, or go through something?
+The end
+ 9. In chapter 6, did you feel that Elena hurt June, without being asked to forgive her?
+10. The epilogue: the letter and the unfolded photo. Did it feel like an ending to the whole game, or like an explanation?
+11. What does "resurrection" mean after playing: what came back, and what did not?
+12. How long did you play, and where did you stop to think, get bored, or get stuck?
 `;
 }

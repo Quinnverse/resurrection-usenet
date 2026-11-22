@@ -540,6 +540,8 @@ function syncCast(dt) {
     const seat = LAYOUTS.porch.seat; me.visible = s.shot === 'twoshot'; me.position.set(seat.x, -4.95, seat.z); me.rotation.y = Math.PI; animate(me, rt.t, 0, 0, 'sit', reduce());
   } else {
     me.position.set(b.x, b.y, b.z); me.rotation.set(0, b.facing, 0);
+    // R4: footsteps, one per stride on the ground (quiet; louder indoors on a hard floor is not modelled)
+    if (b.grounded && !s.seated && !s.dialog && s.scene !== 'train') { const sp = Math.hypot(b.vx, b.vz); rt.stride = (rt.stride || 0) + sp * dt; if (rt.stride > (sp > 3.2 ? 1.15 : 0.78)) { rt.stride = 0; A.play('step'); } } else if (s.dialog) { rt.stride = 0; }
     // in conversation she turns to whoever she is talking to, so close-ups see faces, not the back of a head
     if (s.dialog && !s.seated) {
       const other = s.june && g.rt.june && Math.hypot(g.rt.june.x - b.x, g.rt.june.z - b.z) < 5 ? g.rt.june : (s.theo && worldId === 'town' && Math.hypot(s.theo.x - b.x, s.theo.z - b.z) < 5 ? s.theo : (s.mother && Math.hypot(s.mother.x - b.x, s.mother.z - b.z) < 6 ? s.mother : null));

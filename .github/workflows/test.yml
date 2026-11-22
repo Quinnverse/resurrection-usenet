@@ -74,9 +74,7 @@ jobs:
       - name: Fingerprint of the game files (reports, docs, releases and screenshots are not part of it)
         id: hash
         run: |
-          h=$(git ls-files -s -- frontend combined-server backend/src shared test e2e playwright.config.js package.json package-lock.json Dockerfile \
-                tools/v5-shell-run.mjs tools/v5-three-shim.mjs tools/v5-playthrough.mjs tools/v5-bundle.mjs tools/v5-serve.mjs tools/v5-guide-audit.mjs tools/v5-preview-saves.mjs tools/r4-browser.mjs \
-                ':(exclude)frontend/v5/rc' | sha256sum | cut -c1-24)
+          h=$(bash tools/r4-fingerprint.sh)
           echo "hash=$h" >> "$GITHUB_OUTPUT"; echo "game fingerprint: $h"
 
       - name: A full pass already recorded for this fingerprint?
@@ -365,9 +363,7 @@ jobs:
       - name: Fingerprint
         id: hash
         run: |
-          h=$(git ls-files -s -- frontend combined-server backend/src shared test e2e playwright.config.js package.json package-lock.json Dockerfile \
-                tools/v5-shell-run.mjs tools/v5-three-shim.mjs tools/v5-playthrough.mjs tools/v5-bundle.mjs tools/v5-serve.mjs tools/v5-guide-audit.mjs tools/v5-preview-saves.mjs tools/r4-browser.mjs \
-                ':(exclude)frontend/v5/rc' | sha256sum | cut -c1-24)
+          h=$(bash tools/r4-fingerprint.sh)
           echo "hash=$h" >> "$GITHUB_OUTPUT"
           mkdir .full-pass; echo "run $GITHUB_RUN_ID, commit $GITHUB_SHA, ${{ github.server_url }}/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID" > .full-pass/info.txt
       - uses: actions/cache/save@v4
