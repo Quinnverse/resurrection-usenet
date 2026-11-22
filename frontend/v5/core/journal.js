@@ -9,9 +9,14 @@ const seen = (g, id) => g.s.seen.indexOf(id) >= 0;
 const prov = (g, id) => { const p = g.s.restored[id]; if (!p) { return null; } return { record: p.recordId || null, source: p.source || null, status: p.status || null, file: p.file || null, crc32: p.crc32 || null, evidence: Array.isArray(p.evidence) ? p.evidence.map((e) => `${e.source}: ${e.status}`) : null }; };
 
 export const FRAGMENTS = [
-  { id: 'disk', chapter: 1, year: 1998, who: ['elena', 'mara'], when: (g) => !!g.s.flags.disk },
+  // R4: the prologue (chapter 0) and the epilogue (chapter 8)
+  { id: 'kitchen', chapter: 0, year: 2026, who: ['mara', 'elena'], when: (g) => !!g.s.flags.kLeft },
+  { id: 'machine', chapter: 0, year: 2026, who: ['elena', 'mara'], when: (g) => !!g.s.flags.machine },
+  { id: 'disk', chapter: 0, year: 1998, who: ['elena', 'mara'], when: (g) => !!g.s.flags.disk },
   // RC3: the folded photo from the KEEP box (found with the disk; it was an optional look at the shelf before)
-  { id: 'platformPhoto', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.disk },
+  { id: 'platformPhoto', chapter: 0, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.disk },
+  { id: 'records', chapter: 0, year: 2004, who: ['elena', 'june', 'mara'], when: (g) => !!(g.s.flags.rec_b98 && g.s.flags.rec_b04) },
+  { id: 'firstPhoto', chapter: 0, year: 1998, who: ['june', 'elena'], when: (g) => seen(g, 'p.s.photo') },
   { id: 'bridge', chapter: 1, year: 1998, who: ['june'], when: (g) => !!g.s.restored.bridge, prov: 'bridge' },
   { id: 'carving', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.carved },
   { id: 'trainHand', chapter: 1, year: 1998, who: ['elena', 'june'], when: (g) => !!g.s.flags.chased },
@@ -31,7 +36,9 @@ export const FRAGMENTS = [
   { id: 'credits', chapter: 7, year: 1998, who: ['june', 'elena', 'mara'], when: (g) => !!g.s.edition.credits_restored, prov: 'credits' },
   { id: 'iris', chapter: 7, year: 1998, who: ['iris', 'june'], when: (g) => !!g.s.edition.iris_revived, prov: 'iris' },
   { id: 'lampRestored', chapter: 7, year: 1998, who: ['elena', 'mara'], when: (g) => !!g.s.restored.lamp, prov: 'lamp' },
-  { id: 'snow', chapter: 7, year: null, who: ['mara'], when: (g) => !!g.s.edition.seasons }
+  { id: 'snow', chapter: 7, year: null, who: ['mara'], when: (g) => !!g.s.edition.seasons },
+  { id: 'unfolded', chapter: 8, year: 2026, who: ['elena', 'june', 'mara'], when: (g) => !!g.s.flags.unfolded },
+  { id: 'letterM', chapter: 8, year: 2026, who: ['elena', 'mara'], when: (g) => !!g.s.flags.letterM }
 ];
 
 export function fragments(g) {

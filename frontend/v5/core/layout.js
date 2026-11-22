@@ -24,7 +24,26 @@ export const LAYOUTS = {
       wall(-4.6, -4.15, -3.6, 3.6), wall(4.15, 4.6, -3.6, 3.6), wall(-4.6, 4.6, -3.6, -3.15), wall(-4.6, 4.6, 3.15, 3.6)],
     points: [
       { id: 'computer', x: 3.0, z: -2.75, r: 1.55, y: 1.3 }, { id: 'photo', x: 4.2, z: 0.6, r: 1.6, y: 1.65 }, { id: 'keepbox', x: -1.8, z: 1.3, r: 1.7, y: 0.9 },
-      { id: 'drawing', x: -1.5, z: 3.2, r: 1.45, y: 1.7 }, { id: 'shelf', x: -4.0, z: -1.2, r: 1.5, y: 1.4 }, { id: 'window', x: -0.6, z: -3.2, r: 1.5, y: 1.5 }, { id: 'lamp', x: -3.9, z: -2.95, r: 1.3, y: 1.4 }
+      { id: 'drawing', x: -1.5, z: 3.2, r: 1.45, y: 1.7 }, { id: 'shelf', x: -4.0, z: -1.2, r: 1.5, y: 1.4 }, { id: 'window', x: -0.6, z: -3.2, r: 1.5, y: 1.5 }, { id: 'lamp', x: -3.9, z: -2.95, r: 1.3, y: 1.4 },
+      // R4: the design notebook in two handwritings, the empty envelope to "J.", and the photo on the desk (epilogue)
+      { id: 'notebook', x: 1.5, z: -2.3, r: 1.45, y: 0.8 }, { id: 'envelope', x: -3.95, z: 0.2, r: 1.25, y: 1.0 }, { id: 'unfold', x: 3.9, z: -2.55, r: 1.45, y: 0.95 }
+    ]
+  },
+  // R4: Mom's kitchen, the room of the prologue (February: rain, Mom at the stove; October: grey, empty, boxes).
+  // Interior x -3.6..3.6, z -2.8..2.8, height 2.7. The counter runs along the back wall (window over the sink), the front
+  // door is on the left wall, the study door on the right wall.
+  kitchen: {
+    spawn: { x: -2.7, z: 1.6, yaw: -Math.PI / 2 }, bounds: { x0: -3.5, x1: 3.5, z0: -2.7, z1: 2.7, step: 0.2 },
+    camera: { dist: 3.0, pitch: 0.45, room: { x0: -3.6, x1: 3.6, z0: -2.8, z1: 2.8, y1: 2.6 } },
+    floors: [rect(-3.55, 3.55, -2.75, 2.75)],
+    solids: [wall(-3.6, 3.6, -2.8, -2.2, 0.95), wall(2.95, 3.6, 0.15, 1.25), post(0, 0.5, 0.78, 0.8), wall(-3.6, -2.85, -2.0, -0.9, 1.0),
+      wall(-4.0, -3.55, -3.0, 3.0), wall(3.55, 4.0, -3.0, 3.0), wall(-4.0, 4.0, -3.2, -2.75), wall(-4.0, 4.0, 2.75, 3.2)],
+    stove: { x: 2.3, z: -1.85, yaw: Math.PI }, table: { x: 0, z: 0.5 }, sink: { x: 0.4, z: -1.85 }, byDoor: { x: -2.2, z: 0.9 },
+    points: [
+      { id: 'frontdoor', x: -3.3, z: 1.6, r: 1.2, y: 1.2 }, { id: 'coat', x: -3.35, z: 0.45, r: 1.0, y: 1.6 }, { id: 'kwindow', x: 0.4, z: -2.45, r: 1.3, y: 1.5 },
+      { id: 'kettle', x: 2.35, z: -2.45, r: 1.15, y: 1.1 }, { id: 'fridge', x: 2.9, z: 0.7, r: 1.2, y: 1.4 }, { id: 'studydoor', x: 3.3, z: 2.1, r: 1.25, y: 1.2 },
+      { id: 'machine', x: -1.7, z: -2.45, r: 1.2, y: 1.05 }, { id: 'keys', x: 0.45, z: 0.75, r: 1.35, y: 0.85 }, { id: 'cards', x: -0.45, z: 0.25, r: 1.25, y: 0.85 },
+      { id: 'mugs', x: 1.0, z: -2.45, r: 1.0, y: 1.0 }, { id: 'calendar', x: -3.35, z: -0.4, r: 1.0, y: 1.5 }, { id: 'boxes', x: -2.6, z: -1.45, r: 1.1, y: 0.6 }
     ]
   },
   town: {

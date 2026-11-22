@@ -126,7 +126,7 @@ test('mouse and Shift: the new tips and settings exist in both languages with re
 async function chapter1Lines() {
   const { t } = await import('../frontend/v5/core/i18n.js');
   const g = Gm.createGame(ar); const out = []; let last = null;
-  await playThrough(g, { step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); const k = s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] !== 'pause' ? s.dialog.line[1] : null; if (k && k !== last && ['1.study', '1.town', '1.pier', '1.carve'].includes(s.beat)) { out.push({ beat: s.beat, who: s.dialog.line[0], key: k, en: t('en', k) }); } last = k; ev.filter((e) => e.type === 'caption').forEach((e) => { if (['1.pier'].includes(s.beat)) { out.push({ beat: s.beat, who: 'caption', key: e.key, en: t('en', e.key) }); } }); return ev; } });
+  await playThrough(g, { step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); const k = s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] !== 'pause' ? s.dialog.line[1] : null; if (k && k !== last && ['1.study', 'P.restore', 'P.summer', '1.town', '1.pier', '1.carve'].includes(s.beat)) { out.push({ beat: s.beat, who: s.dialog.line[0], key: k, en: t('en', k) }); } last = k; ev.filter((e) => e.type === 'caption').forEach((e) => { if (['1.pier'].includes(s.beat)) { out.push({ beat: s.beat, who: 'caption', key: e.key, en: t('en', e.key) }); } }); return ev; } });
   return { g, out };
 }
 
@@ -147,11 +147,11 @@ test('chapter 1 story: the folded photo comes before the past, Theo gives June h
   const f = fragments(g).find((x) => x.id === 'platformPhoto'); assert.ok(f && f.found && !f.optional, 'the folded photo is a required memory');
 });
 
-test('chapter 7: the photo is unfolded at the end, whichever choice the player makes about the drafts', async () => {
+test('R4: the photo stays folded in chapter 7 and is unfolded in the epilogue, whichever choice the player makes about the drafts', async () => {
   for (const letter of [0, 1]) {
     const g = Gm.createGame(ar); const heard = new Set();
     await playThrough(g, { choices: { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter }, step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); if (s.dialog && Array.isArray(s.dialog.line)) { heard.add(s.dialog.line[1]); } return ev; } });
-    assert.ok(heard.has('c7.mara.unfolded'), `letter choice ${letter}`);
+    assert.ok(heard.has('r4.c7.notYet') && !heard.has('c7.mara.unfolded') && heard.has('p.e.ph2'), `letter choice ${letter}`);
   }
 });
 
@@ -174,7 +174,7 @@ test('story: each chapter opens with the archive post it is rebuilt from, in the
   const g = Gm.createGame(ar); const heard = []; let last = null;
   await playThrough(g, { step: (i) => { const ev = Gm.tick(g, 1 / 30, i); const s = Gm.snapshot(g); const k = s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] !== 'pause' ? s.dialog.line[1] : null; if (k && k !== last) { heard.push({ k, beat: s.beat }); } last = k; return ev; } });
   const where = (k) => { const h = heard.find((x) => x.k === k); return h ? h.beat : null; }; const at = (k) => heard.findIndex((x) => x.k === k);
-  const want = { 'arch.met.ask': '1.study', 'arch.met.reply': '1.study', 'arch.window.body': '3.yard', 'arch.song.body': '4.cottage', 'arch.manifest.body': '5.depart', 'arch.public.body': '6.cottage', 'arch.reply.body': '6.cottage', 'arch.iris.body': '7.study' };
+  const want = { 'arch.met.ask': 'P.restore', 'arch.met.reply': 'P.restore', /* R4: read on the restore tool */ 'arch.window.body': '3.yard', 'arch.song.body': '4.cottage', 'arch.manifest.body': '5.depart', 'arch.public.body': '6.cottage', 'arch.reply.body': '6.cottage', 'arch.iris.body': '7.study' };
   for (const [k, b] of Object.entries(want)) { assert.equal(where(k), b, k); }
   const order = Object.keys(want); for (let i = 1; i < order.length; i++) { assert.ok(at(order[i - 1]) < at(order[i]), order[i - 1] + ' before ' + order[i]); }
   // the posts come before the scene's first line, so the player knows what is being rebuilt

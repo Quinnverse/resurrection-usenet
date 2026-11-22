@@ -11,7 +11,7 @@ import { LAYOUTS, point } from './layout.js';
 import { ridePose } from './toys.js';
 const juneBike = (r) => { const p = ridePose(r, r.june.s, r.june.d); return { x: p.x, z: p.z }; };
 
-const chapterOf = (beat) => (beat === 'end' ? 7 : parseInt(beat, 10));
+import { chapterOf } from './chapters.js';
 const pt = (scene, id) => { const p = point(scene, id); return p ? { x: p.x, z: p.z } : null; };
 const at = (o) => (o ? { x: o.x, z: o.z, y: o.y || 0 } : null);
 const seen = (g, id) => g.s.seen.indexOf(id) >= 0;
@@ -27,6 +27,27 @@ function remember(g, id, now) {
 // Each beat: the goal, the ordered steps, and where the next step is (a point in this scene, or null when there is no
 // place to go, e.g. sitting on the train). `ctx` lets a step say something more precise than its default instruction.
 const BEATS = {
+  // ---- R4: the prologue --------------------------------------------------------------------------------------------
+  'P.kitchen': (g) => {
+    const f = g.s.flags, m = g.rt.mother;
+    return { steps: [{ id: 'talk', done: !!f.kArgued }, { id: 'leave', done: !!f.kLeft }], target: !f.kArgued ? (m ? { x: m.x, z: m.z } : null) : pt('kitchen', 'frontdoor') };
+  },
+  'P.house': (g) => {
+    const f = g.s.flags;
+    return { steps: [{ id: 'machine', done: !!f.machine }, { id: 'keys', done: !!f.keys }, { id: 'study', done: false }], target: !f.machine ? pt('kitchen', 'machine') : !f.keys ? pt('kitchen', 'keys') : pt('kitchen', 'studydoor') };
+  },
+  'P.restore': (g) => {
+    const f = g.s.flags;
+    return { steps: [{ id: 'mount', done: !!f.mounted }, { id: 'met', done: !!f.rec_met }, { id: 'b98', done: !!f.rec_b98 }, { id: 'b04', done: !!f.rec_b04 }, { id: 'gone', done: !!f.rec_gone, optional: true }, { id: 'run', done: !!f.ranSummer }], target: null };
+  },
+  'P.summer': (g) => {
+    const j = g.rt.june; const took = seen(g, 'p.s.photo');
+    return { steps: [{ id: 'june', done: took }, { id: 'follow', done: !!g.s.flags.summerBroke }], target: j ? { x: j.x, z: j.z } : null };
+  },
+  'E.study': (g) => {
+    const f = g.s.flags;
+    return { steps: [{ id: 'photo', done: !!f.unfolded }, { id: 'letter', done: !!f.letterM }, { id: 'close', done: !!f.epilogue }], target: !f.unfolded ? pt('study', 'unfold') : !f.letterM ? pt('study', 'keepbox') : pt('study', 'computer') };
+  },
   '1.study': (g) => {
     const f = g.s.flags; const tried = !!(f.needDisk || f.disk);
     const steps = [
@@ -111,7 +132,8 @@ const BEATS = {
     const ctx = s.window.placed && !s.flags.lens && !(rt.june && rt.june.y > 6) ? 'do.3.yard.climbing' : null;
     return { steps, target, ctx };
   },
-  '3.beam': (g) => ({ steps: [{ id: 'june', done: !!g.s.flags.foundJune }, { id: 'cottage', done: !!g.s.flags.beamDone }], target: null }),
+  // R4: the target is marked (where the light has to land), not just named
+  '3.beam': (g) => ({ steps: [{ id: 'june', done: !!g.s.flags.foundJune }, { id: 'cottage', done: !!g.s.flags.beamDone }], target: g.s.flags.foundJune ? at(LAYOUTS.coast.door) : at(LAYOUTS.coast.rocks) }),
   '3.cliff': (g) => ({ steps: [{ id: 'down', done: !!(g.s.flags.landed || (g.rt.body && g.rt.body.y < -4.5)) }, { id: 'door', done: false }], target: pt('coast', 'door') }),
   '4.cottage': (g) => {
     const s = g.s, rt = g.rt;

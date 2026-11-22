@@ -23,24 +23,27 @@ import * as Co from './companion.js';
 import * as Toys from './toys.js';
 import { LAYOUTS, point, bridgeFloors, THEO_TOWN, IRIS_TOWN, LIGHTHOUSE } from './layout.js';
 import * as Ob from './objectives.js';
+import * as Pro from './prologue.js';
+import { chapterOf as chapterOfBeat } from './chapters.js';
+export { crtView, RECORDS } from './prologue.js';
 export { objective } from './objectives.js';
 const PIER_END = { x: 0, z: 24.4 };
 
 export const SCHEMA = 1, PROVENANCE_VERSION = 'v5-fixture-1';
-export const CHAPTERS = [1, 2, 3, 4, 5, 6, 7];
-export const BEATS = ['1.study', '1.town', '1.pier', '1.carve', '1.chase', '2.train', '3.ride', '3.yard', '3.beam', '3.cliff', '4.cottage', '4.duet', '4.porch', '5.depart', '5.alone', '6.cottage', '6.beach', '7.study', '7.town', 'end'];
-const BEAT_SCENE = { '1.study': 'study', '1.town': 'town', '1.pier': 'town', '1.carve': 'town', '1.chase': 'station', '4.porch': 'porch', '6.beach': 'coast', '2.train': 'train', '3.ride': 'ride', '3.yard': 'coast', '3.beam': 'coast', '3.cliff': 'coast', '4.cottage': 'cottage', '4.duet': 'cottage', '5.depart': 'station', '5.alone': 'station', '6.cottage': 'cottage', '7.study': 'study', '7.town': 'town', end: 'town' };
-const BEAT_YEAR = { '1.carve': 1998, '4.porch': 1998, '6.beach': 2004, '1.chase': 1998, '2.train': 1998, '3.ride': 1998, '3.yard': 1998, '3.beam': 1998, '3.cliff': 1998, '4.cottage': 1998, '4.duet': 1998, '5.depart': 1998, '5.alone': 2004, '6.cottage': 2004 };
-const PLAYER = { study: 'mara', town: 'mara', station: 'elena', train: 'elena', ride: 'elena', coast: 'elena', cottage: 'elena', porch: 'elena' };
-const BEAT_PLAYER = { '1.carve': 'elena' };
-export const chapterOf = (beat) => (beat === 'end' ? 7 : parseInt(beat, 10));
+export const CHAPTERS = [0, 1, 2, 3, 4, 5, 6, 7, 8];   // R4: 0 is the prologue, 8 the epilogue
+export const BEATS = ['P.kitchen', 'P.house', '1.study', 'P.restore', 'P.summer', '1.town', '1.pier', '1.carve', '1.chase', '2.train', '3.ride', '3.yard', '3.beam', '3.cliff', '4.cottage', '4.duet', '4.porch', '5.depart', '5.alone', '6.cottage', '6.beach', '7.study', '7.town', 'E.study', 'end'];
+const BEAT_SCENE = { 'P.kitchen': 'kitchen', 'P.house': 'kitchen', 'P.restore': 'study', 'P.summer': 'town', 'E.study': 'study', '1.study': 'study', '1.town': 'town', '1.pier': 'town', '1.carve': 'town', '1.chase': 'station', '4.porch': 'porch', '6.beach': 'coast', '2.train': 'train', '3.ride': 'ride', '3.yard': 'coast', '3.beam': 'coast', '3.cliff': 'coast', '4.cottage': 'cottage', '4.duet': 'cottage', '5.depart': 'station', '5.alone': 'station', '6.cottage': 'cottage', '7.study': 'study', '7.town': 'town', end: 'town' };
+const BEAT_YEAR = { 'P.summer': 1998, '1.carve': 1998, '4.porch': 1998, '6.beach': 2004, '1.chase': 1998, '2.train': 1998, '3.ride': 1998, '3.yard': 1998, '3.beam': 1998, '3.cliff': 1998, '4.cottage': 1998, '4.duet': 1998, '5.depart': 1998, '5.alone': 2004, '6.cottage': 2004 };
+const PLAYER = { kitchen: 'mara', study: 'mara', town: 'mara', station: 'elena', train: 'elena', ride: 'elena', coast: 'elena', cottage: 'elena', porch: 'elena' };
+const BEAT_PLAYER = { '1.carve': 'elena', 'P.summer': 'elena' };
+export const chapterOf = chapterOfBeat;
 // seconds stopped at the slipped chain without touching it before June fixes it herself (the help speaks at 30/60/90 s first)
 export const CHAIN_SELF_FIX = 100;
 export const HOLD = { bridge: 4.0, crank: 3.2, pulley: 3.0, chain: 2.0, credits: 2.5, rope: 2.0, seasons: 3.0, post: 2.5, lampRestore: 3.0, newPier: 4.0 };
 const MAX_PHOTOS = 10;
 
 export function newSave() {
-  return { schemaVersion: SCHEMA, provenanceVersion: PROVENANCE_VERSION, beat: '1.study', era: 2004, restored: {}, photos: [], choices: {}, window: { placed: false, finish: null },
+  return { schemaVersion: SCHEMA, provenanceVersion: PROVENANCE_VERSION, beat: 'P.kitchen', era: 2004, restored: {}, photos: [], choices: {}, window: { placed: false, finish: null },
     flags: {}, seen: [], edition: {}, pos: {}, bridge: 0, crank: 0, season: 'summer' };
 }
 
@@ -54,9 +57,9 @@ export const DIALOGS = {
   // chapter 1
   'c1.noDisk': [L('mara', 'c1.mara.never'), L('screen', 'c1.screen.noDisk'), L('mara', 'c1.mara.disk')],
   // RC3: the folded photo is the first question the player carries into the past (who is the girl, why fold her away?)
-  'c1.disk': [L('mara', 'c1.mara.found'), L('mara', 'c1.mara.note'), L('mara', 'c1.mara.folded'), pause(0.8), L('mara', 'c1.mara.unfold'), L('screen', 'c1.photo.back'), L('mara', 'c1.mara.neverSaid')],
+  'c1.disk': [L('mara', 'c1.mara.found'), L('mara', 'c1.mara.note'), L('mara', 'r4.c1.asked'), L('mara', 'c1.mara.folded'), pause(0.8), L('mara', 'c1.mara.unfold'), L('screen', 'c1.photo.back'), L('mara', 'c1.mara.neverSaid')],
   // RC3: the first two posts in the archive are how they met; the player reads them before the game opens
-  'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'arch.met.ask'), L('screen', 'arch.met.reply'), L('mara', 'c1.mara.met'), L('screen', 'c1.screen.title'), L('mara', 'c1.mara.junebug'), L('mara', 'c1.mara.open')],
+  'c1.computer': [L('screen', 'c1.screen.reading'), L('screen', 'c1.screen.title'), L('mara', 'p.r.bootMara')],
   'c1.theo1': [L('theo', 'c1.theo.hello', 'theo'), L('mara', 'c1.mara.twoGirls'), L('theo', 'c1.theo.almost', 'theo'), L('mara', 'c1.mara.howLong'), L('theo', 'c1.theo.dontAsk', 'theo'), L('theo', 'c1.theo.bridge', 'theo')],
   'c1.theo2': [L('theo', 'c1.theo.planks', 'theo'), L('mara', 'c1.mara.june'), L('theo', 'c1.theo.beard', 'theo'), L('theo', 'c1.theo.pier', 'theo'), L('theo', 'c1.theo.tab', 'theo'), L('theo', 'c1.theo.pierHow', 'theo')],
   'c1.memory': [L('mara', 'c1.mara.carved'), L('mara', 'c1.mara.show')],
@@ -132,10 +135,12 @@ export const DIALOGS = {
   'c6.forgive': [L('elena', 'c6.elena.forgive', 'elena'), L('june', 'c6.june.forgive', 'june')],
   'c6.end': [L('elena', 'c6.elena.sorry', 'elena'), L('june', 'c6.june.notToday', 'june'), pause(1.8, 'window')],
   'c6.leave': [pause(1.2, 'june'), L('june', 'c6.june.careful', 'june'), pause(1.0, 'elena')],
+  // R4: Mara hears the words her mother said to her at the door, and that understanding is not an excuse
+  'c6.echo': [L('mara', 'r4.c6.echo'), L('mara', 'r4.c6.harm')],
   // chapter 7
   'c7.letter': [L('mara', 'c7.mara.drafts'), L('mara', 'c7.mara.unsent'), C('letter', ['c7.choice.read', 'c7.choice.close'])],
-  'c7.read': [L('screen', 'c7.screen.draft'), L('mara', 'c7.mara.notMine'), L('screen', 'arch.iris.head'), L('screen', 'arch.iris.body'), L('mara', 'arch.iris.mara'), L('mara', 'c7.mara.unfolded')],
-  'c7.close': [L('mara', 'c7.mara.close'), L('mara', 'c7.mara.notMine'), L('screen', 'arch.iris.head'), L('screen', 'arch.iris.body'), L('mara', 'arch.iris.mara'), L('mara', 'c7.mara.unfolded')],
+  'c7.read': [L('screen', 'c7.screen.draft'), L('mara', 'c7.mara.notMine'), L('screen', 'arch.iris.head'), L('screen', 'arch.iris.body'), L('mara', 'arch.iris.mara'), L('mara', 'r4.c7.notYet')],
+  'c7.close': [L('mara', 'c7.mara.close'), L('mara', 'c7.mara.notMine'), L('screen', 'arch.iris.head'), L('screen', 'arch.iris.body'), L('mara', 'arch.iris.mara'), L('mara', 'r4.c7.notYet')],
   'c7.theo': [L('theo', 'c7.theo.back', 'theo'), L('mara', 'c7.mara.names'), L('theo', 'c7.theo.ok', 'theo')],
   'c7.creditsNeed': [L('mara', 'c7.mara.oneName'), L('mara', 'c7.mara.original')],
   'c7.credits98': [L('mara', 'c7.mara.read98'), L('mara', 'c7.mara.back04')],
@@ -161,6 +166,8 @@ const seen = (g, id) => g.s.seen.indexOf(id) >= 0;
 function say(g, who, key, secs) { g.rt.caption = { who, key, t: g.rt.t, secs: secs || 3.4 }; g.rt.ev.push({ type: 'caption', who, key }); }
 function dialog(g, id, then, lines) {
   const ls = lines || DIALOGS[id];
+  // R4: a conversation stops the body (the chase: Elena kept her sprint speed through the whole dialogue and ran on the spot)
+  if (g.rt.body) { g.rt.body.vx = 0; g.rt.body.vz = 0; }
   g.rt.dialog = { id, lines: ls, i: 0, seen: seen(g, id), then, t0: g.rt.t, lineT: g.rt.t };
   g.rt.ev.push({ type: 'dialog', id, seen: g.rt.dialog.seen });
   lineStart(g);
@@ -233,6 +240,7 @@ function place(g, scene, pos) {
 }
 function extraSolids(g) {
   const out = [];
+  if (g.rt.mother && g.rt.scene === 'kitchen') { out.push({ k: 'circ', x: g.rt.mother.x, z: g.rt.mother.z, r: 0.38, top: 2 }); }
   if (g.rt.theo && g.rt.scene === 'town') { out.push({ k: 'circ', x: g.rt.theo.x, z: g.rt.theo.z, r: 0.42, top: 2 }); }
   if (g.rt.june && (g.rt.scene === 'coast' || g.rt.scene === 'cottage') && !(g.rt.june.y > 1)) { out.push({ k: 'circ', x: g.rt.june.x, z: g.rt.june.z, r: 0.38, top: 2 }); }
   return out;
@@ -246,15 +254,17 @@ function enterBeat(g, beat, loading) {
     theo: null, june: null, iris: null, train: null, ride: null, duet: null, tuning: null, beam: null, carry: null, restoring: null, aim: false, aimYaw: 0, aimPitch: 0, year: BEAT_YEAR[beat] || null,
     tabDeny: 0, season: g.s.season, hold: {}, timers: [] };
   if (beat === '7.town' || beat === 'end') { g.s.era = 2004; }
-  if (beat === '1.carve') { g.s.era = 1998; }
+  if (beat === '1.carve' || beat === 'P.summer') { g.s.era = 1998; }
+  if (beat === '1.town' && !loading) { g.s.era = 2004; }
   refreshWorld(g);
-  if (scene !== 'ride' && scene !== 'train' && scene !== 'porch') { place(g, scene, loading && beat !== '6.beach' && beat !== '1.carve' ? null : (BEAT_START[beat] || null)); } else { g.rt.body = Ph.newBody(0, 0, 0); g.rt.yaw = 0; }
+  if (scene !== 'ride' && scene !== 'train' && scene !== 'porch') { place(g, scene, loading && beat !== '6.beach' && beat !== '1.carve' && beat !== 'P.restore' && beat !== 'P.summer' ? null : (BEAT_START[beat] || null)); } else { g.rt.body = Ph.newBody(0, 0, 0); g.rt.yaw = 0; }
   const setup = SETUP[beat]; if (setup) { setup(g, loading); }
   if (beat === '3.beam' && !g.rt.dialog) { g.rt.shot = g.rt.baseShot; }
   g.rt.ev.push({ type: 'beat', beat, chapter: chapterOf(beat), scene, year: g.rt.year, loading: !!loading });
   g.rt.ev.push({ type: 'save' });
 }
 const BEAT_START = {
+  ...Pro.BEAT_START_R4,
   '1.town': { x: 0, z: -9.2, yaw: Math.PI }, '1.chase': LAYOUTS.station.spawn, '3.yard': { x: 259, z: 16.5, yaw: Math.PI * 1.1 }, '3.beam': { x: 266.2, z: 25.0, yaw: Math.PI * 0.3 },
   '3.cliff': { x: 266.4, z: 24.6, yaw: Math.PI * 0.6 }, '1.carve': { x: -0.2, z: 22.9, yaw: Math.PI }, '6.beach': { x: 298.0, z: 29.0, y: -5, yaw: Math.PI / 2 }, '4.cottage': { x: 0, z: 2.3, yaw: 0 }, '4.duet': LAYOUTS.cottage.guitarSeat,
   '5.depart': { x: -9.5, z: 0.2, yaw: -Math.PI / 2 }, '5.alone': { x: -9.5, z: 0.2, yaw: -Math.PI / 2 }, '6.cottage': { x: 0, z: 2.3, yaw: 0 }, '7.study': LAYOUTS.study.spawn, '7.town': { x: 0, z: -12.6, yaw: Math.PI }
@@ -264,15 +274,15 @@ const later = (g, secs, fn) => g.rt.timers.push({ at: g.rt.t + secs, fn });
 
 // What each beat sets up when it begins (or is loaded from a save).
 const SETUP = {
-  '1.study': (g) => { g.rt.baseShot = null; },
+  '1.study': (g, loading) => { g.rt.baseShot = null; if (!loading && !g.s.flags.c1enter && g.s.flags.keys) { g.s.flags.c1enter = true; later(g, 1.0, () => say(g, 'mara', 'r4.c1.enter', 4.5)); } },
   '1.town': (g) => {
     g.rt.theo = Co.newCompanion(THEO_TOWN.wait.x, THEO_TOWN.wait.z, Math.PI); Co.invite(g.rt.theo, null, 'smile');
     if (g.s.restored.bridge) { g.rt.theo.x = THEO_TOWN.meet.x; g.rt.theo.z = THEO_TOWN.meet.z; Co.wait(g.rt.theo); }
     irisSetup(g);
-    if (!g.s.flags.called) { g.s.flags.called = true; say(g, 'theo', 'c1.theo.call', 4); }
+    if (!g.s.flags.called) { g.s.flags.called = true; if (g.s.flags.summerBroke) { say(g, 'mara', 'r4.c1.back', 4); later(g, 4.4, () => { if (!g.rt.dialog) { say(g, 'theo', 'c1.theo.call', 4); } }); } else { say(g, 'theo', 'c1.theo.call', 4); } }
   },
   '1.pier': (g) => { g.rt.theo = Co.newCompanion(THEO_TOWN.post.x, THEO_TOWN.post.z, 0); Co.wait(g.rt.theo); irisSetup(g); g.s.flags.tab = true; },
-  '1.carve': (g) => { g.rt.june = Co.newCompanion(0.75, 23.7, -Math.PI / 2); Co.wait(g.rt.june, null, 'grin'); irisSetup(g); const armJ = () => later(g, 7, () => juneStartsJ(g)); if (!seen(g, 'c1.carveIntro')) { dialog(g, 'c1.carveIntro', armJ); } else { armJ(); } },
+  '1.carve': (g) => { g.rt.june = Co.newCompanion(0.75, 23.7, -Math.PI / 2); Co.wait(g.rt.june, null, 'grin'); irisSetup(g); const armJ = () => later(g, 7, () => juneStartsJ(g)); if (!seen(g, 'c1.carveIntro')) { dialog(g, 'c1.carveIntro', armJ, seen(g, 'p.s.photo') ? DIALOGS['c1.carveIntro'].slice(3) : null); } else { armJ(); } },
   '1.chase': (g) => {
     const tr = LAYOUTS.station.train;
     g.rt.train = { x: tr.startX, v: 0, moving: false, caught: false, tries: g.rt.train ? g.rt.train.tries : 0 };
@@ -298,6 +308,7 @@ const SETUP = {
     const Y = LAYOUTS.coast; g.rt.seated = true; g.rt.baseShot = 'beamctl';
     g.rt.june = Co.newCompanion(263.0, 25.6, 0); Co.transition(g.rt.june, [[266.8, 22.4], [270.6, 23.4], [272.4, 26.5], [Y.rocks.x, Y.rocks.z]], 2.6);
     g.rt.beam = { a: 1.7, target: g.s.flags.foundJune ? 'cottage' : 'june', holdT: 0, ready: false };
+    if (!g.s.flags.foundJune) { say(g, 'june', 'r4.c3.runRocks', 4); }
   },
   '3.cliff': (g) => { g.rt.june = Co.newCompanion(272.4, 22.6, Math.PI / 2); Co.wait(g.rt.june, null, 'grin'); },
   '4.cottage': (g) => {
@@ -365,10 +376,11 @@ function points(g) {
   const add = (id, x, z, r, extra) => out.push(Object.assign({ id, x, z, r }, extra || {}));
   const lay = LAYOUTS[sc] || {};
   const p = (id) => point(sc, id);
+  if (Pro.owns(beat)) { return Pro.points(g); }
   const at = (id, extra) => { const q = p(id); add(id, q.x, q.z, q.r, extra); };
   if (sc === 'study') {
     if (beat === '1.study' || beat === '7.study') { at('computer', { verb: beat === '7.study' ? 'verb.read' : 'verb.use' }); }
-    ['photo', 'keepbox', 'drawing', 'shelf', 'window', 'lamp'].forEach((id) => at(id, { verb: id === 'lamp' ? 'verb.toggle' : (id === 'keepbox' && beat === '1.study' && !s.flags.disk ? 'verb.open' : 'verb.look'), optional: !(id === 'keepbox' && s.flags.needDisk && !s.flags.disk) }));
+    ['photo', 'keepbox', 'drawing', 'shelf', 'window', 'lamp', 'notebook', 'envelope'].forEach((id) => at(id, { verb: id === 'lamp' ? 'verb.toggle' : (id === 'keepbox' && beat === '1.study' && !s.flags.disk ? 'verb.open' : 'verb.look'), optional: !(id === 'keepbox' && s.flags.needDisk && !s.flags.disk) }));
   } else if (sc === 'town') {
     const th = rt.theo;
     if (th && !rt.theoPier && !(s.flags.beamPier && !s.edition.pier_walk)) { const across = th.z > 11.6 && rt.body.z < 8.4; add('theo', th.x, th.z, across ? 4.9 : 1.9, { verb: 'verb.talk', moving: true, priority: beat === '1.town' && !seen(g, 'c1.theo1') ? 4 : 0 }); }
@@ -441,12 +453,14 @@ function use(g, p) {
   const s = g.s, rt = g.rt, ev = rt.ev;
   ev.push({ type: 'use', id: p.id });
   const looked = (id) => { s.flags['looked_' + id] = true; };
+  if (Pro.owns(s.beat)) { Pro.use(g, p); return; }
   switch (p.id) {
     case 'computer':
       if (s.beat === '1.study') {
         if (!s.flags.disk) { s.flags.needDisk = true; dialog(g, 'c1.noDisk'); return; }
         const lines = seen(g, 'c1.noDisk') ? null : [L('mara', 'c1.mara.never')].concat(DIALOGS['c1.computer']);
-        dialog(g, 'c1.computer', () => { g.rt.ev.push({ type: 'rebuild', messages: g.ar.publicView().messages.size, sources: g.ar.publicView().sources.length }); enterBeat(g, '1.town'); }, lines);
+        // R4: the computer opens the restore tool (P.restore); the posts are read there, one record at a time
+        dialog(g, 'c1.computer', () => { g.rt.ev.push({ type: 'rebuild', messages: g.ar.publicView().messages.size, sources: g.ar.publicView().sources.length }); enterBeat(g, 'P.restore'); }, lines);
       } else {
         ev.push({ type: 'letter', text: g.ar.drafts });
         branch(g, 'c7.letter', 'letter', { 'c7.choice.read': 'c7.read', 'c7.choice.close': 'c7.close' }, () => { s.flags.letterRead = true; enterBeat(g, '7.town'); });
@@ -455,7 +469,7 @@ function use(g, p) {
     case 'keepbox':
       if (s.beat === '1.study' && !s.flags.disk) { s.flags.disk = true; ev.push({ type: 'item', id: 'disk' }); dialog(g, 'c1.disk'); return; }
       looked(p.id); say(g, 'mara', 'look.keepbox' + (s.beat === '7.study' ? '7' : ''), 4.5); return;
-    case 'photo': case 'drawing': case 'shelf': case 'window':
+    case 'photo': case 'drawing': case 'shelf': case 'window': case 'notebook': case 'envelope':
       looked(p.id);
       if (rt.scene === 'study') { say(g, 'mara', 'look.' + p.id + (s.beat === '7.study' ? '7' : ''), 4.5); return; }
       if (s.beat === '4.cottage') { say(g, 'elena', 'c4.look.' + p.id, 4.5); return; }
@@ -468,7 +482,7 @@ function use(g, p) {
       say(g, 'theo', s.beat === '7.town' ? 'c7.theo.idle' : s.beat === '1.pier' ? 'c1.theo.pierIdle' : (s.restored.bridge ? 'c1.theo.idle' : 'c1.theo.wait'), 4.2); return;
     case 'pierEnd': dialog(g, 'c1.memory', () => { g.rt.ev.push({ type: 'memory' }); enterBeat(g, '1.carve'); }); return;
     case 'seaview': s.flags.sea04 = true; say(g, 'elena', 'c5.sea04', 4.5); return;
-    case 'road': { const go = () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '7.study'); }; if (!s.flags.toldCareful) { Co.react(rt.june, 'quiet', 'idle', 4); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; go(); }); } else { go(); } return; }
+    case 'road': { const go = () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '7.study'); }; if (!s.flags.toldCareful) { Co.react(rt.june, 'quiet', 'idle', 4); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; go(); }, C6_LEAVE); } else { go(); } return; }
     case 'hand':
       rt.train.caught = true; ev.push({ type: 'caught' }); Co.react(rt.june, 'grin', 'reach', 2);
       dialog(g, 'c1.hand', () => { s.flags.chased = true; g.rt.ev.push({ type: 'fade' }); enterBeat(g, '2.train'); }); return;
@@ -488,7 +502,7 @@ function use(g, p) {
       if (s.beat === '5.alone') { rt.called = true; say(g, 'elena', 'c5.call04', 3); later(g, 3.6, () => say(g, 'screen', 'c5.announce', 4.5)); return; }
       if (s.beat === '6.cottage') {
         const go = () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '7.study'); };
-        if (!s.flags.toldCareful) { Co.react(rt.june, 'quiet', 'idle', 4); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; go(); }); } else { go(); }
+        if (!s.flags.toldCareful) { Co.react(rt.june, 'quiet', 'idle', 4); dialog(g, 'c6.leave', () => { s.flags.toldCareful = true; go(); }, C6_LEAVE); } else { go(); }
       }
       return;
     // chapter 4
@@ -503,7 +517,7 @@ function use(g, p) {
       if (s.beat === '5.depart') { if (!s.flags.kiosk98) { s.flags.kiosk98 = true; ev.push({ type: 'sfx', name: 'can' }); later(g, 0.5, () => g.rt.ev.push({ type: 'sfx', name: 'can' })); say(g, 'june', 'c5.kiosk98', 3.8); Co.react(rt.june, 'grin', 'wave', 1.6); } else { say(g, 'elena', 'c5.kiosk98b', 3); } return; }
       s.flags.kiosk04 = true; ev.push({ type: 'sfx', name: 'can' }); say(g, 'elena', 'c5.kiosk04', 4); return;
     case 'snap': platformPhoto(g); return;
-    case 'bench': rt.seated = true; dialog(g, 'c5.alone', () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '6.cottage'); }); return;
+    case 'bench': rt.seated = true; dialog(g, 'c5.alone', () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, '6.cottage'); }, DIALOGS['c5.alone'].concat([L('mara', Pro.saidBye(g) ? 'r4.c5.lastA' : 'r4.c5.lastB', 'bench'), pause(1.0, 'bench')])); return;
     // chapter 6
     case 'boxA': case 'boxB':
       rt.carry = p.id; ev.push({ type: 'carry', what: 'box' });
@@ -540,6 +554,7 @@ function use(g, p) {
 function startPen(g) { g.rt.pen = Toys.newPen(); g.rt.shot = g.rt.baseShot = 'paper'; g.rt.ev.push({ type: 'pen-start' }); }
 function holdTick(g, id, dt) {
   const s = g.s, rt = g.rt;
+  if (Pro.owns(s.beat) && Pro.hold(g, id, dt)) { return; }
   if (id === 'gap') { restoreTick(g, dt); return; }
   if (id === 'crank') { crankTick(g, dt); return; }
   const v = rt.hold[id] = Math.min(1, (rt.hold[id] || 0) + dt / HOLD[id]);
@@ -782,7 +797,7 @@ export function tick(g, dt, input0) {
     if (e.level > 0 && e.level > rt.hintLevel) { rt.hintLevel = e.level; rt.ev.push({ type: 'hint', level: rt.hintLevel, auto: true }); nudge(g); }
     if (e.level === 0) { rt.hintLevel = 0; }
   });
-  const fn = TICK[rt.scene]; if (fn) { fn(g, dt, input, active); }
+  const fn = Pro.owns(s.beat) ? Pro.tick : TICK[rt.scene]; if (fn) { fn(g, dt, input, active); }
   if (g.rt !== rt) { return g.rt.ev; }
   // companions
   if (rt.june) { Co.tick(rt.june, dt, { x: rt.body.x, z: rt.body.z }).forEach((e) => { if (e.type === 'june-say' && active && !rt.caption) { say(g, 'june', e.key, 3); } }); }
@@ -800,6 +815,7 @@ export function tick(g, dt, input0) {
   if (near && near.hold && input.useHeld) { holdTick(g, near.id, dt); if (g.rt !== rt) { return g.rt.ev; } }
   if (!input.useHeld && rt.holdStarted) { rt.holdStarted = null; }
   if (input.tab && active) { tryTab(g); }
+  ambientTick(g, active && !rt.dialog && !rt.choice);
   if (rt.caption && rt.t - rt.caption.t > rt.caption.secs) { rt.caption = null; }
   return rt.ev;
 }
@@ -837,13 +853,11 @@ const TICK = {
       if (season !== rt.season) { rt.season = season; s.season = season; rt.ev.push({ type: 'season', season }); if (season === 'winter') { s.edition.snow = true; s.edition.winter_theme = true; rt.ev.push({ type: 'save' }); } }
       if (t > 12 && !rt.snowTalk) { rt.snowTalk = true; rt.theo.x = 14.2; rt.theo.z = 15.6; Co.wait(rt.theo); dialog(g, 'c7.snow', () => { g.rt.beam = { a: 2.4, target: 'pier', holdT: 0, ready: true }; g.rt.seated = true; g.rt.shot = g.rt.baseShot = 'town-beam'; }); }
       if (rt.beam && !rt.dialog) {
-        const bm = rt.beam; if (active) { bm.a -= (input.mx || 0) * 1.1 * dt; }
-        const ta = Toys.beamTo(LIGHTHOUSE, PIER_END); bm.targetA = ta;
-        const gap = Math.min(Toys.angleGap(bm.a, ta), Toys.angleGap(bm.a + Math.PI, ta)); bm.onTarget = gap < 0.1; bm.holdT = bm.onTarget ? bm.holdT + dt : 0;
-        if (bm.holdT > 0.8 && !bm.done) { bm.done = true; rt.ev.push({ type: 'found', what: 'pier' }); dialog(g, 'c7.beamPier', () => { s.flags.beamPier = true; g.rt.beam = null; g.rt.seated = false; g.rt.shot = g.rt.baseShot = null; g.rt.ev.push({ type: 'save' }); Co.transition(g.rt.theo, [[12.6, 14.4], [9.0, 13.2], [4.0, 12.6], [2.7, 12.25]], 1.6); }); /* Theo goes ahead to the pier foot and waits there */ }
+        const bm = rt.beam; steerBeam(bm, LIGHTHOUSE, PIER_END, active ? input : {}, dt);
+        if (bm.holdT > BEAM_HOLD && !bm.done) { bm.done = true; rt.ev.push({ type: 'found', what: 'pier' }); dialog(g, 'c7.beamPier', () => { s.flags.beamPier = true; g.rt.beam = null; g.rt.seated = false; g.rt.shot = g.rt.baseShot = null; g.rt.ev.push({ type: 'save' }); Co.transition(g.rt.theo, [[12.6, 14.4], [9.0, 13.2], [4.0, 12.6], [2.7, 12.25]], 1.6); }); /* Theo goes ahead to the pier foot and waits there */ }
       }
     }
-    if (rt.theoPier && rt.theo && rt.theo.state === 'WAIT' && rt.theo.z > 23 && rt.body.z > 22.6 && !rt.dialog && !rt.finalSaid) { rt.finalSaid = true; dialog(g, 'c7.final', () => { g.rt.ev.push({ type: 'credits-roll' }); enterBeat(g, 'end'); }); }
+    if (rt.theoPier && rt.theo && rt.theo.state === 'WAIT' && rt.theo.z > 23 && rt.body.z > 22.6 && !rt.dialog && !rt.finalSaid) { rt.finalSaid = true; dialog(g, 'c7.final', () => { g.rt.ev.push({ type: 'fade' }); enterBeat(g, 'E.study'); }); }   // R4: the epilogue, then the credits
     if (s.beat === '7.town' && !s.flags.c7theo && rt.beatT > 1.5 && !rt.dialog) { s.flags.c7theo = true; dialog(g, 'c7.theo'); }
     // the pier: pushing against the end of a deck or the 2004 fence says what it is and what to try
     if (s.beat === '1.pier' && active) {
@@ -1045,16 +1059,38 @@ function beamTick(g, dt, input, active) {
   const rt = g.rt, s = g.s, Y = LAYOUTS.coast, bm = rt.beam;
   if (!bm.ready) { if (rt.june.state === 'WAIT') { bm.ready = true; Co.wait(rt.june, null, 'grin'); rt.june.anim = 'wave'; if (bm.target === 'june') { dialog(g, 'c3.findMe'); } } return; }
   if (!active) { return; }
-  bm.a -= (input.mx || 0) * 1.1 * dt;
   const target = bm.target === 'june' ? Y.rocks : Y.door;
-  const ta = Toys.beamTo(Y.lamp, target); bm.targetA = ta;
-  const gap = Math.min(Toys.angleGap(bm.a, ta), Toys.angleGap(bm.a + Math.PI, ta));
-  bm.onTarget = gap < 0.1; bm.holdT = bm.onTarget ? bm.holdT + dt : 0;
-  if (bm.holdT > 0.8) {
+  steerBeam(bm, Y.lamp, target, input, dt);
+  if (bm.holdT > BEAM_HOLD) {
     bm.holdT = 0;
     if (bm.target === 'june') { s.flags.foundJune = true; rt.ev.push({ type: 'found', what: 'june' }); Co.react(rt.june, 'grin', 'wave', 3); dialog(g, 'c3.found', () => { g.rt.beam.target = 'cottage'; }); }
     else { s.flags.beamDone = true; rt.ev.push({ type: 'found', what: 'cottage' }); dialog(g, 'c3.beamDone', () => enterBeat(g, '3.cliff')); }
   }
+}
+// R4 (Owner: "A/D can't find June"): the beam used to turn at one speed, had to sit inside +-0.1 rad for 0.8 s, and was
+// drawn level at lamp height, 6 m above June, so lining it up on screen was 0.7 rad off. Now: the drawn beam tilts down
+// to the target's distance (render), the window is +-0.15 rad and 0.6 s, the beam slows near the target so a tap does not
+// overshoot it, and the state says which arm is nearer, which way to turn and how long is left to hold.
+export const BEAM_TOL = 0.15, BEAM_HOLD = 0.6;
+function steerBeam(bm, from, to, input, dt) {
+  const ta = Toys.beamTo(from, to); bm.targetA = ta;
+  const g0 = Toys.angleGap(bm.a, ta), g1 = Toys.angleGap(bm.a + Math.PI, ta);
+  bm.arm = g1 < g0 ? 1 : 0; const gapNow = Math.min(g0, g1);
+  bm.a -= (input.mx || 0) * (gapNow < 0.4 ? 0.55 : 1.1) * dt;
+  const g2 = Toys.angleGap(bm.a, ta), g3 = Toys.angleGap(bm.a + Math.PI, ta);
+  bm.arm = g3 < g2 ? 1 : 0; bm.gap = Math.min(g2, g3);
+  const armA = bm.a + (bm.arm ? Math.PI : 0); bm.dir = Math.sign(Math.atan2(Math.sin(ta - armA), Math.cos(ta - armA)));   // +1: turning with a rising angle (A) brings it closer
+  bm.onTarget = bm.gap < BEAM_TOL; bm.holdT = bm.onTarget ? bm.holdT + dt : 0;
+}
+// R4: people who speak without being asked. When the player stands still for a while, June (or Theo) says something of
+// her own: not an instruction, a thought. At most every 18 s, each line once per visit.
+const AMBIENT = { '2.train': ['june', 3], '3.yard': ['june', 2], '4.cottage': ['june', 2], '5.depart': ['june', 2], '6.cottage': ['june', 1], '1.pier': ['theo', 2], 'P.summer': ['june', 1] };
+function ambientTick(g, active) {
+  const rt = g.rt, a = AMBIENT[g.s.beat]; if (!a || !active || rt.caption || rt.aim || rt.sketch || rt.tunnel || rt.carry || rt.duet || rt.tuning || rt.pen) { return; }
+  const n = rt.ambI || 0; if (n >= a[1] || rt.idleT < 8 || rt.beatT < 10 || rt.t - (rt.ambAt || -99) < 18) { return; }
+  const who = a[0], npc = who === 'theo' ? rt.theo : rt.june; if (!npc) { return; }
+  if (g.s.beat === 'P.summer' && seen(g, 'p.s.photo')) { return; }
+  rt.ambI = n + 1; rt.ambAt = rt.t; say(g, who, 'r4.amb.' + g.s.beat + '.' + (n + 1), 4.2); Co.react(npc, 'smile', 'idle', 2);
 }
 function moveBody(g, dt, input, glide) {
   const rt = g.rt;
@@ -1104,8 +1140,8 @@ export function parseSave(raw, ar) {
   if (!at('7.town')) { s.edition = {}; delete s.restored.credits; delete s.restored.iris; delete s.restored.lamp; }
   if (s.edition.iris_revived && !s.edition.credits_restored) { s.edition.iris_revived = false; delete s.restored.iris; }
   if (s.edition.seasons && !s.edition.iris_revived) { s.edition.seasons = false; s.edition.snow = false; }
-  if (s.beat === 'end' && !s.edition.seasons) { s.beat = '7.town'; }
-  if (s.edition.iris_revived && !s.restored.iris) { s.edition.iris_revived = false; s.edition.seasons = false; s.edition.snow = false; if (s.beat === 'end') { s.beat = '7.town'; } }
+  if ((s.beat === 'end' || s.beat === 'E.study') && !s.edition.seasons) { s.beat = '7.town'; }
+  if (s.edition.iris_revived && !s.restored.iris) { s.edition.iris_revived = false; s.edition.seasons = false; s.edition.snow = false; if (s.beat === 'end' || s.beat === 'E.study') { s.beat = '7.town'; } }
   return s;
 }
 export function snapshot(g) {
@@ -1116,12 +1152,12 @@ export function snapshot(g) {
     prompt: rt.prompt ? Object.assign({}, rt.prompt) : null, dialog: rt.dialog ? { id: rt.dialog.id, i: rt.dialog.i, n: rt.dialog.lines.length, line: rt.dialog.lines[rt.dialog.i], seen: rt.dialog.seen } : null,
     choice: rt.choice ? Object.assign({}, rt.choice) : null, caption: rt.caption ? rt.caption.key : null, shot: rt.shot,
     june: rt.june ? { x: rt.june.x, y: rt.june.y || 0, z: rt.june.z, state: rt.june.state, anim: rt.june.anim, expr: rt.june.expr } : null,
-    theo: rt.theo ? { x: rt.theo.x, z: rt.theo.z, state: rt.theo.state } : null, iris: rt.iris ? { x: rt.iris.x, z: rt.iris.z, state: rt.iris.state, leaving: rt.iris.leaving, atDock: !!rt.iris.atDock, boarded: !!rt.iris.boarded, gone: rt.iris.gone, loops: !!(rt.iris.script && rt.iris.script.loops) } : null,
+    theo: rt.theo ? { x: rt.theo.x, z: rt.theo.z, state: rt.theo.state } : null, mother: rt.mother ? { x: rt.mother.x, z: rt.mother.z, state: rt.mother.state, anim: rt.mother.anim, expr: rt.mother.expr, facing: rt.mother.facing } : null, crt: Pro.crtView(g), leaving: !!rt.leaving, iris: rt.iris ? { x: rt.iris.x, z: rt.iris.z, state: rt.iris.state, leaving: rt.iris.leaving, atDock: !!rt.iris.atDock, boarded: !!rt.iris.boarded, gone: rt.iris.gone, loops: !!(rt.iris.script && rt.iris.script.loops) } : null,
     train: rt.train ? { x: rt.train.x, v: rt.train.v, moving: rt.train.moving, caught: !!rt.train.caught, tries: rt.train.tries || 0, gone: !!rt.train.gone } : null,
     ride: rt.ride ? { s: rt.ride.s, d: rt.ride.d, v: rt.ride.v, length: rt.ride.road.length, stop: rt.ride.stop || null, gates: (rt.ride.gates || []).slice(), june: { s: rt.ride.june.s, d: rt.ride.june.d, mode: rt.ride.june.mode, noHands: !!rt.ride.june.noHands }, overtook: rt.ride.overtook } : null,
     duet: rt.duet ? { t: rt.duet.t, layers: rt.duet.layers, hits: rt.duet.hits, misses: rt.duet.misses, cueIn: rt.duet.cueIn, second: rt.duet.second } : null,
     tuning: rt.tuning ? { string: rt.tuning.string, needle: Toys.needleAt(rt.tuning), misses: rt.tuning.misses, done: rt.tuning.done } : null,
-    beam: rt.beam ? { a: rt.beam.a, target: rt.beam.target, targetA: rt.beam.targetA, onTarget: !!rt.beam.onTarget, ready: rt.beam.ready } : null,
+    beam: rt.beam ? { a: rt.beam.a, target: rt.beam.target, targetA: rt.beam.targetA, onTarget: !!rt.beam.onTarget, ready: rt.beam.ready, gap: rt.beam.gap, arm: rt.beam.arm || 0, dir: rt.beam.dir || 0, hold: rt.beam.holdT ? Math.min(1, rt.beam.holdT / BEAM_HOLD) : 0, done: !!rt.beam.done } : null,
     pen: rt.pen ? { x: rt.pen.x, y: rt.pen.y, i: rt.pen.i, trail: rt.pen.trail.slice(), done: rt.pen.done } : null, tunnel: rt.tunnel ? { t: rt.tunnel.t } : null,
     stars: rt.stars ? { i: rt.stars.i, linked: rt.stars.linked.slice(), onStar: !!rt.stars.onStar, aimYaw: rt.aimYaw, aimPitch: rt.aimPitch } : null, sketch: rt.sketch ? { still: rt.sketch.still, resets: rt.sketch.resets } : null, leg: rt.leg === undefined ? null : rt.leg,
         dare: rt.dare === undefined ? null : rt.dare, aimHelp: rt.aimHelp && rt.scene === 'train' ? Object.assign({}, rt.aimHelp) : null, sleep: rt.sleep ? { t: rt.sleep.t, done: !!rt.sleep.done } : null,
@@ -1130,3 +1166,8 @@ export function snapshot(g) {
   };
 }
 export { points as availablePoints };
+
+// R4: the prologue and epilogue module gets the game's own helpers
+const C6_LEAVE = DIALOGS['c6.leave'].concat(DIALOGS['c6.echo']);
+Object.assign(SETUP, Pro.SETUP_R4);
+Pro.install({ DIALOGS, dialog, say, branch, later, seen, enterBeat: (g, b) => enterBeat(g, b), moveBody, L, pause, C });

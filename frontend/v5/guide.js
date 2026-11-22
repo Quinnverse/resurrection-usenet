@@ -5,6 +5,7 @@
 import { objective } from './core/objectives.js';
 import { fragments, counts } from './core/journal.js';
 import { BEATS } from './core/game.js';
+import { chapterOf } from './core/chapters.js';
 import { groundAt } from './core/physics.js';
 
 export function createGuide(c) {
@@ -82,8 +83,8 @@ export function createGuide(c) {
   function nextTut(s, o, dt) {
     if (c.prefs.tips === false) { return null; }
     const done = tutDone(); const g = c.game();
-    if (!done.move && s.scene !== 'train' && s.scene !== 'ride' && s.scene !== 'porch') { return { id: 'move' }; }
-    if (!done.look && done.move && s.scene !== 'train' && s.scene !== 'ride' && s.scene !== 'porch') { return { id: 'look' }; }
+    if (!done.move && s.scene !== 'train' && s.scene !== 'ride' && s.scene !== 'porch' && !s.seated) { return { id: 'move' }; }   // R4: never "WASD to walk" while sitting at the beam or the computer
+    if (!done.look && done.move && s.scene !== 'train' && s.scene !== 'ride' && s.scene !== 'porch' && !s.seated) { return { id: 'look' }; }
     // Shift: taught on the first longer walk (the owner found it by accident), and done when the player runs
     if (!done.sprint && done.look && walkedFar > 10 && !s.prompt && (s.scene === 'study' || s.scene === 'town' || s.scene === 'station' || s.scene === 'coast') && c.device() !== 'touch') { return { id: 'sprint', secs: 9 }; }
     if (!done.use && s.prompt) { return { id: 'use' }; }
@@ -130,7 +131,7 @@ export function createGuide(c) {
     }
     // ---- help markers
     const tgt = o && o.target; const help = s.assist || 0; const g0 = g.s.flags;
-    const firstGoal = g.s.beat === '1.study' && c.prefs.tips !== false && !tutDone().use;                    // the very first time: show where the computer is
+    const firstGoal = (g.s.beat === 'P.kitchen' || g.s.beat === '1.study') && c.prefs.tips !== false && !tutDone().use;                    // the very first time: show where the computer is
     const missing = g.s.beat === '1.study' && g0.needDisk && !g0.disk;                                        // the computer asked for a disk: show the box at once
     const showBeacon = !!tgt && !cine && (help >= 2 || firstGoal || missing || (s.hintLevel >= 2));
     const b = ensureBeacon();
@@ -190,7 +191,7 @@ export function createGuide(c) {
     const o = objective(g); const fr = fragments(g); const ct = counts(g);
     panel.append(el('h2', { text: T('jr.title') }));
     // this chapter: earlier goals of the chapter (done) and the current one with its steps
-    const ch = o ? o.chapter : 7; const beatsBefore = BEATS.filter((b) => (b === 'end' ? 7 : parseInt(b, 10)) === ch && BEATS.indexOf(b) < BEATS.indexOf(g.s.beat));
+    const ch = o ? o.chapter : 7; const beatsBefore = BEATS.filter((b) => chapterOf(b) === ch && BEATS.indexOf(b) < BEATS.indexOf(g.s.beat));
     const goals = el('div', { class: 'jgoals', 'data-testid': 'journal-goals' }, [el('div', { class: 'lbl', text: T('jr.goals') + ' · ' + T('chap.' + ch) })]);
     beatsBefore.forEach((b) => goals.append(el('div', { class: 'jg done', text: '✓ ' + T('obj.' + b) })));
     if (o) { goals.append(el('div', { class: 'jg now', text: '▸ ' + T(o.goal) })); const ol = el('ol', { class: 'qsteps jsteps' }); o.steps.forEach((x) => ol.append(el('li', { class: (x.done ? 'done' : '') + (x.optional ? ' opt' : ''), text: (x.done ? '✓ ' : '○ ') + T(x.key) + (x.optional ? ' (' + T('hud.optional') + ')' : '') }))); goals.append(ol); if (o.nextKey) { goals.append(el('div', { class: 'jnext', text: T('hud.next') + ': ' + T(o.nextKey) })); } }
@@ -198,9 +199,9 @@ export function createGuide(c) {
     panel.append(el('div', { class: 'lbl', text: T('jr.memories') + ' · ' + T('jr.found', { n: ct.found, of: ct.of }) }));
     const list = el('div', { class: 'jmem', 'data-testid': 'journal-memories' });
     const upto = o ? o.chapter : 7;
-    for (let n = 1; n <= 7; n++) {
+    for (let n = 0; n <= 8; n++) {
       const fs = fr.filter((f) => f.chapter === n); if (!fs.length) { continue; } if (n > upto && !fs.some((f) => f.found)) { continue; }   // chapters not reached yet stay out of sight
-      const cc = ct.byChapter[n]; list.append(el('div', { class: 'jch', text: T('jr.chapter', { n }) + ' · ' + T('jr.found', { n: cc.found, of: cc.of }) }));
+      const cc = ct.byChapter[n]; list.append(el('div', { class: 'jch', text: (n === 0 || n === 8 ? T('chap.' + n).split(' · ')[0] : T('jr.chapter', { n })) + ' · ' + T('jr.found', { n: cc.found, of: cc.of }) }));
       fs.forEach((f) => {
         if (!f.found) { list.append(el('div', { class: 'jm locked', 'data-testid': 'mem-' + f.id }, [el('div', { class: 'jt', text: '· · ·  ' + T('jr.notYet') + (f.optional ? ' (' + T('jr.optional') + ')' : '') }), el('div', { class: 'jd', text: T(f.optional ? 'jr.hiddenOpt' : 'jr.hiddenReq') })])); return; }
         const meta = [f.year ? String(f.year) : T('jr.noYear'), T('jr.with') + ': ' + f.who.map((w) => T('sp.' + w)).join(', ')].join(' · ');

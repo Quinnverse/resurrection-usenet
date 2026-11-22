@@ -13,8 +13,8 @@ import { LAYOUTS } from '../frontend/v5/core/layout.js';
 export const DT = 1 / 30;
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 export function makeBot(g, opts) {
-  const o = Object.assign({ choices: { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter: 0 }, glide: true, log: false, optional: true, sleepShot: true }, opts || {});
-  const bot = { g, t: 0, events: [], beats: [], o, stuck: [], beatTimes: {}, dialogT: 0 };
+  const o = Object.assign({ choices: { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter: 0, pk1: 0, pk2: 0, pk3: 0, ps: 0 }, glide: true, log: false, optional: true, sleepShot: true }, opts || {});
+  const bot = { g, t: 0, events: [], beats: [], o, stuck: [], replanned: [], beatTimes: {}, dialogT: 0 };
   let lastBeat = g.s.beat, beatT0 = 0;
   bot.tick = async (input) => {
     const s0 = Gm.snapshot(g); const inDialog = !!(s0.dialog || s0.choice);
@@ -42,9 +42,9 @@ export function makeBot(g, opts) {
   };
   bot.axes = (dx, dz) => { const s = bot.snap(); const yaw = s.yaw; const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const d = Math.hypot(dx, dz) || 1; return { mz: (dx * fx + dz * fz) / d, mx: (dx * rx + dz * rz) / d }; };
   // walk to (x, z) on the current floor; stop early when `until(snapshot)` holds
-  bot.walkTo = async (x, z, until, sprint) => {
-    const s0 = bot.snap(); const w = g.rt.world;
-    const path = Ph.findPath(w, g.rt.scene + g.s.era + g.s.beat + Math.round(g.s.bridge * 20) + (g.rt.carry || ''), { x: s0.x, z: s0.z, y: s0.y }, { x, z }, { reach: 1.0 }) || [[s0.x, s0.z], [x, z]];
+  bot.walkTo = async (x, z, until, sprint, fresh) => {
+    const s0 = bot.snap(); const w = g.rt.world; const stuckAt = bot.stuck.length;
+    const path = Ph.findPath(w, (fresh ? 'fresh' + bot.t : '') + g.rt.scene + g.s.era + g.s.beat + Math.round(g.s.bridge * 20) + (g.rt.carry || '') + Object.keys(g.s.edition).join(',')   /* R4: the edition changes the town's solids (Iris's dock) */, { x: s0.x, z: s0.z, y: s0.y }, { x, z }, { reach: 1.0 }) || [[s0.x, s0.z], [x, z]];
     for (const [px, pz] of path.slice(1)) {
       let best = Infinity, lastGood = bot.t;
       for (let i = 0; i < 40 / DT; i++) {
@@ -56,12 +56,16 @@ export function makeBot(g, opts) {
         const a = bot.axes(px - s.x, pz - s.z); await bot.tick(Object.assign(a, { sprint: !!sprint }));
       }
     }
-    const s = bot.snap(); return until ? until(s) : Math.hypot(x - s.x, z - s.z) < 1.2;
+    const s = bot.snap(); const ok = until ? until(s) : Math.hypot(x - s.x, z - s.z) < 1.2;
+    // R4: a path planned on an older grid of the same scene can run into a floor edge; plan once more from here
+    if (!ok && !fresh) { const before = bot.stuck.splice(stuckAt); const ok2 = await bot.walkTo(x, z, until, sprint, true); if (ok2) { bot.replanned.push(...before); } else { bot.stuck.push(...before); } return ok2; }
+    return ok;
   };
   bot.promptIs = (id) => (s) => s.prompt && s.prompt.id === id;
   bot.use = async (id) => { const s = bot.snap(); if (!s.prompt || s.prompt.id !== id) { throw new Error(`no prompt ${id} at beat ${s.beat} (${s.x.toFixed(2)},${s.z.toFixed(2)}): ${JSON.stringify(s.prompt)}`); } await bot.tick({ use: true }); };
   bot.hold = async (id, secs) => { for (let i = 0; i < 15 && Math.hypot(g.rt.body.vx, g.rt.body.vz) > 0.05 && bot.snap().prompt && bot.snap().prompt.id === id; i++) { await bot.tick({}); }   // stop walking first
     for (let i = 0; i < secs / DT; i++) { const s = bot.snap(); if (!s.prompt || s.prompt.id !== id) { return; } await bot.tick({ useHeld: true, use: i === 0 }); } };
+  bot.useWhen = async (id, secs) => { await bot.until((s) => s.prompt && s.prompt.id === id, secs || 5); await bot.use(id); };
   bot.go = async (id, x, z) => { if (!(await bot.walkTo(x, z, bot.promptIs(id)))) { const s = bot.snap(); throw new Error(`could not reach ${id} at beat ${s.beat} from (${s.x.toFixed(2)},${s.z.toFixed(2)}) prompt=${JSON.stringify(s.prompt)}`); } };
   bot.goUse = async (id, x, z) => { await bot.go(id, x, z); await bot.use(id); await bot.talk(); };
   // like until, but also stops when `alt` holds
@@ -83,18 +87,51 @@ export function makeBot(g, opts) {
   return bot;
 }
 
+// R4: from the computer in the study to the 2004 town: the restore tool (read the disk, open the posts, repair the
+// summer build, compare the 2004 build, run it) and the first memory (June's photo, the record breaking)
+export async function restoreAndRemember(bot, opt) {
+  // ---- the restore tool: read the disk, open, repair, compare, run
+  await bot.until((s) => s.beat === 'P.restore', 10);
+  await bot.until((s) => s.prompt && s.prompt.id === 'disk', 5); await bot.hold('disk', 4);
+  await bot.useWhen('record'); await bot.talk();   // how they met
+  await bot.useWhen('record'); await bot.until((s) => s.prompt && s.prompt.id === 'repair', 5); await bot.hold('repair', 5); await bot.talk();       // the damaged summer build, repaired from the disk
+  if (opt) { await bot.until((s) => s.prompt && s.prompt.id === 'record', 5); await bot.tick({ mz: -1 }); await bot.tick({}); await bot.useWhen('record'); await bot.talk(); }   // down to the removed record
+  await bot.useWhen('record'); await bot.talk();                               // the 2004 build, then Mara's question
+  await bot.talk(); await bot.until((s) => s.prompt && s.prompt.id === 'run', 5); await bot.hold('run', 4);
+  // ---- the first memory: June takes the photo, then the record breaks
+  await bot.until((s) => s.beat === 'P.summer', 10);
+  await bot.go('june', 0.3, 23.8); await bot.use('june'); await bot.talk();
+  await bot.until((s) => s.beat === '1.town', 40, (s) => bot.axes(0.1 - s.x, 22.0 - s.z));
+  await bot.until((s) => s.scene === 'town' && s.beat === '1.town');
+}
+
 // The whole game. Returns the bot (events, beats, timings).
 export async function playThrough(g, opts) {
   const bot = makeBot(g, opts); const mark = {}; const m = (k) => { mark[k] = bot.t; };
   const P = (scene, id) => LAYOUTS[scene].points.find((p) => p.id === id);
   const opt = bot.o.optional;
-  // ---- chapter 1
+  // ---- R4 prologue: the last Sunday (skipped when a test starts the game at a later beat)
+  if (g.s.beat === 'P.kitchen') {
+    await bot.until((s) => s.mother && s.prompt && s.prompt.id === 'mother', 20, (s) => (s.mother ? bot.axes(s.mother.x - 0.7 - s.x, s.mother.z + 0.6 - s.z) : {}));
+    if (opt) { await bot.walkTo(-2.6, 0.5); await bot.until((s) => s.prompt && s.prompt.id === 'coat', 3, () => bot.axes(-1, 0)); if (bot.snap().prompt && bot.snap().prompt.id === 'coat') { await bot.use('coat'); } }
+    await bot.go('mother', 1.5, -1.0); await bot.use('mother'); await bot.talk(); await bot.talk();
+    await bot.go('frontdoor', -2.6, 1.6); await bot.use('frontdoor'); await bot.talk();
+    await bot.until((s) => s.beat === 'P.house', 10); m('house');
+    await bot.goUse('machine', -1.7, -1.75);
+    if (opt) { await bot.goUse('cards', -0.9, 1.4); }
+    await bot.go('keys', 1.1, 1.3); await bot.use('keys');
+    await bot.goUse('studydoor', 2.6, 2.1);
+    await bot.until((s) => s.beat === '1.study', 10); m('study');
+  }
+  // ---- the study (prologue, scene C)
   const comp = P('study', 'computer');
   await bot.goUse('computer', comp.x, comp.z + 1.0);                         // no disk yet
   await bot.goUse('keepbox', -1.1, 2.2);                                     // Elena's backup disk
   if (opt) { await bot.goUse('photo', 3.2, 0.7); }
+  if (opt) { await bot.goUse('notebook', 1.5, -1.2); }
   await bot.goUse('computer', comp.x, comp.z + 1.0);
-  await bot.until((s) => s.scene === 'town'); m('town');
+  await restoreAndRemember(bot, opt); m('restore');
+  await bot.until((s) => s.scene === 'town' && s.beat === '1.town'); m('town');
   if (opt) { await bot.walkTo(-3.4, -3.2); await bot.until((s) => s.prompt && s.prompt.id === 'irisTalk', 4, () => bot.axes(-1, -0.4)); await bot.use('irisTalk'); }
   await bot.walkTo(0, 7.4); await bot.until((s) => s.prompt && s.prompt.id === 'theo', 10, () => bot.axes(0, 1)); await bot.use('theo'); await bot.talk();
   await bot.until((s) => s.prompt && s.prompt.id === 'gap', 10, () => bot.axes(0, 1)); await bot.hold('gap', 6); m('bridge');
@@ -249,7 +286,13 @@ export async function playThrough(g, opts) {
   }, (s) => s.flags.beamPier);
   // new planks in the present edition, then walk Theo out to the end
   await bot.go('newPier', 0.2, 13.0); await bot.hold('newPier', 5); await bot.talk();
-  await bot.until((s) => s.beat === 'end', 90, (s) => (s.theo && s.z < 24.0 ? bot.axes(s.theo.x - 0.3 - s.x, Math.min(24.0, s.theo.z - 0.9) - s.z) : {}));
+  await bot.until((s) => s.beat === 'E.study', 90, (s) => (s.theo && s.z < 24.0 ? bot.axes(s.theo.x - 0.3 - s.x, Math.min(24.0, s.theo.z - 0.9) - s.z) : {}));
+  // ---- R4 epilogue: both of them
+  m('epilogue');
+  await bot.go('unfold', 3.8, -1.5); await bot.hold('unfold', 3); await bot.until((s) => s.dialog || s.flags.unfolded, 5); await bot.talk();
+  await bot.goUse('keepbox', -1.1, 2.2);
+  await bot.goUse('computer', comp.x, comp.z + 1.0);
+  await bot.until((s) => s.beat === 'end', 10);
   m('end');
   bot.finish(); bot.marks = mark;
   return bot;

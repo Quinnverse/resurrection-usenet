@@ -245,8 +245,8 @@ describe('V5 the whole game, played headlessly', () => {
   it('seen dialogue can be skipped and still moves the story on; unseen cannot', async () => {
     const s = Gm.newSave(); s.beat = '1.study'; s.seen = ['c1.computer', 'c1.noDisk']; s.flags.disk = true; const g = Gm.createGame(AR, s); const bot = makeBot(g);
     await bot.go('computer', 3.0, -1.7); await bot.use('computer'); assert.equal(bot.snap().dialog.seen, true);
-    await bot.tick({ skip: true }); assert.equal(g.s.beat, '1.town');
-    const g2 = Gm.createGame(AR); const b2 = makeBot(g2); await b2.go('computer', 3.0, -1.7); await b2.use('computer'); await b2.tick({ skip: true }); assert.ok(b2.snap().dialog, 'not skippable the first time');
+    await bot.tick({ skip: true }); assert.equal(g.s.beat, 'P.restore');   // R4: the computer opens the restore tool
+    const g2 = Gm.createGame(AR, Object.assign(Gm.newSave(), { beat: '1.study' })); const b2 = makeBot(g2); await b2.go('computer', 3.0, -1.7); await b2.use('computer'); await b2.tick({ skip: true }); assert.ok(b2.snap().dialog, 'not skippable the first time');
     // a skipped dialogue with a choice still makes the choice
     const s3 = Gm.newSave(); s3.beat = '5.depart'; s3.seen = ['c5.arrive', 'c5.news']; s3.flags = { c5arrive: true, suitcase: true, walked: true }; const g3 = Gm.createGame(AR, s3); const b3 = makeBot(g3);
     await b3.go('june', -26.3, -0.5); await b3.use('june'); await b3.tick({ skip: true }); assert.equal(g3.s.choices.parting, 'c5.choice.stay'); assert.ok(b3.snap().dialog && b3.snap().dialog.id === 'c5.stay');

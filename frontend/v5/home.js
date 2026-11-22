@@ -8,10 +8,10 @@ $('start').href = L.game; $('continue').href = L.game; $('tech').href = L.tech; 
 $('playtest').href = L.playtest; $('form').href = L.form; $('advanced').href = L.hub;
 
 // is there a save in this browser? (browsers may keep local files apart: then it simply says so and the title screen decides)
-const chapterOf = (beat) => { const m = /^(\d)\./.exec(String(beat || '')); return m ? Number(m[1]) : beat === 'end' ? 7 : null; };
+const chapterOf = (beat) => { const b = String(beat || ''); if (/^P\./.test(b) || b === '1.study') { return 0; } if (b === 'E.study') { return 8; } const m = /^(\d)\./.exec(b); return m ? Number(m[1]) : b === 'end' ? 7 : null; };
 try {
   const raw = JSON.parse(localStorage.getItem('v5.save.v1')); const box = $('save');
-  if (raw && typeof raw.beat === 'string') { const ch = chapterOf(raw.beat); box.textContent = `Save found: ${ch ? 'chapter ' + ch + ' · ' : ''}${raw.beat} · 找到存档${ch ? '：第 ' + ch + ' 章' : ''}`; box.classList.remove('none'); }
+  if (raw && typeof raw.beat === 'string') { const ch = chapterOf(raw.beat); box.textContent = `Save found: ${ch !== null ? (ch === 0 ? 'prologue · ' : ch === 8 ? 'epilogue · ' : 'chapter ' + ch + ' · ') : ''}${raw.beat} · 找到存档${ch !== null ? (ch === 0 ? '：序章' : ch === 8 ? '：尾声' : '：第 ' + ch + ' 章') : ''}`; box.classList.remove('none'); }
   else { box.textContent = 'No save seen in this browser yet. · 此浏览器里还没有存档。'; }
 } catch (e) { $('save').textContent = 'Save status unknown. · 存档状态未知。'; }
 
