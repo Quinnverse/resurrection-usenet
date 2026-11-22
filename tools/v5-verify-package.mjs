@@ -24,6 +24,7 @@ const zip = path.resolve(args.find((a) => a.endsWith('.zip')) || '');
 const want = args.indexOf('--commit') >= 0 ? args[args.indexOf('--commit') + 1] : null;
 if (!fs.existsSync(zip)) { console.error('usage: node tools/v5-verify-package.mjs <package.zip> [--commit <hash>]'); process.exit(2); }
 
+const BEAT_COUNT = (await import('../frontend/v5/core/game.js')).BEATS.length;
 const results = []; const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: detail || '' }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`); };
 const sha256 = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 
@@ -34,7 +35,10 @@ const top = fs.readdirSync(dir); const base = top.length === 1 && fs.statSync(pa
 check('one top folder inside the zip', base !== dir, top.join(', '));
 
 const rcN = (/resurrection-v5-rc(\d+)/.exec(path.basename(base)) || [])[1] || '2';
-const need = ['START-HERE.txt', 'CHAPTER-1-RETEST.txt', 'Resurrection-V5-Start.html', 'Resurrection-V5.html', 'Resurrection-V5-Playtest.html', 'Resurrection-V5-Tech.html', 'Resurrection-V5-Audio.html', 'Resurrection-V5-RC.html', 'feedback-form.html', 'docs/V5-RC2-REPORT.md', 'docs/V5-LOCAL-TESTING.md'].concat(rcN !== '2' ? ['docs/V5-RC' + rcN + '-REPORT.md', 'docs/V5-RC' + rcN + '-STORY.md'] : []);
+const PAGES = ['Resurrection-V5-Start.html', 'Resurrection-V5.html', 'Resurrection-V5-Playtest.html', 'Resurrection-V5-Tech.html', 'Resurrection-V5-Audio.html', 'Resurrection-V5-RC.html', 'feedback-form.html'];
+const need = rcN === '4'
+  ? ['START-HERE.txt', 'PLAYTEST-QUESTIONS.txt', 'RESURRECTION_THEME.md', 'docs/V5-RC2-REPORT.md', 'docs/V5-LOCAL-TESTING.md', 'docs/R4-REPORT.md', 'docs/R4-SCRIPT.md', 'docs/R4-CHARACTERS-TIMELINE.md', 'docs/R4-CHAPTER-LINKS.md', 'docs/R4-BLOCKER-FIXES.md', 'docs/R4-TEST-STRATEGY.md'].concat(PAGES)
+  : ['START-HERE.txt', 'CHAPTER-1-RETEST.txt', 'docs/V5-RC2-REPORT.md', 'docs/V5-LOCAL-TESTING.md'].concat(PAGES, rcN !== '2' ? ['docs/V5-RC' + rcN + '-REPORT.md', 'docs/V5-RC' + rcN + '-STORY.md'] : []);
 const missing = need.filter((f) => !fs.existsSync(path.join(base, f)));
 check('all expected files are in the folder', missing.length === 0, missing.length ? 'missing: ' + missing.join(', ') : `${need.length} files`);
 const shots = fs.existsSync(path.join(base, 'shots')) ? fs.readdirSync(path.join(base, 'shots')).length : 0;
@@ -70,7 +74,7 @@ const game = path.join(base, 'Resurrection-V5.html');
 for (const [label, extra] of [['English', []], ['Chinese (with the alternate choices)', ['--lang', 'zh', '--alt']]]) {
   const r = spawnSync(process.execPath, [path.join(root, 'tools', 'v5-shell-run.mjs'), '--quiet', '--html', game, ...extra], { cwd: root, encoding: 'utf8', timeout: 300000, maxBuffer: 64 * 1024 * 1024 });
   let j = null; try { j = JSON.parse((r.stdout || '').trim().split('\n').pop()); } catch (e) { /* no report */ }
-  const ok = !!j && j.ok === true && r.status === 0 && j.shippedPage && j.shippedPage.standalone === true && (all.size !== 1 || j.shippedPage.build === [...all][0]) && (j.beatsVisited || []).length === 20 && (j.failedChecks || []).length === 0 && (j.hudHiddenTooLong || []).length === 0;
+  const ok = !!j && j.ok === true && r.status === 0 && j.shippedPage && j.shippedPage.standalone === true && (all.size !== 1 || j.shippedPage.build === [...all][0]) && (j.beatsVisited || []).length === BEAT_COUNT &&   /* R4: the prologue and epilogue make 25 */  (j.failedChecks || []).length === 0 && (j.hudHiddenTooLong || []).length === 0;
   check(`the extracted game page plays all seven chapters to the credits, ${label}`, ok, j ? `ok=${j.ok}, ${(j.beatsVisited || []).length} beats, ${j.gameSeconds}s of game time, build ${j.shippedPage && j.shippedPage.build}, journal ${j.journal && j.journal.found}/${j.journal && j.journal.of}${(j.failedChecks || []).length ? ', failed: ' + j.failedChecks.join('; ') : ''}` : `no report; exit ${r.status}; ${String(r.stderr || '').slice(0, 200)}`);
 }
 
