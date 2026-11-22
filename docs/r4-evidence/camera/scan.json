@@ -1,0 +1,676 @@
+{
+  "1.town": [
+    {
+      "shot": "theo",
+      "speaker": "theo",
+      "cameraAt": [
+        0.06,
+        1.5,
+        10.71
+      ],
+      "headDist": 1.84,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "theo",
+        "d": 1.84
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "theo",
+      "cameraAt": [
+        0,
+        3.35,
+        -14.86
+      ],
+      "headDist": 27.42,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "theo",
+        "d": 27.36
+      }
+    }
+  ],
+  "2.train": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        0.02,
+        1.32,
+        0.78
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        0.02,
+        1.32,
+        0.78
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    }
+  ],
+  "3.yard": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        258.02,
+        1.5,
+        16.81
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": "window",
+      "speaker": "june",
+      "cameraAt": [
+        256.75,
+        1.45,
+        17.1
+      ],
+      "headDist": 2.33,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 2.32
+      }
+    },
+    {
+      "shot": "twoshot",
+      "speaker": "june",
+      "cameraAt": [
+        256.75,
+        1.45,
+        17.1
+      ],
+      "headDist": 2.33,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 2.32
+      }
+    },
+    {
+      "shot": "elena",
+      "speaker": "elena",
+      "cameraAt": [
+        259.34,
+        1.5,
+        17.94
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 0.44
+      }
+    },
+    {
+      "shot": "beam",
+      "speaker": "june",
+      "cameraAt": [
+        254,
+        3.5,
+        12
+      ],
+      "headDist": 7.99,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 7.75
+      }
+    },
+    {
+      "shot": "beamctl",
+      "speaker": "june",
+      "cameraAt": [
+        256,
+        13,
+        42
+      ],
+      "headDist": 26.75,
+      "blocked": true,
+      "blocker": {
+        "dist": 25.41,
+        "color": "#fff4d6",
+        "owner": null,
+        "name": "",
+        "geo": "BoxGeometry",
+        "size": [
+          0.9,
+          1.1,
+          0.06
+        ],
+        "at": [
+          258.75,
+          2.12,
+          19.2
+        ]
+      },
+      "nearestBody": {
+        "id": "june17",
+        "d": 24.17
+      }
+    },
+    {
+      "shot": "beamctl",
+      "speaker": "elena",
+      "cameraAt": [
+        256,
+        13,
+        42
+      ],
+      "headDist": 28.11,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 24.17
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        257.36,
+        3.11,
+        11.44
+      ],
+      "headDist": 6.91,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 6.73
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "elena",
+      "cameraAt": [
+        257.36,
+        3.11,
+        11.44
+      ],
+      "headDist": 5.54,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 6.73
+      }
+    }
+  ],
+  "4.cottage": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        1.27,
+        1.5,
+        1.81
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": "elena",
+      "speaker": "elena",
+      "cameraAt": [
+        1.37,
+        1.5,
+        1.74
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.36
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        0,
+        2.41,
+        2.8
+      ],
+      "headDist": 3.2,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 3.08
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "elena",
+      "cameraAt": [
+        0,
+        2.41,
+        2.8
+      ],
+      "headDist": 0.99,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 3.08
+      }
+    }
+  ],
+  "5.depart": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        -4.91,
+        1.5,
+        -0.03
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": "elena",
+      "speaker": "elena",
+      "cameraAt": [
+        -8.03,
+        1.5,
+        0.33
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 4.6
+      }
+    },
+    {
+      "shot": "bench",
+      "speaker": "elena",
+      "cameraAt": [
+        -6.5,
+        1.8,
+        1.8
+      ],
+      "headDist": 3.41,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 3.78
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        -14.5,
+        2.79,
+        0.2
+      ],
+      "headDist": 11.09,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 11.02
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "elena",
+      "cameraAt": [
+        -14.5,
+        2.79,
+        0.2
+      ],
+      "headDist": 5.15,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 11.02
+      }
+    }
+  ],
+  "6.cottage": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        1.26,
+        1.5,
+        -0.83
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june23",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": "elena",
+      "speaker": "elena",
+      "cameraAt": [
+        0.71,
+        1.5,
+        1
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june23",
+        "d": 3.37
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        0,
+        2.41,
+        2.8
+      ],
+      "headDist": 5.36,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june23",
+        "d": 5.29
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "elena",
+      "cameraAt": [
+        0,
+        2.41,
+        2.8
+      ],
+      "headDist": 0.99,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june23",
+        "d": 5.29
+      }
+    }
+  ],
+  "7.town": [
+    {
+      "shot": "theo",
+      "speaker": "theo",
+      "cameraAt": [
+        -0.64,
+        1.5,
+        -11.56
+      ],
+      "headDist": 1.84,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "theo",
+        "d": 1.84
+      }
+    },
+    {
+      "shot": "mara",
+      "speaker": "mara",
+      "cameraAt": [
+        1.36,
+        1.5,
+        -12.03
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "theo",
+        "d": 0.46
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "theo",
+      "cameraAt": [
+        0,
+        3.35,
+        -18.26
+      ],
+      "headDist": 7,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "theo",
+        "d": 6.76
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "mara",
+      "cameraAt": [
+        0,
+        3.35,
+        -18.26
+      ],
+      "headDist": 5.94,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "theo",
+        "d": 6.76
+      }
+    }
+  ],
+  "P.kitchen": [
+    {
+      "shot": "mara",
+      "speaker": "mara",
+      "cameraAt": [
+        -0.03,
+        1.5,
+        0.69
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "elena45",
+        "d": 3.45
+      }
+    },
+    {
+      "shot": "mother",
+      "speaker": "mother",
+      "cameraAt": [
+        1.4,
+        1.5,
+        -0.62
+      ],
+      "headDist": 1.53,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "elena45",
+        "d": 1.53
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "mara",
+      "cameraAt": [
+        -2.98,
+        2.41,
+        2.6
+      ],
+      "headDist": 2.21,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "elena45",
+        "d": 6.9
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "mother",
+      "cameraAt": [
+        -2.98,
+        2.41,
+        2.6
+      ],
+      "headDist": 6.96,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "elena45",
+        "d": 6.9
+      }
+    }
+  ],
+  "P.summer": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        -0.81,
+        1.5,
+        23.92
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": "elena",
+      "speaker": "elena",
+      "cameraAt": [
+        0.82,
+        1.5,
+        24.07
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 0.5
+      }
+    },
+    {
+      "shot": "twoshot",
+      "speaker": "mara",
+      "cameraAt": [
+        -1.79,
+        1.45,
+        24.73
+      ],
+      "headDist": 2.36,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 2.35
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        -0.2,
+        3.35,
+        17.34
+      ],
+      "headDist": 7.42,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 7.2
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "elena",
+      "cameraAt": [
+        -0.2,
+        3.35,
+        17.34
+      ],
+      "headDist": 5.94,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 7.2
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "mara",
+      "cameraAt": [
+        -0.2,
+        3.35,
+        17.34
+      ],
+      "headDist": 5.94,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 7.2
+      }
+    }
+  ]
+}

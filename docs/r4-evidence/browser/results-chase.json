@@ -1,0 +1,21 @@
+{
+  "when": "2026-11-22T16:43:51.813Z",
+  "chromium": "159.0.8154.6",
+  "port": 8138,
+  "passed": 0,
+  "failed": 1,
+  "results": [
+    {
+      "name": "chase: after the grab Elena stands still through the whole conversation",
+      "ok": false,
+      "shots": [
+        "docs/r4-evidence/browser/c1-hand-dialogue.jpg"
+      ],
+      "notes": [
+        "during c1.hand: moved 0.000 m in 1.5 s; body speed that drives the run animation: 4.40 m/s"
+      ],
+      "error": "the body still has speed 4.40 m/s, so the run animation plays",
+      "seconds": 27
+    }
+  ]
+}

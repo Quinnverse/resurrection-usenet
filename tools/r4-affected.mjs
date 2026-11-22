@@ -40,7 +40,7 @@ const STEPS = {
   prologue: ['node tools/r4-browser.mjs prologue'],
   epilogue: ['node tools/r4-browser.mjs epilogue'],
   beam: ['node tools/r4-browser.mjs beam town-beam'],
-  chase: ['node tools/r4-browser.mjs chase train chain']
+  chase: ['node tools/r4-browser.mjs chase cameras chain']
 };
 const order = ['node', 'shell', 'prologue', 'epilogue', 'beam', 'chase'].filter((k) => need.has(k));
 console.log(`changed since ${since}: ${files.length} file(s), ${why.length} that can change the game`);

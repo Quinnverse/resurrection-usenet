@@ -1,0 +1,18 @@
+{
+  "when": "2026-11-22T16:51:44.223Z",
+  "chromium": "159.0.8154.6",
+  "port": 8787,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "name": "cameras: every dialogue close-up in every beat is clear of coats, hair and other bodies",
+      "ok": true,
+      "shots": [],
+      "notes": [
+        "5.depart 5 probes; 0 blocked; 0 with a body within 0.7 m | 6.cottage 4 probes; 0 blocked; 0 with a body within 0.7 m | 7.town 4 probes; 0 blocked; 0 with a body within 0.7 m | P.kitchen 4 probes; 0 blocked; 0 with a body within 0.7 m | P.summer 6 probes; 0 blocked; 0 with a body within 0.7 m | every dialogue close-up is clear"
+      ],
+      "seconds": 62
+    }
+  ]
+}

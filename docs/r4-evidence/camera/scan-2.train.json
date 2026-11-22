@@ -1,0 +1,36 @@
+{
+  "2.train": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        0.02,
+        1.32,
+        0.78
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        0.02,
+        1.32,
+        0.78
+      ],
+      "headDist": 1.48,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    }
+  ]
+}

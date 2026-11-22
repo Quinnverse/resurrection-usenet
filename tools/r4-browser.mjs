@@ -3,7 +3,7 @@
 // (positions, the HUD line), never sets game state. Writes screenshots and results.json to docs/r4-evidence/browser.
 //
 //   node tools/r4-browser.mjs                 every check
-//   node tools/r4-browser.mjs prologue beam   only some (prologue, prologue-zh, chase, train, beam, town-beam, epilogue, chain, saves)
+//   node tools/r4-browser.mjs prologue beam   only some (prologue, prologue-zh, chase, cameras, beam, town-beam, epilogue, chain)
 //
 // Starts tools/v5-serve.mjs on a free port and stops it at the end. Needs `npx playwright install chromium`.
 import { chromium } from '@playwright/test';
@@ -154,21 +154,13 @@ if (want('chase')) {
   });
 }
 
-// ---- 3. the train: no close-up puts the camera inside June (the green model) -------------------------------------------------
-if (want('train')) {
-  await record('train: every dialogue close-up keeps the camera clear of June and Elena', async (r) => {
-    const { page, ctx } = await open('?preview=2.train');
-    await until(page, (s) => s.beat === '2.train', 60000); await wait(page, 600); const seen = new Set(); let worst = 99;
-    for (let i = 0; i < 40; i++) {
-      const s = await snap(page); if (!s.dialog) { break; }
-      const d = await page.evaluate(() => window.V5Debug.cameraClearance ? window.V5Debug.cameraClearance() : null);
-      if (d) { worst = Math.min(worst, d.min); }
-      const sh = s.shot || 'none'; if (!seen.has(sh)) { seen.add(sh); await wait(page, 250); r.shots.push(await shot(page, 'c2-train-shot-' + sh)); }
-      await page.keyboard.press('KeyE'); await wait(page, 380);
-    }
-    r.notes.push('shots seen: ' + [...seen].join(', ') + '; nearest body to the camera: ' + worst.toFixed(2) + ' m');
-    if (worst < 0.6) { throw new Error('camera within ' + worst.toFixed(2) + ' m of a body'); }
-    await ctx.close();
+// ---- 3. cameras: no dialogue close-up has a coat or hair in front of the speaker's face, or sits on another body -------------------------
+// (the first version of this check only measured the distance to bodies; it passed with the bug in. The scan casts a ray
+// from the camera to the speaker's head and reports what is in the way: tools/r4-camera-scan.mjs)
+if (want('train') || want('cameras')) {
+  await record('cameras: every dialogue close-up in every beat is clear of coats, hair and other bodies', async (r) => {
+    const out = await new Promise((res) => { const c = spawn('node', ['tools/r4-camera-scan.mjs'], { env: Object.assign({}, process.env, { R4_CAM_OUT: path.join(OUT, 'cameras') }) }); let t = ''; c.stdout.on('data', (d) => { t += d; }); c.stderr.on('data', (d) => { t += d; }); c.on('close', (code) => res({ code, t })); });
+    r.notes.push(out.t.trim().split('\n').slice(-6).join(' | ')); if (out.code !== 0) { throw new Error(out.t.trim().split('\n').slice(-5).join(' | ')); }
   });
 }
 

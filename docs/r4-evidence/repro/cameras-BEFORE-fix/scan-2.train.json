@@ -1,0 +1,52 @@
+{
+  "2.train": [
+    {
+      "shot": "june",
+      "speaker": "june",
+      "cameraAt": [
+        0.49,
+        1.55,
+        0.88
+      ],
+      "headDist": 1.51,
+      "blocked": false,
+      "blocker": null,
+      "nearestBody": {
+        "id": "june17",
+        "d": 1.48
+      }
+    },
+    {
+      "shot": null,
+      "speaker": "june",
+      "cameraAt": [
+        -1.3,
+        1.85,
+        1.75
+      ],
+      "headDist": 3.05,
+      "blocked": true,
+      "blocker": {
+        "dist": 1.42,
+        "color": "#4b3568",
+        "owner": "elena17",
+        "name": "",
+        "geo": "SphereGeometry",
+        "size": [
+          0.42,
+          0.25,
+          0.42
+        ],
+        "at": [
+          -0.44,
+          1.57,
+          0.66
+        ]
+      },
+      "nearestBody": {
+        "id": "june17",
+        "d": 2.99
+      }
+    }
+  ]
+}

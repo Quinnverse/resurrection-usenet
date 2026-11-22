@@ -396,7 +396,7 @@ function onBeat(ev) {
   const lay = LAYOUTS[sceneWorldId(ev.scene)];
   const s = Gm.snapshot(g); cam.yaw = s.yaw; cam.pitch = (lay && lay.camera && lay.camera.pitch) || 0.36; cam.dist = (lay && lay.camera && lay.camera.dist) || 4.5;
   syncCast(0); updateCamera(true); // place the cast first so the cut lands on where they are now
-  if (ev.chapter !== rt.lastChapter) { const prev = rt.lastChapter; rt.lastChapter = ev.chapter; showChapter(ev.chapter); if (PT.active() && prev !== undefined && prev !== null && !ev.loading) { rateChapter(prev); } }
+  if (ev.beat === 'end' && rt.lastChapter === 8) { /* R4: the credits follow the epilogue; the chapter card is not announced again */ } else if (ev.chapter !== rt.lastChapter) { const prev = rt.lastChapter; rt.lastChapter = ev.chapter; showChapter(ev.chapter); if (PT.active() && prev !== undefined && prev !== null && !ev.loading) { rateChapter(prev); } }
   PT.beat(ev.beat, ev.chapter);
   // R4: the way into 1998 is a colour coming back: grey, dim and flat at first, then the summer (the prologue's whole idea)
   if (ev.beat === 'P.summer' && !ev.loading) { app.classList.add('colorin'); setTimeout(() => app.classList.remove('colorin'), reduce() ? 300 : 3800); }
@@ -432,12 +432,18 @@ function headOf(p) { return p ? new THREE.Vector3(p.position.x, (p.position.y ||
 function closeUp(p, facing, side, dist) {
   const h = headOf(p); const others = Object.values(cast).filter((q) => q !== p && q.visible && q.parent).map(headOf);
   if (others.some((o) => o.distanceTo(h) < 1.4)) { dist = (dist || 1.5) * 1.35; side = (side || 0.35) * 1.6; }   // someone right beside them: a looser close-up, so their head is not half the frame
-  for (const swing of [0, 0.5, -0.5, 0.9, -0.9, 1.3, -1.3]) {
+  // R4: not only the line of sight but the camera itself keeps 0.9 m from everyone else (it used to end up 0.44 m from June
+  // or Theo, so a shoulder filled the frame edge). If no angle is clear, the one that is farthest from everyone wins.
+  let best = null;
+  for (const swing of [0, 0.5, -0.5, 0.9, -0.9, 1.3, -1.3, 1.8, -1.8, Math.PI]) {
     const a = facing + swing; const f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)); const r = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
     const pos = h.clone().addScaledVector(f, dist || 1.5).addScaledVector(r, side || 0.35).add(new THREE.Vector3(0, -0.05, 0));
     const seg = new THREE.Line3(pos, h); const blocked = others.some((o) => { const c = new THREE.Vector3(); seg.closestPointToPoint(o, true, c); return c.distanceTo(o) < 0.42; });
-    if (!blocked) { return { pos, look: h.clone() }; }
+    const gap = others.reduce((m, o) => Math.min(m, Math.hypot(pos.x - o.x, pos.z - o.z)), 99);
+    if (!blocked && gap >= 0.9) { return { pos, look: h.clone() }; }
+    if (!blocked && (!best || gap > best.gap)) { best = { pos, gap }; }
   }
+  if (best) { return { pos: best.pos, look: h.clone() }; }
   const f = new THREE.Vector3(Math.sin(facing), 0, Math.cos(facing)); return { pos: h.clone().addScaledVector(f, dist || 1.5).add(new THREE.Vector3(0, 0.3, 0)), look: h.clone() };
 }
 function shotFor(name, s) {
@@ -446,9 +452,9 @@ function shotFor(name, s) {
   const mo = s.mother ? person('elena45') : null;
   // R4 (Owner: a green model in front of the camera on the train): June's teal coat filled the frame because the
   // close-up swung round to 0.48 m from her. On the train the two faces get fixed shots from the aisle.
-  if (s.scene === 'train' && (name === 'june' || name === 'elena')) {
+  if (s.scene === 'train' && s.dialog && (name === 'june' || name === 'elena' || name === 'seat' || name === 'photoback' || !name)) {
     const js = LAYOUTS.train.june, es = LAYOUTS.train.seat;
-    return name === 'june' ? { pos: new THREE.Vector3(0.02, 1.32, 0.78), look: new THREE.Vector3(js.x, 1.12, js.z) } : { pos: new THREE.Vector3(-0.02, 1.32, -0.78), look: new THREE.Vector3(es.x, 1.12, es.z) };
+    return name !== 'elena' ? { pos: new THREE.Vector3(0.02, 1.32, 0.78), look: new THREE.Vector3(js.x, 1.12, js.z) } : { pos: new THREE.Vector3(-0.02, 1.32, -0.78), look: new THREE.Vector3(es.x, 1.12, es.z) };
   }
   switch (name) {
     case 'mother': if (mo) { return closeUp(mo, facingTo(mo, me), 0.3, 1.5); } break;
@@ -950,7 +956,26 @@ function tick(now) {
 }
 
 // Read-only view for automated browser tests. It cannot change anything.
-window.V5Debug = { text(k, v) { return T(k, v); }, bodySpeed() { const b = g && g.rt.body; return b ? Math.hypot(b.vx || 0, b.vz || 0) : 0; }, cameraClearance() { const c = camera.position; let min = 99, who = null; Object.entries(cast).forEach(([id, p]) => { if (!p.visible || !p.parent || p === person(avatarId())) { return; } const y = Math.max(p.position.y, Math.min(p.position.y + 1.7, c.y)); const d = Math.hypot(c.x - p.position.x, c.y - y, c.z - p.position.z); if (d < min) { min = d; who = id; } }); return { min, who, shot: g ? Gm.snapshot(g).shot : null }; }, objective() { return g ? objective(g) : null; }, journal() { return g ? journalCounts(g) : null; }, guide() { return { quest: !guide.el.bar.hidden && guide.el.bar.textContent, tip: guide.el.tipBox.hidden ? null : guide.el.tipBox.getAttribute('data-id'), arrow: !guide.el.arrow.hidden, toast: !guide.el.toast.hidden, device: lastDev, camYaw: cam.yaw, pointerLocked: locked }; }, snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
+window.V5Debug = { text(k, v) { return T(k, v); },
+  // R4: what stands between the camera and the speaker's head under a given shot? Used by tools/r4-camera-scan.mjs.
+  // Returns the first solid thing on the ray (its colour, name, which character it belongs to, how far), the distance to
+  // the nearest character body, and leaves the camera where the shot puts it so a screenshot shows the same view.
+  probeShot(shot, speaker) {
+    if (!g || !world) { return null; }
+    g.rt.shot = shot; const fake = !g.rt.dialog; if (fake) { g.rt.dialog = { id: 'probe', lines: [[speaker, 'probe', shot]], i: 0, seen: true }; } updateCamera(true); camera.updateMatrixWorld(true); renderer.render(world.scene, camera);
+    const ids = { june: juneId(), elena: avatarId(), mara: avatarId(), theo: 'theo', mother: 'elena45' }; const tid = ids[speaker]; const tp = tid && cast[tid]; if (!tp || !tp.visible) { return { shot, speaker, error: 'speaker not on stage' }; }
+    const seated = Gm.snapshot(g).scene === 'train'; const head = new THREE.Vector3(tp.position.x, tp.position.y + (seated ? 1.2 : 1.55), tp.position.z);
+    const dir = head.clone().sub(camera.position); const dist = dir.length(); dir.normalize();
+    const rc = new THREE.Raycaster(camera.position.clone(), dir, 0.02, Math.max(0.05, dist - 0.12)); rc.camera = camera;   // sprites need it
+    const isIn = (o, root) => { for (let q = o; q; q = q.parent) { if (q === root) { return true; } } return false; };
+    const castOf = (o) => { for (const [id, p] of Object.entries(cast)) { if (isIn(o, p)) { return id; } } return null; };
+    const hit = rc.intersectObjects(world.scene.children, true).find((h) => { if (castOf(h.object) === tid) { return false; }   // the speaker's own face is the target, not an obstacle
+      const m = h.object.material; const mm = Array.isArray(m) ? m[0] : m; return h.object.isMesh && mm && !(mm.transparent && mm.opacity < 0.6) && mm.blending !== THREE.AdditiveBlending && mm.visible !== false && (() => { for (let q = h.object; q; q = q.parent) { if (!q.visible) { return false; } } return true; })(); });   // Raycaster ignores visibility, so check the whole chain
+    if (fake) { g.rt.dialog = null; }
+    let near = { id: null, d: 99 }; Object.entries(cast).forEach(([id, p]) => { if (!p.visible || !p.parent || p === person(avatarId())) { return; } const d = Math.hypot(camera.position.x - p.position.x, camera.position.z - p.position.z); if (d < near.d) { near = { id, d }; } });
+    const col = hit && hit.object.material && (Array.isArray(hit.object.material) ? hit.object.material[0] : hit.object.material).color;
+    return { shot, speaker, cameraAt: camera.position.toArray().map((v) => +v.toFixed(2)), headDist: +dist.toFixed(2), blocked: !!hit, blocker: hit ? { dist: +hit.distance.toFixed(2), color: col ? '#' + col.getHexString() : null, owner: castOf(hit.object), name: hit.object.name || hit.object.parent && hit.object.parent.name || '', geo: hit.object.geometry && hit.object.geometry.type, size: hit.object.geometry && hit.object.geometry.boundingBox === null ? (hit.object.geometry.computeBoundingBox(), hit.object.geometry.boundingBox.getSize(new THREE.Vector3()).toArray().map((v) => +v.toFixed(2))) : null, at: hit.point.toArray().map((v) => +v.toFixed(2)) } : null, nearestBody: { id: near.id, d: +near.d.toFixed(2) } };
+  }, bodySpeed() { const b = g && g.rt.body; return b ? Math.hypot(b.vx || 0, b.vz || 0) : 0; }, cameraClearance() { const c = camera.position; let min = 99, who = null; Object.entries(cast).forEach(([id, p]) => { if (!p.visible || !p.parent || p === person(avatarId())) { return; } const y = Math.max(p.position.y, Math.min(p.position.y + 1.7, c.y)); const d = Math.hypot(c.x - p.position.x, c.y - y, c.z - p.position.z); if (d < min) { min = d; who = id; } }); return { min, who, shot: g ? Gm.snapshot(g).shot : null }; }, objective() { return g ? objective(g) : null; }, journal() { return g ? journalCounts(g) : null; }, guide() { return { quest: !guide.el.bar.hidden && guide.el.bar.textContent, tip: guide.el.tipBox.hidden ? null : guide.el.tipBox.getAttribute('data-id'), arrow: !guide.el.arrow.hidden, toast: !guide.el.toast.hidden, device: lastDev, camYaw: cam.yaw, pointerLocked: locked }; }, snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
 
 // ---- RC1 review modes: preview a saved moment (?preview=<beat>) and measure frame times (?bench=...) -------------
 async function previewSaves() { const r = await fetch('/v5/data/preview-saves.json'); if (!r.ok) { throw new Error('preview-saves ' + r.status); } return JSON.parse(await r.text()).saves || {}; }

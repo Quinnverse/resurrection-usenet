@@ -147,7 +147,7 @@ jobs:
         include:
           - { name: prologue EN, checks: prologue }
           - { name: prologue ZH, checks: prologue-zh }
-          - { name: 'chase, train, beams, chain, epilogue', checks: 'chase train beam town-beam chain epilogue' }
+          - { name: 'chase, cameras, beams, chain, epilogue', checks: 'chase cameras beam town-beam chain epilogue' }
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/browser
