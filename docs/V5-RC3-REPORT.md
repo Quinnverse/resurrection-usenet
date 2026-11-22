@@ -65,7 +65,20 @@ On the same run, chapter 1 in real Chromium: path A (computer first) reached the
 then 95 s lost on the pier) at 166 s. Neither had a stuck moment. Both are 6 s longer than in RC2 because of the new
 lines.
 
-Final run on `275ba4b`: {{FINAL_CI}}
+Final run on `40adaa4`, GitHub Actions run `44987957801` (the code of the RC3 package):
+
+| Job | Result |
+|---|---|
+| Authoritative suite (npm test), container smoke, change detection | PASS |
+| V5 full game, 14 of 14 tests: whole game EN (540 game s, 11,647 task-bar checks, 0 mismatches) and ZH (537 game s, 11,651 checks, 0 mismatches), 7 chapters with the journal opened and closed in each, Tab on the pier, key remapping, touch, pad, keyboard menus, audio, tech demo, old pages | PASS |
+| V5 RC1/RC2/RC3 review pages, first-time guide, packages (including the real-mouse photo dares and the chain and Shift checks) | PASS |
+| V5 whole game on one input device: keyboard + mouse, pad, touch | PASS, PASS, PASS |
+| Browser end-to-end (older pages) | PASS |
+| Browser end-to-end, P5 slice | FAIL, the known baseline (`V5-P5-BASELINE.md`), old code, not V5 |
+
+Earlier failures in this series, each fixed in a later commit: on `275ba4b` (run `44920729504`) the Shift tip covered the
+first "press E" tip and the pier help test lost its turn (fixed in `9552a32`); on `9552a32` (run `44985849604`) a click made
+with the camera raised was dropped when the right button was released in the same frame (fixed in `40adaa4`).
 
 ## 4 · Not verified by a person
 
