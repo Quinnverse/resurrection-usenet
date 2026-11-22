@@ -900,7 +900,7 @@ function rateChapter(ch, then) {
   const row = (k) => el('div', { class: 'srow' }, [el('span', { class: 'sl', text: T('pt.' + k) }), el('span', { class: 'sv' }, [1, 2, 3, 4, 5].map((n) => el('button', { type: 'button', class: 'sbtn', 'data-testid': `rate-${k}-${n}`, text: String(n), onclick: (e) => { pick[k] = n; [...e.target.parentNode.children].forEach((c) => c.classList.toggle('on', c === e.target)); } })))]);
   const note = el('textarea', { class: 'ptnote', rows: '2', maxlength: '400', placeholder: T('pt.note') });
   const done = () => { PT.rate(ch, pick.fun, pick.moved, note.value); ui.panel.hidden = true; mode = back === 'rate' ? 'play' : back; if (then) { then(); } };
-  ui.panel.append(el('h2', { text: T('pt.title', { n: ch }) }), el('p', { class: 'dim', text: T('pt.why') }), row('fun'), row('moved'), note,
+  ui.panel.append(el('h2', { text: ch === 0 || ch === 8 ? T('pt.title.' + ch) : T('pt.title', { n: ch }) }), el('p', { class: 'dim', text: T('pt.why') }), row('fun'), row('moved'), note,
     el('div', { class: 'row' }, [el('button', { type: 'button', class: 'btn', 'data-testid': 'rate-skip', text: T('pt.skip'), onclick: () => { pick.fun = pick.moved = 0; done(); } }), el('button', { type: 'button', class: 'btn primary', 'data-testid': 'rate-done', text: T('pt.continue'), onclick: done })]));
 }
 function deviceInfo() {

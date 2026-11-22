@@ -1,0 +1,40 @@
+{
+  "when": "2026-11-22T17:04:07.688Z",
+  "chromium": "159.0.8154.6",
+  "port": 8742,
+  "passed": 3,
+  "failed": 0,
+  "results": [
+    {
+      "name": "chase: after the grab Elena stands still through the whole conversation",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c1-hand-dialogue.jpg"
+      ],
+      "notes": [
+        "during c1.hand: moved 0.000 m in 1.5 s; body speed that drives the run animation: 0.00 m/s"
+      ],
+      "seconds": 23
+    },
+    {
+      "name": "cameras: every dialogue close-up in every beat is clear of coats, hair and other bodies",
+      "ok": true,
+      "shots": [],
+      "notes": [
+        "5.depart 5 probes; 0 blocked; 0 with a body within 0.7 m | 6.cottage 4 probes; 0 blocked; 0 with a body within 0.7 m | 7.town 4 probes; 0 blocked; 0 with a body within 0.7 m | P.kitchen 4 probes; 0 blocked; 0 with a body within 0.7 m | P.summer 6 probes; 0 blocked; 0 with a body within 0.7 m | every dialogue close-up is clear"
+      ],
+      "seconds": 62
+    },
+    {
+      "name": "ride (ch. 3): the chain prompt is on screen and holding E fixes it",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c3-chain-prompt.jpg"
+      ],
+      "notes": [
+        "chain fixed with E"
+      ],
+      "seconds": 31
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "when": "2026-11-22T17:00:28.545Z",
+  "chromium": "159.0.8154.6",
+  "port": 8383,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "name": "prologue in English with real keys (kitchen → house → study → restore → 1998 → town), then Continue after a reload",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/p01-kitchen-arrive.jpg",
+        "docs/r4-evidence/browser/p02-kitchen-prompt.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_m3.jpg",
+        "docs/r4-evidence/browser/p04-choice-pk1.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_b2.jpg",
+        "docs/r4-evidence/browser/p04-choice-pk2.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_e6.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_kettleSfx.jpg",
+        "docs/r4-evidence/browser/p05-take-care.jpg",
+        "docs/r4-evidence/browser/p06-last-time-card.jpg",
+        "docs/r4-evidence/browser/p07-house-card.jpg",
+        "docs/r4-evidence/browser/p08-house.jpg",
+        "docs/r4-evidence/browser/p09-machine-mom.jpg",
+        "docs/r4-evidence/browser/p10-study.jpg",
+        "docs/r4-evidence/browser/p11-folded-photo.jpg",
+        "docs/r4-evidence/browser/p12-restore-disk.jpg",
+        "docs/r4-evidence/browser/p13-restore-list.jpg",
+        "docs/r4-evidence/browser/p14-restore-damaged.jpg",
+        "docs/r4-evidence/browser/p15-restore-repairing.jpg",
+        "docs/r4-evidence/browser/p16-restore-compare.jpg",
+        "docs/r4-evidence/browser/p17-restore-question.jpg",
+        "docs/r4-evidence/browser/p18-restore-run.jpg",
+        "docs/r4-evidence/browser/p19-summer-card.jpg",
+        "docs/r4-evidence/browser/p20-summer.jpg",
+        "docs/r4-evidence/browser/p21-photo-c1_june_oneFace.jpg",
+        "docs/r4-evidence/browser/p21-photo-p_s_j2.jpg",
+        "docs/r4-evidence/browser/p22-record-breaks.jpg",
+        "docs/r4-evidence/browser/p23-town-2004.jpg"
+      ],
+      "notes": [
+        "after S the selection is 3",
+        "selection after the removed record: 2",
+        "choices: {\"pk1\":\"p.choice.k1b\",\"pk2\":\"p.choice.k2a\",\"pk3\":\"p.choice.k3a\",\"ps\":\"p.choice.s2\"}",
+        "journal: {\"found\":6,\"of\":28,\"byChapter\":{\"0\":{\"found\":6,\"of\":6},\"1\":{\"found\":0,\"of\":3},\"2\":{\"found\":0,\"of\":2},\"3\":{\"found\":0,\"of\":2},\"4\":{\"found\":0,\"of\":3},\"5\":{\"found\":0,\"of\":1},\"6\":{\"found\":0,\"of\":4},\"7\":{\"found\":0,\"of\":5},\"8\":{\"found\":0,\"of\":2}}}",
+        "page errors: 0"
+      ],
+      "seconds": 183
+    }
+  ]
+}

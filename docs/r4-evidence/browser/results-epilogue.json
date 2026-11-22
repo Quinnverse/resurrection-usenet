@@ -1,0 +1,23 @@
+{
+  "when": "2026-11-22T17:01:11.004Z",
+  "chromium": "159.0.8154.6",
+  "port": 8414,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "name": "epilogue: unfold the photo, read the letter to M., switch off the screen, credits",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/e01-study-evening.jpg",
+        "docs/r4-evidence/browser/e02-unfold-prompt.jpg",
+        "docs/r4-evidence/browser/e03-photo-unfolded.jpg",
+        "docs/r4-evidence/browser/e04-letter.jpg",
+        "docs/r4-evidence/browser/e05-final-line.jpg",
+        "docs/r4-evidence/browser/e06-credits.jpg"
+      ],
+      "notes": [],
+      "seconds": 39
+    }
+  ]
+}

@@ -5,6 +5,7 @@ export const EN_R4 = {
   'chap.0': 'Prologue · The Words We Never Said',
   'chap.8': 'Epilogue · Both of Them',
   'sp.mother': 'Mom', 'sp.machine': 'Answering machine',
+  'pt.title.0': 'End of the prologue', 'pt.title.8': 'End of the epilogue',
 
   // ---- P.kitchen: February 2026, the last Sunday ----------------------------------------------------------------
   'p.card.kitchen.a': 'February 2026',
@@ -244,6 +245,7 @@ export const ZH_R4 = {
   'chap.0': '序章 · 没能说完的话',
   'chap.8': '尾声 · 照片里的两个人',
   'sp.mother': '妈妈', 'sp.machine': '答录机',
+  'pt.title.0': '序章结束', 'pt.title.8': '尾声结束',
 
   'p.card.kitchen.a': '2026 年 2 月',
   'p.card.kitchen.b': '妈妈家。周日晚饭。雨从中午一直下到现在。',
