@@ -1,0 +1,35 @@
+name: Node and Chromium
+description: Node 22 with the npm cache, and Chromium for Playwright from a cache (only the system libraries are installed each time)
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+
+    - name: Install dev dependencies
+      shell: bash
+      run: npm ci --no-audit --no-fund
+
+    - name: Playwright version
+      id: pw
+      shell: bash
+      run: echo "v=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+    - name: Chromium cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: chromium-${{ runner.os }}-${{ steps.pw.outputs.v }}
+
+    - name: Install Chromium (download only on a cache miss)
+      shell: bash
+      run: |
+        if [ "${{ steps.cache.outputs.cache-hit }}" = "true" ]; then
+          npx playwright install-deps chromium
+        else
+          npx playwright install --with-deps chromium
+        fi

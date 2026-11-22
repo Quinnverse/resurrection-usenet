@@ -94,20 +94,20 @@ const KEY_LINES = ['c2.june.youreTheView', 'c2.june.sketchDone', 'c2.june.coldHa
   'c7.mara.unsent', 'c7.mara.read98', 'c7.iris.thanks', 'c7.mara.summerEnd', 'c7.theo.end', 'c7.theo.goodnight'];
 
 test.describe('V5 — The Summer We Never Finished', () => {
-  test('title, real keyboard in the study, pause and settings', async ({ page }, testInfo) => {
+  test('title, real keyboard in the kitchen, pause and settings', async ({ page }, testInfo) => {
     const w = watch(page);
     await page.addInitScript(() => { localStorage.setItem('v5.prefs.v1', JSON.stringify({ lang: 'en' })); });
     await page.goto('/v5/');
     await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 });
     await attach(testInfo, 'title', await shot(page));
     await page.getByTestId('start').click();
-    await expect.poll(async () => (await snap(page)).beat, { timeout: 15000 }).toBe('1.study');
+    await expect.poll(async () => (await snap(page)).beat, { timeout: 15000 }).toBe('P.kitchen');   // R4: a new game opens in Mom’s kitchen
     const s0 = await snap(page);
     await page.keyboard.down('KeyW'); await page.waitForTimeout(3000); await page.keyboard.up('KeyW');
     const s1 = await snap(page);
     expect(Math.hypot(s1.x - s0.x, s1.z - s0.z)).toBeGreaterThan(0.3);
     expect(s1.fps).toBeGreaterThan(0);
-    await attach(testInfo, 'study-walk', await shot(page));
+    await attach(testInfo, 'kitchen-walk', await shot(page));
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('resume')).toBeVisible();
     await page.getByTestId('settings').click();
@@ -163,7 +163,7 @@ test.describe('V5 — The Summer We Never Finished', () => {
 
   for (const run of [{ lang: 'en', choices: { train: 1, parting: 0, finish: 1, closer: 0, defend: 0, offer: 0, letter: 0 } }, { lang: 'zh', choices: { train: 0, parting: 1, finish: 0, closer: 1, defend: 1, offer: 1, letter: 1 } }]) {
     test.describe(() => {
-      test(`the whole game, seven chapters, ${run.lang}`, async ({ page }, testInfo) => {
+      test(`the whole game: prologue, seven chapters, epilogue, ${run.lang}`, async ({ page }, testInfo) => {
         test.setTimeout(60 * 60 * 1000);
         const w = watch(page);
         await page.addInitScript(initHook);

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "bash start.sh",
-    "test": "node --test test/resurrection.test.js test/session.test.js test/p3-core.test.js test/p4-core.test.mjs test/p5-core.test.mjs test/v5-core.test.mjs test/v5-rc.test.mjs test/v5-rc2.test.mjs test/v5-rc3.test.mjs",
+    "test": "node --test test/resurrection.test.js test/session.test.js test/p3-core.test.js test/p4-core.test.mjs test/p5-core.test.mjs test/v5-core.test.mjs test/v5-rc.test.mjs test/v5-rc2.test.mjs test/v5-rc3.test.mjs test/v5-r4.test.mjs",
     "test:e2e": "playwright test",
     "test:v5-shell": "node tools/v5-shell-run.mjs --quiet && node tools/v5-shell-run.mjs --quiet --lang zh --alt && node tools/v5-shell-run.mjs --tech && node tools/v5-shell-run.mjs --quiet --bundle && node tools/v5-shell-run.mjs --quiet --preview end && node tools/v5-shell-run.mjs --quiet --bench low",
     "v5": "node tools/v5-serve.mjs --open",
@@ -26,7 +26,11 @@
     "v5:logs": "node tools/v5-run.mjs logs",
     "v5:stop": "node tools/v5-run.mjs stop",
     "v5:runs": "node tools/v5-run.mjs list",
-    "v5:ci": "node tools/v5-run.mjs ci"
+    "v5:ci": "node tools/v5-run.mjs ci",
+    "test:r4": "node tools/r4-affected.mjs --run",
+    "test:r4:plan": "node tools/r4-affected.mjs",
+    "test:r4:quick": "npm test && node tools/v5-shell-run.mjs --quiet",
+    "test:r4:browser": "node tools/r4-browser.mjs"
   },
   "keywords": [
     "horror",

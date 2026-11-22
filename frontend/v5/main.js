@@ -398,6 +398,8 @@ function onBeat(ev) {
   syncCast(0); updateCamera(true); // place the cast first so the cut lands on where they are now
   if (ev.chapter !== rt.lastChapter) { const prev = rt.lastChapter; rt.lastChapter = ev.chapter; showChapter(ev.chapter); if (PT.active() && prev !== undefined && prev !== null && !ev.loading) { rateChapter(prev); } }
   PT.beat(ev.beat, ev.chapter);
+  // R4: the way into 1998 is a colour coming back: grey, dim and flat at first, then the summer (the prologue's whole idea)
+  if (ev.beat === 'P.summer' && !ev.loading) { app.classList.add('colorin'); setTimeout(() => app.classList.remove('colorin'), reduce() ? 300 : 3800); }
   if (ev.beat === '1.town') { tip(T('ui.next'), 0); }
 }
 

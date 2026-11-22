@@ -139,7 +139,7 @@ test.describe('V5 RC1 review tooling', () => {
     await expect(page.locator('.note.pt')).toContainText('Pressing Start or Continue means you agree');
     expect(await page.evaluate(() => localStorage.getItem('v5.playtest.v1'))).toBeNull();
     await page.getByTestId('pt-tester').fill('P99'); await page.getByTestId('start').click(); await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(2000);
-    const log = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.playtest.v1'))); expect(log.tester).toBe('P99'); expect(log.version).toBe(2); expect(log.chapters[1].startedAt).toBeTruthy();
+    const log = await page.evaluate(() => JSON.parse(localStorage.getItem('v5.playtest.v1'))); expect(log.tester).toBe('P99'); expect(log.version).toBe(2); expect(log.chapters[0].startedAt).toBeTruthy();   // R4: chapter 0 is the prologue
     await page.keyboard.press('Escape'); await expect(page.getByTestId('pt-download')).toBeVisible(); await expect(page.getByTestId('pt-delete')).toBeVisible();
     await attach(testInfo, 'file-playtest-pause', await shot(page));
     await page.getByTestId('pt-delete').click(); expect(await page.evaluate(() => localStorage.getItem('v5.playtest.v1'))).toBeNull();
@@ -172,7 +172,7 @@ test.describe('V5 RC1 review tooling', () => {
     await page.goto(url('Resurrection-V5-Start.html')); await expect(page.getByTestId('home-save')).toContainText('Save found');
     // 2 continue: the title offers Continue and it works
     await page.getByTestId('home-continue').click(); await expect(page.getByTestId('continue')).toBeVisible({ timeout: 60000 }); await page.keyboard.press('Enter');
-    await expect.poll(async () => (await snap(page)).beat, { timeout: 15000 }).toBe('1.study');
+    await expect.poll(async () => (await snap(page)).beat, { timeout: 15000 }).toBe('P.kitchen');   // R4: the save is the start of the prologue
     // 3 the technical demo: restore changes the floor
     await page.goto(url('Resurrection-V5-Start.html')); await page.getByTestId('home-tech').click(); await expect(page.getByTestId('fixture')).toBeVisible({ timeout: 60000 });
     await expect.poll(() => page.evaluate(() => window.V5Tech && window.V5Tech.path2004), { timeout: 30000 }).toBe(false);

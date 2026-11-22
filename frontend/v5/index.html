@@ -169,6 +169,8 @@
     @keyframes unfold { from { transform:translateX(-50%) rotate(-1.5deg) scaleX(.5); opacity:.3; } to { transform:translateX(-50%) rotate(-1.5deg) scaleX(1); opacity:1; } }
     .act.warm { color:#ffe2a0; opacity:1; } .act.good { color:#fff3c0; opacity:1; text-shadow:0 0 12px rgba(255,220,120,.9); font-weight:bold; }
     #app.glitch #stage { animation:glitch .18s steps(2) 7; } @keyframes glitch { 0% { filter:hue-rotate(0) contrast(1.4); transform:translateX(-6px); } 50% { filter:hue-rotate(90deg) saturate(.2) contrast(2); transform:translateX(6px); } 100% { filter:none; transform:none; } }
+    #app.colorin #stage { animation:colorin 3.6s ease-out; } @keyframes colorin { 0% { filter:grayscale(.95) brightness(.72) contrast(.92); } 55% { filter:grayscale(.45) brightness(.9); } 100% { filter:none; } }
+    @media (prefers-reduced-motion: reduce) { #app.colorin #stage { animation:none; } }
     @media (prefers-reduced-motion: reduce) { #app.glitch #stage { animation:none; filter:grayscale(1); } .photocard { animation:none; } }
   </style>
 </head>

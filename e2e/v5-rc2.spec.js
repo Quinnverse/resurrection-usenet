@@ -17,6 +17,7 @@ function watch(page) {
   return { issues };
 }
 const snap = (page) => page.evaluate(() => window.V5Debug.snapshot());
+const { openAtStudy } = require('./r4-start.js');
 const obj = (page) => page.evaluate(() => window.V5Debug.objective());
 async function attach(testInfo, name, buf) { await testInfo.attach(name, { body: buf, contentType: 'image/jpeg' }); if (process.env.CI) { console.log(`V5_SHOT ${name} ${buf.toString('base64')}`); } }
 const shot = (page) => page.screenshot({ type: 'jpeg', quality: 72 });
@@ -68,7 +69,7 @@ async function serveBot(page) {
 //      wanders for 95 s doing nothing useful, and only then follows the task bar across the pier
 async function chapterOnePath(page, testInfo, which) {
   const started = page.evaluate(async (w) => {
-    const { makeBot, DT } = await import('/v5-test/bot.mjs'); const { LAYOUTS } = await import('/v5/core/layout.js');
+    const { makeBot, DT, restoreAndRemember } = await import('/v5-test/bot.mjs'); const { LAYOUTS } = await import('/v5/core/layout.js');
     const h = window.__V5_TEST__; await h.virtualize(); const D = window.V5Debug; const log = [];
     let frames = 0; const shot = async (name) => { h.shotReq = name; while (h.shotReq) { await new Promise((r) => h.realTimeout(r, 40)); } };
     const marks = [];
@@ -85,7 +86,7 @@ async function chapterOnePath(page, testInfo, which) {
       for (const id of ['photo', 'drawing', 'shelf', 'window']) { const p = P('study', id); await bot.walkTo(p.x, p.z + 0.6, bot.promptIs(id)); if (bot.snap().prompt && bot.snap().prompt.id === id) { await bot.use(id); await bot.wait(1.2); await shot(`B-01-look-${id}`); note('looked at ' + id); } }
       await bot.goUse('keepbox', -1.1, 2.2); await bot.wait(1.0); note('opened the box first'); await shot('B-02-disk-found-first');
     }
-    await bot.goUse('computer', comp.x, comp.z + 1.0); note('loaded the disk'); await bot.until((s) => s.scene === 'town'); await bot.wait(1.0); note('in the town'); await shot(`${w}-05-town`);
+    await bot.goUse('computer', comp.x, comp.z + 1.0); note('loaded the disk'); await restoreAndRemember(bot, false); note('restored, the first memory, the record broke'); await bot.wait(1.0); note('in the town'); await shot(`${w}-05-town`);
     await bot.walkTo(0, 7.4); await bot.until((s) => s.prompt && s.prompt.id === 'theo', 10, () => bot.axes(0, 1)); await bot.use('theo'); await bot.talk(); note('talked to Theo');
     await bot.until((s) => s.prompt && s.prompt.id === 'gap', 10, () => bot.axes(0, 1)); await bot.hold('gap', 6); note('restored the bridge');
     await bot.until((s) => s.beat === '1.pier', 60); await bot.wait(1.0); note('on the pier'); await shot(`${w}-06-pier-goal`);
@@ -120,12 +121,12 @@ test.describe('V5 RC2 — a first-time player', () => {
   test('keyboard and mouse: tips one at a time, the task bar, the computer asks for the disk and the game points at the box, a memory, the journal, remapped keys', async ({ page }, testInfo) => {
     test.setTimeout(12 * 60 * 1000);
     const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low' });
-    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await openAtStudy(page, expect);
     await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(1200);
     // 1 the first tip says how to walk, with the real keys; the task bar says the goal and the next step
     await expect(page.getByTestId('tut')).toBeVisible(); await expect(page.getByTestId('tut')).toContainText('W A S D');
     await expect(page.getByTestId('quest-goal')).toHaveText('Open Mom’s game archive'); await expect(page.getByTestId('quest-next')).toContainText('press E at the computer');
-    await expect(page.getByTestId('quest-chapter')).toContainText('Chapter 1');
+    await expect(page.getByTestId('quest-chapter')).toContainText('Prologue');
     expect(await page.evaluate(() => { const b = window.__V5_TEST__ && 0; void b; return !!document.querySelector('[data-testid="quest"]:not([hidden])'); })).toBe(true);
     await attach(testInfo, 'rc2-01-first-tip-and-goal', await shot(page));
     // 2 walking finishes the walking tip; the next tip is about looking around
@@ -220,11 +221,27 @@ test.describe('V5 RC2 — a first-time player', () => {
     expect(w.issues).toEqual([]); await ctx.close();
   });
 
+  test('R4: a new game opens in the kitchen: the goal, the first tip, Mom speaks first, the door says not yet', async ({ page }, testInfo) => {
+    test.setTimeout(6 * 60 * 1000);
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low' });
+    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(1200);
+    expect((await snap(page)).beat).toBe('P.kitchen');
+    await expect(page.getByTestId('quest-chapter')).toContainText('Prologue'); await expect(page.getByTestId('quest-goal')).toHaveText('Sunday dinner at Mom’s');
+    await expect(page.getByTestId('quest-next')).toContainText('press E'); await expect(page.getByTestId('tut')).toContainText('W A S D');
+    await expect.poll(async () => (await snap(page)).caption, { timeout: 8000 }).toBe('p.k.hello');   // she speaks before she is spoken to
+    await attach(testInfo, 'r4-kitchen-first-minute', await shot(page));
+    // the front door is not a way out until the conversation has happened
+    await walkTo(page, -2.6, 1.6, (s) => s.prompt && s.prompt.id === 'frontdoor', 20000); await page.keyboard.press('KeyE'); await page.waitForTimeout(300);
+    expect((await snap(page)).beat).toBe('P.kitchen'); expect((await snap(page)).caption).toBe('p.k.notYet');
+    expect(w.issues).toEqual([]);
+  });
+
   test('Chinese: the task bar, the tips and the journal in Chinese', async ({ page }, testInfo) => {
     const w = watch(page); await prefsInit(page, { lang: 'zh', quality: 'low' });
     await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
     await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(1000);
-    await expect(page.getByTestId('quest-goal')).toHaveText('打开妈妈的游戏档案'); await expect(page.getByTestId('tut')).toContainText('走动');
+    await expect(page.getByTestId('quest-goal')).toHaveText('周日，回妈妈家吃晚饭'); await expect(page.getByTestId('quest-chapter')).toContainText('序章'); await expect(page.getByTestId('tut')).toContainText('走动');
     await attach(testInfo, 'rc2-11-chinese-first-tip', await shot(page));
     await page.goto('/v5/?preview=6.cottage&lang=zh'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('6.cottage');
     for (let i = 0; i < 20 && (await snap(page)).dialog; i++) { await page.keyboard.press('KeyE'); await page.waitForTimeout(600); }
@@ -241,7 +258,7 @@ test.describe('V5 RC2 — a first-time player', () => {
       const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, recordVideo: { dir: testInfo.outputPath('video'), size: { width: 960, height: 540 } } });
       const page = await ctx.newPage(); const w = watch(page); await page.addInitScript(initHook); await serveBot(page);
       await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
-      await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+      await openAtStudy(page, expect);
       await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
       const out = await chapterOnePath(page, testInfo, which);
       console.log(`V5_CH1_PATH ${which} ` + JSON.stringify(out));
@@ -256,14 +273,14 @@ test.describe('V5 RC2 — a first-time player', () => {
     test.setTimeout(20 * 60 * 1000);
     const w = watch(page); await page.addInitScript(initHook); await serveBot(page);
     await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
-    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await openAtStudy(page, expect);
     await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
     // the scripted player plays to the middle of the pier: 1998 deck end, then 2004 on the middle section
     await page.evaluate(async () => {
-      const { makeBot, DT } = await import('/v5-test/bot.mjs'); const { LAYOUTS } = await import('/v5/core/layout.js');
+      const { makeBot, DT, restoreAndRemember } = await import('/v5-test/bot.mjs'); const { LAYOUTS } = await import('/v5/core/layout.js');
       const h = window.__V5_TEST__; await h.virtualize(); const g = h.game; const bot = makeBot(g, { step: (i) => h.step(i), optional: false });
       const P = (sc, id) => LAYOUTS[sc].points.find((p) => p.id === id); const comp = P('study', 'computer');
-      await bot.goUse('keepbox', -1.1, 2.2); await bot.goUse('computer', comp.x, comp.z + 1.0); await bot.until((s) => s.scene === 'town');
+      await bot.goUse('keepbox', -1.1, 2.2); await bot.goUse('computer', comp.x, comp.z + 1.0); await restoreAndRemember(bot, false);
       await bot.walkTo(0, 7.4); await bot.until((s) => s.prompt && s.prompt.id === 'theo', 10, () => bot.axes(0, 1)); await bot.use('theo'); await bot.talk();
       await bot.until((s) => s.prompt && s.prompt.id === 'gap', 10, () => bot.axes(0, 1)); await bot.hold('gap', 6); await bot.until((s) => s.beat === '1.pier', 60);
       await bot.walkTo(0, 13.5); await bot.tick({ tab: true }); await bot.wait(0.4); await bot.walkTo(0, 17.6); await bot.tick({ tab: true }); await bot.wait(0.4); await bot.walkTo(0, 20.0);
@@ -341,10 +358,10 @@ test.describe('V5 RC3 — after the owner playtest', () => {
     test.setTimeout(8 * 60 * 1000);
     const w = watch(page); await page.addInitScript(initHook); await serveBot(page);
     await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
-    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await openAtStudy(page, expect);
     await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
     await page.evaluate(async () => {
-      const { makeBot } = await import('/v5-test/bot.mjs'); const h = window.__V5_TEST__; await h.virtualize(); const bot = makeBot(h.game, { step: (i) => h.step(i), optional: false });
+      const { makeBot, restoreAndRemember } = await import('/v5-test/bot.mjs'); const h = window.__V5_TEST__; await h.virtualize(); const bot = makeBot(h.game, { step: (i) => h.step(i), optional: false });
       await bot.go('keepbox', -1.1, 2.2); await bot.use('keepbox'); h.unvirtualize();
     });
     const seen = [];
@@ -435,7 +452,7 @@ test.describe('V5 RC3 — after the owner playtest', () => {
     test.setTimeout(6 * 60 * 1000);
     const tips = Object.assign({}, TIPS_DONE); delete tips.sprint;
     const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: tips });
-    await page.goto('/v5/'); await expect(page.getByTestId('start')).toBeVisible({ timeout: 30000 }); await page.keyboard.press('Enter');
+    await openAtStudy(page, expect);
     await expect.poll(async () => (await snap(page)).mode, { timeout: 15000 }).toBe('play'); await page.waitForTimeout(800);
     // walk back and forth across the study with the real keys until the tip appears
     const tip = page.getByTestId('tut'); let seen = false;

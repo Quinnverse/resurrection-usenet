@@ -1,92 +1,281 @@
 name: Resurrection QA
 
+# How this workflow spends time (R4):
+#   push                    quick checks only (about 3 minutes): npm test, the Node shell in English, the guide audit,
+#                           the preview-save check. Documents, reports, releases and screenshots do not start a run at all.
+#   push with [ci r4]       also the real-Chromium prologue / beam / chase / train / chain / epilogue checks, in parallel
+#   push with [ci full]     everything below, once, for a frozen version
+#   workflow_dispatch       suite = quick | r4 | full (full ignores a result already recorded for the same game files
+#                           unless "force" is ticked)
+#   pull_request            everything
+# A newer push cancels the older push run on the same branch; a manual run is only cancelled by a newer manual run.
+# The full result of a given set of game files is recorded (job "record") and reused, so repackaging, new reports and
+# new documents never repeat the whole-game tests.
+
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - 'release/**'
+      - 'test-runs/**'
+      - '**/*.md'
   pull_request:
-  workflow_dispatch:   # run everything by hand (the heavy jobs also run for pull requests and when game files change)
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'quick = Node tests and the Node shell; r4 = + the real-Chromium R4 checks; full = everything'
+        type: choice
+        options: [quick, r4, full]
+        default: quick
+      force:
+        description: 'Run the full suite even if this exact game version already passed it'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+  actions: write   # the record of a passed full run is kept in the Actions cache
+
+concurrency:
+  group: qa-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && 'manual' || 'push' }}
+  cancel-in-progress: true
 
 jobs:
-  changes:
-    name: Did the game change? (decides whether the long browser jobs run)
+  plan:
+    name: Plan (what this run needs, and whether this game version already passed)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      game: ${{ steps.diff.outputs.game }}
+      scope: ${{ steps.scope.outputs.scope }}
+      full: ${{ steps.reuse.outputs.full }}
+      r4: ${{ steps.reuse.outputs.r4 }}
+      p5: ${{ steps.areas.outputs.p5 }}
+      server: ${{ steps.areas.outputs.server }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compare with the previous push
-        id: diff
+      - name: Scope of this run
+        id: scope
         env:
-          BEFORE: ${{ github.event.before }}
           EVENT: ${{ github.event_name }}
+          INPUT: ${{ inputs.suite }}
         run: |
-          # Only these paths can be changed without touching the game itself: documents, release files, the review and
-          # start pages, the build and server tools, their tests, and this workflow. Anything else runs every job.
-          LIGHT='^(docs/|release/|README\.md$|\.gitignore$|\.github/workflows/|tools/|test/v5-rc\.test\.mjs$|e2e/v5-rc\.spec\.js$|frontend/v5/(home|rc|rc-scenes|audio|audio-check|tech)\.(html|js)$|frontend/v5/rc/)'
-          game=true
-          if [ "$EVENT" = "push" ] && [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -Eq '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            other=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -Ev "$LIGHT" || true)
-            if [ -z "$other" ]; then game=false; fi
-            echo "changed outside the light paths:"; echo "${other:-none}"
+          msg=$(git log -1 --format=%B "$GITHUB_SHA")
+          scope=quick
+          if [ "$EVENT" = "workflow_dispatch" ]; then scope="$INPUT"
+          elif [ "$EVENT" = "pull_request" ]; then scope=full
+          elif echo "$msg" | grep -q '\[ci full\]'; then scope=full
+          elif echo "$msg" | grep -q '\[ci r4\]'; then scope=r4
           fi
-          echo "game=$game" >> "$GITHUB_OUTPUT"
-          echo "game=$game"
+          echo "scope=$scope" >> "$GITHUB_OUTPUT"; echo "scope: $scope"
 
-  test:
-    name: Authoritative suite (npm test)
+      - name: Fingerprint of the game files (reports, docs, releases and screenshots are not part of it)
+        id: hash
+        run: |
+          h=$(git ls-files -s -- frontend combined-server backend/src shared test e2e playwright.config.js package.json package-lock.json Dockerfile \
+                tools/v5-shell-run.mjs tools/v5-three-shim.mjs tools/v5-playthrough.mjs tools/v5-bundle.mjs tools/v5-serve.mjs tools/v5-guide-audit.mjs tools/v5-preview-saves.mjs tools/r4-browser.mjs \
+                ':(exclude)frontend/v5/rc' | sha256sum | cut -c1-24)
+          echo "hash=$h" >> "$GITHUB_OUTPUT"; echo "game fingerprint: $h"
+
+      - name: A full pass already recorded for this fingerprint?
+        id: recorded
+        uses: actions/cache/restore@v4
+        with:
+          path: .full-pass
+          key: full-pass-${{ steps.hash.outputs.hash }}
+
+      - name: Decide
+        id: reuse
+        env:
+          SCOPE: ${{ steps.scope.outputs.scope }}
+          HIT: ${{ steps.recorded.outputs.cache-hit }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          full=false; r4=false
+          if [ "$SCOPE" = "full" ]; then
+            if [ "$HIT" = "true" ] && [ "$FORCE" != "true" ]; then
+              echo "::notice::This game version already passed the full suite; reusing it: $(cat .full-pass/info.txt)"
+            else full=true; r4=true; fi
+          elif [ "$SCOPE" = "r4" ]; then r4=true
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"; echo "r4=$r4" >> "$GITHUB_OUTPUT"; echo "full=$full r4=$r4"
+
+      - name: Which old areas does this branch touch (compared with master)?
+        id: areas
+        run: |
+          base=$(git merge-base "$GITHUB_SHA" origin/master 2>/dev/null || true)
+          p5=true; server=true
+          if [ -n "$base" ]; then
+            git diff --name-only "$base" "$GITHUB_SHA" > changed.txt
+            grep -Eq '^(frontend/p5/|e2e/p5\.spec\.js|combined-server/|test/p5-)' changed.txt || p5=false
+            grep -Eq '^(Dockerfile|combined-server/|backend/|deploy/)' changed.txt || server=false
+          fi
+          # the P5 slice is old code with a known failing baseline (docs/V5-P5-BASELINE.md): it only runs when this branch touches it
+          echo "p5=$p5" >> "$GITHUB_OUTPUT"; echo "server=$server" >> "$GITHUB_OUTPUT"; echo "p5=$p5 server=$server"
+
+  quick:
+    name: Quick checks (npm test, Node shell EN, guide audit, preview saves)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Run authoritative test suite
+      - name: npm test
         run: npm test
+      - name: Swallowed-comment lint
+        run: node tools/v5-lint-swallowed.mjs
+      - name: Preview saves match the code
+        run: node tools/v5-preview-saves.mjs --check
+      - name: Guide audit
+        run: node tools/v5-guide-audit.mjs && node tools/v5-guide-audit.mjs --alt
+      - name: The real main.js in the Node shell, whole game in English
+        run: node tools/v5-shell-run.mjs --quiet
 
-  browser:
-    name: Browser end-to-end (Playwright)
-    needs: changes
-    if: needs.changes.outputs.game == 'true'
+  r4-browser:
+    name: R4 real-Chromium checks (${{ matrix.name }})
+    needs: plan
+    if: needs.plan.outputs.r4 == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: prologue EN, checks: prologue }
+          - { name: prologue ZH, checks: prologue-zh }
+          - { name: 'chase, train, beams, chain, epilogue', checks: 'chase train beam town-beam chain epilogue' }
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/browser
+      - name: Play with the real keyboard
+        run: node tools/r4-browser.mjs ${{ matrix.checks }}
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          node-version: '22'
+          name: r4-browser-${{ strategy.job-index }}
+          path: docs/r4-evidence/browser/
+          retention-days: 30
 
-      - name: Install dev dependencies
-        run: npm install --no-audit --no-fund
+  v5-main:
+    name: V5 ${{ matrix.name }}
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: 'whole game EN (prologue, 7 chapters, epilogue)', minutes: 75, grep: 'epilogue, en$', invert: '' }
+          - { name: 'whole game ZH (prologue, 7 chapters, epilogue)', minutes: 75, grep: 'epilogue, zh$', invert: '' }
+          - { name: 'every beat, Tab, remap, touch, pad and keyboard menus, audio, tech', minutes: 50, grep: '', invert: 'device: |whole game: prologue' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/browser
+      - name: Node shell, all modes
+        if: matrix.grep == ''
+        run: npm run test:v5-shell
+      - name: Build the V5 playtest package
+        if: matrix.grep == ''
+        run: node tools/v5-playtest-pack.mjs
+      - name: Chromium
+        env:
+          GREP: ${{ matrix.grep }}
+          INVERT: ${{ matrix.invert }}
+        run: |
+          if [ -n "$GREP" ]; then npx playwright test e2e/v5.spec.js --grep "$GREP"
+          else npx playwright test e2e/v5.spec.js --grep-invert "$INVERT"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v5-main-${{ strategy.job-index }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
 
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
+  v5-devices:
+    name: V5 whole game on one input device (${{ matrix.device }})
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { device: kbm, minutes: 65 }
+          - { device: pad, minutes: 45 }
+          - { device: touch, minutes: 45 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/browser
+      - name: Device path in the Node shell (fast check)
+        run: node tools/v5-shell-run.mjs --quiet --device ${{ matrix.device }}
+      - name: Whole game in Chromium with only this device
+        run: |
+          npx playwright test e2e/v5.spec.js --grep "device: ${{ matrix.device }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v5-device-${{ matrix.device }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
 
-      - name: Run browser suite (all but P5)
+  v5-rc:
+    name: V5 review pages, first-time guide and packages (${{ matrix.spec }})
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: [v5-rc, v5-rc2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/browser
+      - name: Build the review package and the playtest package (single html files)
+        if: matrix.spec == 'v5-rc'
+        run: npm run v5:rc
+      - name: Chromium
+        run: npx playwright test e2e/${{ matrix.spec }}.spec.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v5-rc-${{ matrix.spec }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  browser-old:
+    name: Older pages and the old game (Playwright), once per frozen version
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/browser
+      - name: Run browser suite (all but P5 and V5)
         run: npm run test:e2e
         env:
           E2E_SKIP_P5: '1'
           E2E_SKIP_V5: '1'
-
-      - name: Upload screenshots and report
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: resurrection-browser-evidence
+          name: browser-old
           path: |
             test-results/
             playwright-report/
@@ -94,175 +283,19 @@ jobs:
           retention-days: 14
 
   browser-p5:
-    name: Browser end-to-end, P5 slice (Playwright)
-    needs: changes
-    if: needs.changes.outputs.game == 'true'
+    name: P5 slice (Playwright), only when this branch touches it
+    needs: plan
+    if: needs.plan.outputs.full == 'true' && needs.plan.outputs.p5 == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 40
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dev dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: Run P5 browser tests
-        run: npx playwright test e2e/p5.spec.js
-
-      - name: Upload P5 screenshots, videos and report
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/browser
+      - run: npx playwright test e2e/p5.spec.js
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: resurrection-p5-evidence
-          path: |
-            test-results/
-            playwright-report/
-          if-no-files-found: warn
-          retention-days: 14
-
-  browser-v5:
-    name: Browser end-to-end, V5 full game (Playwright)
-    needs: changes
-    if: needs.changes.outputs.game == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 150   # the two whole-game tests take 29 to 38 minutes each, depending on the runner
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dev dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: V5 shell harness (Node, no browser)
-        run: npm run test:v5-shell
-
-      - name: Build the V5 playtest package
-        run: node tools/v5-playtest-pack.mjs
-
-      - name: Upload the V5 playtest package
-        uses: actions/upload-artifact@v4
-        with:
-          name: resurrection-v5-playtest-package
-          path: dist/resurrection-v5-playtest.zip
-          retention-days: 30
-
-      - name: Run V5 browser tests
-        run: |
-          npx playwright test e2e/v5.spec.js --grep-invert "device: "
-
-      - name: Upload V5 screenshots and report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: resurrection-v5-evidence
-          path: |
-            test-results/
-            playwright-report/
-          if-no-files-found: warn
-          retention-days: 14
-
-  browser-v5-rc:
-    name: V5 RC1/RC2 review pages, first-time player guide, packages (Playwright)
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dev dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: V5 shell harness (Node, no browser; includes the single-file build)
-        run: npm run test:v5-shell
-
-      - name: Build the RC1 package and the playtest package (single html files)
-        run: npm run v5:rc
-
-      - name: Upload the RC1 package
-        uses: actions/upload-artifact@v4
-        with:
-          name: resurrection-v5-rc1-package
-          path: |
-            dist/resurrection-v5-rc1.zip
-            dist/resurrection-v5-playtest.zip
-          retention-days: 30
-
-      - name: Run the RC1 and RC2 browser tests
-        run: |
-          npx playwright test e2e/v5-rc.spec.js e2e/v5-rc2.spec.js
-
-      - name: Upload RC1 screenshots and report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: resurrection-v5-rc-evidence
-          path: |
-            test-results/
-            playwright-report/
-          if-no-files-found: warn
-          retention-days: 14
-
-  browser-v5-devices:
-    name: V5 whole game on one input device (${{ matrix.device }})
-    needs: changes
-    if: needs.changes.outputs.game == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 100
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [kbm, pad, touch]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dev dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: Device path in the Node shell (fast check)
-        run: node tools/v5-shell-run.mjs --quiet --device ${{ matrix.device }}
-
-      - name: Whole game in Chromium with only this device
-        run: |
-          npx playwright test e2e/v5.spec.js --grep "device: ${{ matrix.device }}"
-
-      - name: Upload screenshots, video and report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: resurrection-v5-device-${{ matrix.device }}
+          name: browser-p5
           path: |
             test-results/
             playwright-report/
@@ -271,6 +304,8 @@ jobs:
 
   container:
     name: Container smoke (build, health, restart recovery, no tokens in logs)
+    needs: plan
+    if: needs.plan.outputs.full == 'true' || (github.event_name == 'push' && needs.plan.outputs.server == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -318,3 +353,24 @@ jobs:
         run: |
           docker rm -f game || true
           docker volume rm resurrection-ci-saves || true
+
+  record:
+    name: Record the full pass for this game version (so it is not run again)
+    needs: [plan, quick, r4-browser, v5-main, v5-devices, v5-rc, browser-old, browser-p5, container]
+    if: ${{ !cancelled() && needs.plan.outputs.full == 'true' && !contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fingerprint
+        id: hash
+        run: |
+          h=$(git ls-files -s -- frontend combined-server backend/src shared test e2e playwright.config.js package.json package-lock.json Dockerfile \
+                tools/v5-shell-run.mjs tools/v5-three-shim.mjs tools/v5-playthrough.mjs tools/v5-bundle.mjs tools/v5-serve.mjs tools/v5-guide-audit.mjs tools/v5-preview-saves.mjs tools/r4-browser.mjs \
+                ':(exclude)frontend/v5/rc' | sha256sum | cut -c1-24)
+          echo "hash=$h" >> "$GITHUB_OUTPUT"
+          mkdir .full-pass; echo "run $GITHUB_RUN_ID, commit $GITHUB_SHA, ${{ github.server_url }}/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID" > .full-pass/info.txt
+      - uses: actions/cache/save@v4
+        with:
+          path: .full-pass
+          key: full-pass-${{ steps.hash.outputs.hash }}
