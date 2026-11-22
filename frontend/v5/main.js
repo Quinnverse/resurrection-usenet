@@ -202,7 +202,9 @@ cv.addEventListener('mousedown', (e) => {
   PT.input('mouse'); lastDev = 'kbm';
   A.unlock(); if (mode !== 'play') { return; }
   if (!locked && cv.requestPointerLock && !reduceLockPref()) { try { const r = cv.requestPointerLock(); if (r && r.catch) { r.catch(() => { /* refused: dragging still works */ }); } } catch (err) { /* refused */ } }
-  if (e.button === 0) { mouse.left = true; mouse.click = true; } if (e.button === 2) { mouse.right = true; }
+  // a click made while the camera is raised counts as a photo even if the right button is let go before the next frame
+  // (on a slow machine both can happen within one frame: CI at 4 fps lost the shot)
+  if (e.button === 0) { mouse.left = true; mouse.click = true; mouse.clickAim = mouse.right || down.has(keys.aim); } if (e.button === 2) { mouse.right = true; }
 });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) { mouse.left = false; } if (e.button === 2) { mouse.right = false; } });
 window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } if (locked || mouse.left || mouse.right) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; } });
@@ -295,7 +297,7 @@ function collectInput(dt) {
     jump: p('jump') || tpad.jump || (P.edge(0) && !s.dialog && !ch), jumpHeld: k('jump') || P.btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || P.btn(4) || P.btn(5) || P.btn(10) || stickSprint,
     use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || P.edge(2), useHeld: k('use') || P.btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
     tab: p('tab') || P.edge(3) || tpad.tab, hint: p('hint') || P.edge(8) || tpad.hint, autoHelp: prefs.autoHelp !== false,
-    aim: mouse.right || k('aim') || P.btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || k('aim') || P.btn(6))) || (p('use') && (mouse.right || k('aim'))) || P.edge(7) || (tpad.shoot && tpad.aim),
+    aim: mouse.right || (mouse.click && mouse.clickAim) || k('aim') || P.btn(6) || (tpad.aim && s.scene === 'train'), shoot: (mouse.click && (mouse.right || mouse.clickAim || k('aim') || P.btn(6))) || (p('use') && (mouse.right || k('aim'))) || P.edge(7) || (tpad.shoot && tpad.aim),
     aimDX: mouse.dx, aimDY: mouse.dy, aspect: window.innerWidth / Math.max(1, window.innerHeight), advance: !!(s.dialog && advanceNow), skip: !!(rt.skip && s.dialog && s.dialog.seen) || !!(P.edge(1) && s.dialog && s.dialog.seen), choose: rt.choose
   };
   // choices with a pad: D-pad moves the highlight, A or X picks it
@@ -314,7 +316,7 @@ function collectInput(dt) {
   if (s.scene !== 'train' && tpad.aim) { tpad.aim = false; }
   touchUI.classList.toggle('train', s.scene === 'train'); touchUI.classList.toggle('can-tab', s.scene === 'town' && !!s.tab);   // not 'era': that is the year label's class and moved the buttons to the top
   if ((p('journal') || (P.edge(12) && !ch) || tpad.journal) && !s.dialog && !s.choice) { rt.openJournal = true; }
-  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = tpad.tab = tpad.hint = tpad.journal = false;
+  rt.skip = false; rt.choose = null; mouse.dx = 0; mouse.dy = 0; mouse.click = false; mouse.clickAim = false; pressed.clear(); tpad.jump = tpad.use = tpad.shoot = tpad.tab = tpad.hint = tpad.journal = false;
   return input;
 }
 
