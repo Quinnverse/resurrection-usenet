@@ -153,7 +153,8 @@ export function createGuide(c) {
     const pos = { x: s.x, z: s.z }; if (lastPos) { const st = Math.hypot(pos.x - lastPos.x, pos.z - lastPos.z); moved += st; if (st < 2) { walkedFar += st; } } lastPos = pos;
     const yaw = c.camYaw(); if (lastYaw !== null) { looked += Math.abs(yaw - lastYaw); } lastYaw = yaw;
     if (tutDone().goal) { sinceGoal += dt; }
-    if (!tut || cine) {
+    // the first "press E" tip always wins over the Shift tip (CI: Shift was still showing at the computer)
+    if (!tut || cine || (tut.id === 'sprint' && s.prompt && !tutDone().use)) {
       const n = cine ? null : nextTut(s, o, dt);
       if (n && (!tut || tut.id !== n.id)) { tut = n; tutT = 0; moved = 0; looked = 0; }
     }

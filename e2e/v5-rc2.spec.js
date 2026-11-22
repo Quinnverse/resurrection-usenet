@@ -370,7 +370,9 @@ test.describe('V5 RC3 — after the owner playtest', () => {
   });
   test('photo dares with the real mouse: hold the right button, the frame turns gold on the lighthouse, click; then the kite', async ({ page }, testInfo) => {
     test.setTimeout(10 * 60 * 1000);
-    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE });
+    // Settings › Mouse › Free pointer: the view turns by dragging with a button held. Headless Chromium does not move a
+    // captured pointer, so steering with a captured pointer cannot be tested here (it is the same input path otherwise)
+    const w = watch(page); await prefsInit(page, { lang: 'en', quality: 'low', tut: TIPS_DONE, noLock: true });
     await page.goto('/v5/?preview=2.train'); await expect.poll(async () => (await snap(page).catch(() => ({}))).beat, { timeout: 60000 }).toBe('2.train');
     const vp = page.viewportSize(); const cx = vp.width / 2, cy = vp.height / 2; await page.mouse.move(cx, cy);
     const skipTalk = async () => { for (let i = 0; i < 30 && (await snap(page)).dialog; i++) { await page.keyboard.press('Space'); await page.waitForTimeout(450); } };

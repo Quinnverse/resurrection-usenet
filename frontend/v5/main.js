@@ -205,10 +205,7 @@ cv.addEventListener('mousedown', (e) => {
   if (e.button === 0) { mouse.left = true; mouse.click = true; } if (e.button === 2) { mouse.right = true; }
 });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) { mouse.left = false; } if (e.button === 2) { mouse.right = false; } });
-// Chromium reports one large jump on the first moves right after the pointer is captured (it flung the train camera to
-// the ceiling in the RC3 browser test): those are not the player's hand
-let skipMoves = 0;
-window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } if (skipMoves > 0) { skipMoves -= 1; return; } if (locked || mouse.left || mouse.right) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; } });
+window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } if (locked || mouse.left || mouse.right) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; } });
 // Mouse modes. Exploring: after a click on the scene the pointer is captured; moving the mouse looks around, a dot in the
 // middle shows where you look, a click uses what is named. Menus, the journal and the pause screen: the pointer is free and
 // visible. Esc (the browser releases the pointer on Esc) always pauses, so the cursor and the menu arrive together; Resume
@@ -216,7 +213,7 @@ window.addEventListener('mousemove', (e) => { if (mode !== 'play') { return; } i
 let ownUnlock = false;
 const releasePointer = () => { if (document.pointerLockElement) { ownUnlock = true; document.exitPointerLock(); } };
 document.addEventListener('pointerlockchange', () => {
-  const was = locked; locked = document.pointerLockElement === cv; app.classList.toggle('locked', locked); if (locked && !was) { skipMoves = 2; }
+  const was = locked; locked = document.pointerLockElement === cv; app.classList.toggle('locked', locked);
   if (was && !locked && !ownUnlock && mode === 'play' && g) { openPause(); }
   ownUnlock = false;
 });
