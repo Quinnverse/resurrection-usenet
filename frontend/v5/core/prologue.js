@@ -256,8 +256,9 @@ function crtTick(g, input, active) {
   const c = g.rt.crt; if (!c || !active) { if (c) { c.lastMz = input.mz || 0; } return; }
   if (c.stage === 'list' || c.stage === 'run') {
     const mz = input.mz || 0; const n = RECORDS.length + (c.stage === 'run' ? 1 : 0);
-    if (mz > 0.5 && c.lastMz <= 0.5) { c.sel = (c.sel + n - 1) % n; g.rt.ev.push({ type: 'sfx', name: 'blip' }); }
-    if (mz < -0.5 && c.lastMz >= -0.5) { c.sel = (c.sel + 1) % n; g.rt.ev.push({ type: 'sfx', name: 'blip' }); }
+    const up = input.navUp || (mz > 0.5 && c.lastMz <= 0.5), down = input.navDown || (mz < -0.5 && c.lastMz >= -0.5);
+    if (up) { c.sel = (c.sel + n - 1) % n; g.rt.ev.push({ type: 'sfx', name: 'blip' }); }
+    else if (down) { c.sel = (c.sel + 1) % n; g.rt.ev.push({ type: 'sfx', name: 'blip' }); }
     c.lastMz = mz;
   }
 }

@@ -112,7 +112,7 @@ export async function playThrough(g, opts) {
   const opt = bot.o.optional;
   // ---- R4 prologue: the last Sunday (skipped when a test starts the game at a later beat)
   if (g.s.beat === 'P.kitchen') {
-    await bot.until((s) => s.mother && s.prompt && s.prompt.id === 'mother', 20, (s) => (s.mother ? bot.axes(s.mother.x - 0.7 - s.x, s.mother.z + 0.6 - s.z) : {}));
+    await bot.wait(0.2);
     if (opt) { await bot.walkTo(-2.6, 0.5); await bot.until((s) => s.prompt && s.prompt.id === 'coat', 3, () => bot.axes(-1, 0)); if (bot.snap().prompt && bot.snap().prompt.id === 'coat') { await bot.use('coat'); } }
     await bot.go('mother', 1.5, -1.0); await bot.use('mother'); await bot.talk(); await bot.talk();
     await bot.go('frontdoor', -2.6, 1.6); await bot.use('frontdoor'); await bot.talk();
@@ -128,7 +128,7 @@ export async function playThrough(g, opts) {
   await bot.goUse('computer', comp.x, comp.z + 1.0);                         // no disk yet
   await bot.goUse('keepbox', -1.1, 2.2);                                     // Elena's backup disk
   if (opt) { await bot.goUse('photo', 3.2, 0.7); }
-  if (opt) { await bot.goUse('notebook', 1.5, -1.2); }
+  if (opt) { await bot.goUse('notebook', 2.0, -1.45); }
   await bot.goUse('computer', comp.x, comp.z + 1.0);
   await restoreAndRemember(bot, opt); m('restore');
   await bot.until((s) => s.scene === 'town' && s.beat === '1.town'); m('town');

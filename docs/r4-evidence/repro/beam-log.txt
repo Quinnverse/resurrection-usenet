@@ -1,0 +1,9 @@
+ready at {
+  a: 1.7,
+  target: 'june',
+  targetA: -0.5438324563021214,
+  onTarget: false,
+  ready: true
+}
+[["1.83",false,"3.beam",false],["1.96",false,"3.beam",false],["2.19",false,"3.beam",false],["2.32",false,"3.beam",false],["2.41",false,"3.beam",false],["2.52",true,"3.beam",false],["2.67",true,"3.beam",false],["2.78",false,"3.beam",false],["2.91",false,"3.beam",false],["3.04",false,"3.beam",false],["3.15",false,"3.beam",false],["3.22",false,"3.beam",false],["3.35",false,"3.beam",false],["3.48",false,"3.beam",false],["3.61",false,"3.beam",false],["3.73",false,"3.beam",false],["3.86",false,"3.beam",false],["4.01",false,"3.beam",false],["4.12",false,"3.beam",false],["4.25",false,"3.beam",false],["4.27",false,"3.beam",false],["4.27",false,"3.beam",false],["4.39",false,"3.beam",false],["4.61",false,"3.beam",false],["4.82",false,"3.beam",false],["4.94",false,"3.beam",false],["5.05",false,"3.beam",false],["5.24",false,"3.beam",false],["5.37",false,"3.beam",false],["5.48",false,"3.beam",false],["5.60",false,"3.beam",false],["5.79",true,"3.beam",false],["5.95",false,"3.beam",false],["6.06",false,"3.beam",false],["6.19",false,"3.beam",false],["6.32",false,"3.beam",false],["6.45",false,"3.beam",false],["6.56",false,"3.beam",false],["6.67",false,"3.beam",false],["6.85",false,"3.beam",false]]
+final {"a":6.850859999999985,"target":"june","targetA":-0.5438324563021214,"onTarget":false,"ready":true} undefined

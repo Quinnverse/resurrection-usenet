@@ -164,9 +164,8 @@ export const EN_R4 = {
   // ---- the beam: say where, which key, and when it is right ---------------------------------------------------------------
   'r4.c3.runRocks': 'Give me ten seconds — I’m going out to the rocks. Find me with the light!',
   'r4.ui.beam.wait': 'June is running out to the rocks…',
-  'r4.ui.beam.toL': '{who} is further left — hold {key}',
-  'r4.ui.beam.toR': '{who} is further right — hold {key}',
   'r4.ui.beam.near': 'Almost — tap {key}',
+  'r4.ui.beam.turn': 'Turn the light toward {who} — hold {key}',
   'r4.ui.beam.hold': 'That’s it — hold the light there',
   'r4.beam.june': 'June', 'r4.beam.cottage': 'The cottage', 'r4.beam.pier': 'The old pier',
 
@@ -396,9 +395,8 @@ export const ZH_R4 = {
 
   'r4.c3.runRocks': '给我十秒——我去礁石那边。用灯光找到我！',
   'r4.ui.beam.wait': '琳正跑向礁石……',
-  'r4.ui.beam.toL': '{who}还在左边——按住 {key}',
-  'r4.ui.beam.toR': '{who}还在右边——按住 {key}',
   'r4.ui.beam.near': '快到了——轻点 {key}',
+  'r4.ui.beam.turn': '把光转向{who}——按住 {key}',
   'r4.ui.beam.hold': '就是那里——让光停住',
   'r4.beam.june': '琳', 'r4.beam.cottage': '小屋', 'r4.beam.pier': '旧码头',
 

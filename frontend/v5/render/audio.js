@@ -83,6 +83,9 @@ export function setAmbience(kind) {
   if (kind === 'train') { loop(220, 0.8, 0.16, 2.2); loop(1800, 0.3, 0.02); }
   if (kind === 'wind') { loop(900, 0.6, 0.1, 0.3); }
   if (kind === 'winter') { loop(500, 0.4, 0.05, 0.1); }
+  // R4: rain on a kitchen window at night: a soft low wash, a brighter patter on the glass, and a slow gust
+  if (kind === 'rain') { loop(1500, 0.3, 0.06, 0.08); loop(5200, 0.4, 0.018, 0.6); loop(300, 0.5, 0.05, 0.05); }
+  if (kind === 'house') { loop(250, 0.4, 0.025); }
   heard.add('amb:' + kind);
 }
 
@@ -118,7 +121,12 @@ const FX = {
   star: (t) => { bell(t, 84, 0.8, 0.03, sfxBus); }, dot: (t) => tone(t, N(84), 0.15, 0.02, 'triangle'), carve: (t) => hiss(t, 0.25, 0.06, 3200, 3),
   tuned: (t) => { tone(t, N(64), 1.0, 0.05, 'triangle'); tone(t, N(64) * 2, 0.6, 0.02, 'sine'); }, detuned: (t) => { tone(t, N(64) * 1.04, 0.5, 0.04, 'triangle'); tone(t, N(64), 0.5, 0.03, 'triangle'); },
   found: (t) => { [79, 84, 88].forEach((m, i) => tone(t + i * 0.1, N(m), 1.2, 0.04, 'sine')); }, lens: (t) => { tone(t, 600, 0.06, 0.04, 'triangle'); hiss(t, 0.2, 0.04, 2400, 2); },
-  gate: (t) => { hiss(t, 0.25, 0.05, 2600, 1); tone(t, N(86), 0.3, 0.03, 'sine'); }
+  gate: (t) => { hiss(t, 0.25, 0.05, 2600, 1); tone(t, N(86), 0.3, 0.03, 'sine'); },
+  // R4: the kettle comes to the boil and screams; the answering machine's beep; a record breaking up; a photo unfolded
+  kettle: (t) => { hiss(t, 1.2, 0.03, 2600, 1.5); tone(t + 0.6, 1800, 2.2, 0.035, 'sine', null, 2400, 0.4); tone(t + 0.7, 2650, 2.0, 0.02, 'sine', null, 3100, 0.5); },
+  machine: (t) => { tone(t, 1000, 0.35, 0.04, 'sine'); hiss(t + 0.4, 0.5, 0.02, 3500, 0.6); },
+  glitch: (t) => { [0, 0.07, 0.15, 0.2, 0.31].forEach((d, i) => tone(t + d, 180 + i * 140, 0.06, 0.04, 'square', null, 90)); hiss(t, 0.5, 0.05, 1200, 0.4); },
+  unfold: (t) => { hiss(t, 0.35, 0.05, 2200, 0.9); [72, 76, 79].forEach((m, i) => tone(t + 0.3 + i * 0.12, N(m), 1.4, 0.03, 'sine')); }
 };
 export function play(name) { heard.add(name); if (prefs.muted || !FX[name]) { return; } const c = context(); if (!c) { return; } if (c.state === 'suspended') { c.resume(); } FX[name](c.currentTime + 0.01); }
 // A duet note: the player's guitar, and June's humming once she joins.

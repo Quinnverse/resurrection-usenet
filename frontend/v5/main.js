@@ -7,6 +7,7 @@ import * as Toys from './core/toys.js';
 import { LAYOUTS } from './core/layout.js';
 import { t as tr } from './core/i18n.js';
 import { buildStudy } from './render/study.js';
+import { buildKitchen } from './render/kitchen.js';
 import { buildTown } from './render/town.js';
 import { buildStation, buildCarriage, buildCoast, buildCottage } from './render/scenes.js';
 import { makeCast, makeTheo, animate, setExpression, showProp } from './render/people.js';
@@ -54,6 +55,7 @@ const ui = {
   prompt: el('div', { class: 'prompt', 'data-testid': 'prompt', hidden: '' }), subs: el('div', { class: 'subs', 'data-testid': 'subs' }), choice: el('div', { class: 'choices', 'data-testid': 'choices', hidden: '' }),
   banner: el('div', { class: 'banner', 'data-testid': 'banner' }), tip: el('div', { class: 'tip', 'data-testid': 'tip' }), fade: el('div', { class: 'fade' }), aim: el('div', { class: 'aimframe', hidden: '', 'data-testid': 'aimframe' }, [el('div', { class: 'aimnote', 'data-testid': 'aim-note' })]),
   meter: el('div', { class: 'meter', hidden: '', 'data-testid': 'meter' }), paper: el('canvas', { class: 'paper', width: '520', height: '360', hidden: '', 'data-testid': 'paper' }), reticle: el('div', { class: 'reticle', hidden: '' }), lookdot: el('div', { class: 'lookdot', 'data-testid': 'lookdot' }), act: el('div', { class: 'act', 'data-testid': 'act' }),
+  crt: el('div', { class: 'crtview', hidden: '', 'data-testid': 'crt' }), photo: el('canvas', { class: 'photocard', width: '520', height: '390', hidden: '', 'data-testid': 'photo-unfolded' }),
   panel: el('div', { class: 'panel', hidden: '', role: 'dialog', 'data-testid': 'panel' }), overlay: el('div', { class: 'overlay', hidden: '' }), saved: el('div', { class: 'saved' }), source: el('button', { class: 'source', type: 'button', hidden: '', 'data-testid': 'source' })
 };
 ui.subs.append(el('div', { class: 'who' }), el('div', { class: 'line' }), el('div', { class: 'next' }));
@@ -90,7 +92,7 @@ const rt = { t: 0, frames: 0, fps: 60, lastSave: 0, chapterShown: 0, lastBeat: n
 function getWorld(id) {
   if (worlds[id]) { return worlds[id]; }
   const lowShadow = prefs.quality === 'low' ? 512 : prefs.quality === 'medium' ? 1024 : 1536;
-  const w = id === 'study' ? buildStudy({ shadow: lowShadow }) : id === 'town' ? buildTown({ shadow: lowShadow, low: prefs.quality === 'low' }) : id === 'station' ? buildStation({ shadow: lowShadow }) : id === 'train' ? buildCarriage({ shadow: lowShadow }) : id === 'cottage' ? buildCottage({ shadow: lowShadow }) : buildCoast({ shadow: lowShadow });
+  const w = id === 'study' ? buildStudy({ shadow: lowShadow }) : id === 'kitchen' ? buildKitchen({ shadow: lowShadow }) : id === 'town' ? buildTown({ shadow: lowShadow, low: prefs.quality === 'low' }) : id === 'station' ? buildStation({ shadow: lowShadow }) : id === 'train' ? buildCarriage({ shadow: lowShadow }) : id === 'cottage' ? buildCottage({ shadow: lowShadow }) : buildCoast({ shadow: lowShadow });
   // a soft warm light near the camera, on only in dialogue close-ups, so a face against the sky or a lamp is still
   // readable. Added once per world (intensity 0 otherwise) so turning it on never changes the light count.
   const face = new THREE.PointLight(0xffe4cc, 0, 3.2, 2); face.name = 'faceFill'; w.scene.add(face); w.faceFill = face;
@@ -113,12 +115,15 @@ function stageWorld() {
   add(person(avatarId()));
   if (s.june) { add(person(juneId())); }
   if (s.theo && id === 'town') { add(person('theo')); }
+  if (s.mother && id === 'kitchen') { add(person('elena45')); }
   if (id === 'town' && w.theo) { w.theo.visible = false; }   // the town module's own Theo; the shell draws its own
   dressWorld(s);
-  A.setAmbience({ study: 'room', town: s.season === 'winter' ? 'winter' : 'sea', station: 'sea', train: 'train', coast: 'wind', cottage: 'room' }[id]);
+  A.setAmbience({ kitchen: s.beat === 'P.kitchen' ? 'rain' : 'house', study: 'room', town: s.season === 'winter' ? 'winter' : 'sea', station: 'sea', train: 'train', coast: 'wind', cottage: 'room' }[id]);
   A.setTheme(themeFor(s));
 }
 function themeFor(s) {
+  if (s.beat === 'P.kitchen') { return 'cottage04'; }   // R4: almost no music under the argument; the rain does the work
+  if (s.beat === 'P.summer') { return 'summer'; }
   if (s.beat === '4.porch') { return 'night'; }
   if (s.beat === '6.beach') { return 'cottage04'; }
   if (s.beat === '1.carve') { return 'summer'; }
@@ -148,7 +153,13 @@ function dressWorld(s) {
     w.setSeason(s.season || 'summer');
     if (g.rt.iris) { w.iris.visible = !g.rt.iris.gone || false; }
   }
-  if (worldId === 'study') { w.setLamp(!g.s.flags.lampOff); if (s.beat === '1.study' || s.beat === '7.study') { w.setCrt(s.beat === '7.study' || g.s.seen.includes('c1.computer'), s.beat === '7.study' ? ['drafts/', ' june-7.txt  (not sent)', ' june-6.txt  (not sent)', ' ...'] : null); } }
+  if (worldId === 'study') {
+    w.setLamp(!g.s.flags.lampOff); w.setTime(s.beat === 'E.study' ? 'evening' : 'day'); w.setPhoto(s.beat === 'E.study' ? (g.s.flags.unfolded ? 'stand' : 'flat') : 'none');
+    if (s.beat === '1.study' || s.beat === '7.study') { w.setCrt(s.beat === '7.study' || g.s.seen.includes('c1.computer'), s.beat === '7.study' ? ['drafts/', ' june-7.txt  (not sent)', ' june-6.txt  (not sent)', ' ...'] : null); }
+    if (s.beat === 'P.restore') { w.setCrt(true, crtLines(s)); }
+    if (s.beat === 'E.study') { w.setCrt(!g.s.flags.epilogue, [T('p.e.crt1'), T('p.e.crt2'), T('p.e.crt3'), ' 2026 present edition', ' ' + T('sp.elena') + ' · ' + T('sp.june') + ' · ' + T('sp.mara')]); }
+  }
+  if (worldId === 'kitchen') { w.setMode(s.beat === 'P.kitchen' ? 'rain' : 'grey', { coatMara: s.beat === 'P.kitchen' && !s.leaving, keysTaken: !!g.s.flags.keys, blink: !g.s.flags.machine }); }
   if (worldId === 'station') { w.setTime(s.beat === '1.chase' ? 'morning' : s.beat === '5.depart' ? 'dusk' : 'y2004'); }
   if (worldId === 'cottage') { w.setEra(s.year || 1998); }
   if (worldId === 'coast') {
@@ -293,7 +304,7 @@ function collectInput(dt) {
   const padAct = P.edge(0) || P.edge(2);
   const advanceNow = p('use') || pressed.has('Space') || pressed.has('Enter') || mouse.click || tpad.use || tpad.jump || padAct;
   const input = {
-    mx: Math.max(-1, Math.min(1, mx)), mz: Math.max(-1, Math.min(1, mz)), yaw: cam.yaw,
+    mx: Math.max(-1, Math.min(1, mx)), mz: Math.max(-1, Math.min(1, mz)), yaw: cam.yaw, navUp: p('forward') || pressed.has('ArrowUp'), navDown: p('back') || pressed.has('ArrowDown'),   // R4: a quick tap on the restore list is never lost between frames
     jump: p('jump') || tpad.jump || (P.edge(0) && !s.dialog && !ch), jumpHeld: k('jump') || P.btn(0) || !!tpad.jumpHeld, sprint: k('sprint') || down.has('ShiftRight') || P.btn(4) || P.btn(5) || P.btn(10) || stickSprint,
     use: p('use') || tpad.use || (mouse.click && !s.aim && s.scene !== 'train') || P.edge(2), useHeld: k('use') || P.btn(2) || tpad.useHeld || (mouse.left && !!(s.prompt && s.prompt.hold)),
     tab: p('tab') || P.edge(3) || tpad.tab, hint: p('hint') || P.edge(8) || tpad.hint, autoHelp: prefs.autoHelp !== false,
@@ -342,6 +353,12 @@ function handle(ev) {
     case 'season': if (ev.season === 'winter') { A.setTheme('winter'); A.setAmbience('winter'); } break;
     case 'rebuild': showRebuild(ev); break;
     case 'memory': cardFlash(T('ui.memory'), T('ui.memoryNote')); break;
+    case 'card': cardFlash(T(ev.a), ev.b ? T(ev.b) : ''); break;
+    case 'crt': if (worldId === 'study' && world.wake && ev.on) { world.wake(rt.t); A.play('crtWake'); } break;
+    case 'crt-damage': rt.crtShake = rt.t; break;
+    case 'glitch': A.play('glitch'); rt.glitchT = rt.t; app.classList.add('glitch'); setTimeout(() => app.classList.remove('glitch'), reduce() ? 200 : 1400); break;
+    case 'unfold': A.play('unfold'); showPhoto(); if (world && world.setPhoto) { world.setPhoto('stand'); } break;
+    case 'line': { const k = Array.isArray(ev.line) ? ev.line[1] : null; if (k === 'p.k.kettleSfx') { A.play('kettle'); if (world && world.setSteam) { world.setSteam(true); setTimeout(() => world.setSteam && world.setSteam(false), 3500); } } if (k === 'c1.june.oneFace') { A.play('shutter'); fadeBlinkWhite(); } if (k === 'p.e.f6') { if (world && world.setLamp) { world.setLamp(false); } } break; }
     case 'years-later': cardFlash(T('ui.years'), ''); break;
     case 'letter': showLetter(ev.text); break;
     case 'caught': A.play('caught'); break;
@@ -379,7 +396,7 @@ function onBeat(ev) {
   const lay = LAYOUTS[sceneWorldId(ev.scene)];
   const s = Gm.snapshot(g); cam.yaw = s.yaw; cam.pitch = (lay && lay.camera && lay.camera.pitch) || 0.36; cam.dist = (lay && lay.camera && lay.camera.dist) || 4.5;
   syncCast(0); updateCamera(true); // place the cast first so the cut lands on where they are now
-  if (ev.chapter !== rt.lastChapter) { const prev = rt.lastChapter; rt.lastChapter = ev.chapter; showChapter(ev.chapter); if (PT.active() && prev && !ev.loading) { rateChapter(prev); } }
+  if (ev.chapter !== rt.lastChapter) { const prev = rt.lastChapter; rt.lastChapter = ev.chapter; showChapter(ev.chapter); if (PT.active() && prev !== undefined && prev !== null && !ev.loading) { rateChapter(prev); } }
   PT.beat(ev.beat, ev.chapter);
   if (ev.beat === '1.town') { tip(T('ui.next'), 0); }
 }
@@ -387,6 +404,10 @@ function onBeat(ev) {
 // ---- acting on key lines: the faces of the speaker and the listener while a line is on screen ----------------------
 // [speaker's face, listener's face]. Lines not listed keep the companion state machine's expression.
 const LINE_EXPR = {
+  // R4: the last Sunday
+  'p.k.e3': ['quiet', 'hurt'], 'p.k.b1': ['angry', 'hurt'], 'p.k.b2': ['hurt', 'angry'], 'p.k.c1': ['angry', 'hurt'], 'p.k.c2': ['hurt', 'angry'], 'p.k.d1': ['angry', 'hurt'], 'p.k.d2': ['hurt', 'angry'], 'p.k.d3': ['quiet', 'surprise'],
+  'p.k.e6': ['hurt', 'quiet'], 'p.k.e7': ['quiet', 'hurt'], 'p.k.m6': ['hurt', 'hurt'], 'p.k.e8': ['hurt', 'quiet'], 'p.k.careful': ['quiet', 'hurt'], 'p.k.bye': ['quiet', 'quiet'], 'p.k.hello': ['smile', 'neutral'],
+  'p.s.j2': ['grin', 'smile'], 'p.s.pa2': ['grin', 'shy'], 'p.s.pb2': ['tease', 'smile'], 'c1.june.oneFace': ['grin', 'shy'],
   'c1.june.thought': ['hurt', 'quiet'], 'c1.elena.when': ['smile', 'shy'], 'c1.june.remember': ['tease', 'smile'],
   'c2.june.view': ['tease', 'shy'], 'c2.elena.sincere': ['shy', 'surprise'], 'c2.june.sincere': ['shy', 'shy'], 'c2.june.youreTheView': ['shy', 'surprise'], 'c2.june.coldHand': ['shy', 'shy'], 'c2.june.wishBack': ['tease', 'shy'],
   'c3.june.dontListen': ['tease', 'neutral'], 'c3.elena.wantTo': ['shy', 'surprise'],
@@ -420,15 +441,26 @@ function closeUp(p, facing, side, dist) {
 function shotFor(name, s) {
   const me = person(avatarId()), jn = s.june ? person(juneId()) : null, th = s.theo ? person('theo') : null;
   const facingTo = (a, b) => Math.atan2(b.position.x - a.position.x, b.position.z - a.position.z);
+  const mo = s.mother ? person('elena45') : null;
+  // R4 (Owner: a green model in front of the camera on the train): June's teal coat filled the frame because the
+  // close-up swung round to 0.48 m from her. On the train the two faces get fixed shots from the aisle.
+  if (s.scene === 'train' && (name === 'june' || name === 'elena')) {
+    const js = LAYOUTS.train.june, es = LAYOUTS.train.seat;
+    return name === 'june' ? { pos: new THREE.Vector3(0.02, 1.32, 0.78), look: new THREE.Vector3(js.x, 1.12, js.z) } : { pos: new THREE.Vector3(-0.02, 1.32, -0.78), look: new THREE.Vector3(es.x, 1.12, es.z) };
+  }
   switch (name) {
+    case 'mother': if (mo) { return closeUp(mo, facingTo(mo, me), 0.3, 1.5); } break;
+    case 'kitchen': return { pos: new THREE.Vector3(-2.9, 1.95, 2.35), look: new THREE.Vector3(1.4, 1.0, -1.7) };
+    case 'crt': return { pos: new THREE.Vector3(2.05, 1.6, -1.45), look: new THREE.Vector3(3.1, 1.0, -2.9) };   // beside Mara, not through her head
     case 'june': if (jn) { return closeUp(jn, facingTo(jn, me), 0.3, 1.45); } break;
-    case 'elena': case 'mara': return closeUp(me, jn ? facingTo(me, jn) : (th ? facingTo(me, th) : me.rotation.y), -0.3, 1.45);
+    case 'elena': case 'mara': return closeUp(me, jn ? facingTo(me, jn) : (mo ? facingTo(me, mo) : (th ? facingTo(me, th) : me.rotation.y)), -0.3, 1.45);
     case 'theo': if (th) { return closeUp(th, facingTo(th, me), 0.4, 1.8); } break;
     case 'hands': if (jn) { const mid = me.position.clone().lerp(jn.position, 0.5); return { pos: mid.clone().add(new THREE.Vector3(-1.2, 1.3, -2.4)), look: mid.clone().add(new THREE.Vector3(0, 1.2, 0)) }; } break;
     case 'twoshot': case 'window': if (jn) { const mid = me.position.clone().lerp(jn.position, 0.5); const d = jn.position.clone().sub(me.position); const n = new THREE.Vector3(-d.z, 0, d.x).normalize(); return { pos: mid.clone().addScaledVector(n, Math.max(2.2, d.length() * 1.3)).add(new THREE.Vector3(0, 1.45, 0)), look: mid.clone().add(new THREE.Vector3(0, 1.25, 0)) }; } break;
     case 'beam': return { pos: new THREE.Vector3(254, 3.5, 12), look: new THREE.Vector3(264, 7.5, 28) };
     case 'bench': return { pos: new THREE.Vector3(-6.5, 1.8, 1.8), look: new THREE.Vector3(-1.0, 0.9, -1.8) };
-    case 'beamctl': return { pos: new THREE.Vector3(256.5, 10.5, 15.5), look: new THREE.Vector3(278, -1, 31) };
+    // R4: from the north side of the yard, so the tower is not between the camera and June's rocks or the cottage
+    case 'beamctl': return { pos: new THREE.Vector3(256, 13, 42), look: new THREE.Vector3(281, -1.5, 29) };
     case 'town-beam': return { pos: new THREE.Vector3(22.5, 9.5, 12.0), look: new THREE.Vector3(3, 0.5, 24) };
     case 'paper': return { pos: new THREE.Vector3(1.3, 2.05, 1.05), look: new THREE.Vector3(1.3, 0.75, 0.05) };
     case 'platform': return { pos: new THREE.Vector3(-6.2, 1.6, 0.4), look: new THREE.Vector3(-2.2, 1.2, 1.6) };
@@ -480,7 +512,7 @@ function updateCamera(snap) {
   camera.position.copy(cam.pos); camera.lookAt(cam.look);
   const fill = world && world.faceFill;
   if (fill) {
-    const onFace = s.shot === 'june' || s.shot === 'elena' || s.shot === 'mara' || s.shot === 'theo';
+    const onFace = s.shot === 'june' || s.shot === 'elena' || s.shot === 'mara' || s.shot === 'theo' || s.shot === 'mother';
     fill.intensity += ((onFace ? 1.4 : 0) - fill.intensity) * (snap ? 1 : 0.2);
     fill.position.copy(cam.pos).lerp(cam.look, 0.25).add(tmp2.set(0, 0.25, 0));
   }
@@ -502,7 +534,7 @@ function syncCast(dt) {
     me.position.set(b.x, b.y, b.z); me.rotation.set(0, b.facing, 0);
     // in conversation she turns to whoever she is talking to, so close-ups see faces, not the back of a head
     if (s.dialog && !s.seated) {
-      const other = s.june && g.rt.june && Math.hypot(g.rt.june.x - b.x, g.rt.june.z - b.z) < 5 ? g.rt.june : (s.theo && worldId === 'town' && Math.hypot(s.theo.x - b.x, s.theo.z - b.z) < 5 ? s.theo : null);
+      const other = s.june && g.rt.june && Math.hypot(g.rt.june.x - b.x, g.rt.june.z - b.z) < 5 ? g.rt.june : (s.theo && worldId === 'town' && Math.hypot(s.theo.x - b.x, s.theo.z - b.z) < 5 ? s.theo : (s.mother && Math.hypot(s.mother.x - b.x, s.mother.z - b.z) < 6 ? s.mother : null));
       if (other) { me.rotation.y = Math.atan2(other.x - b.x, other.z - b.z); }
     }
     const mode = s.seated ? (s.beat === '4.duet' ? 'guitar' : 'sit') : (b.gliding ? 'pose' : (!b.grounded ? 'run' : (s.carry ? 'hold' : 'walk')));
@@ -523,6 +555,16 @@ function syncCast(dt) {
     showProp(jn, 'camera', m === 'camera'); showProp(jn, 'suitcase', s.beat === '5.depart' && !!g.rt.boarding); showProp(jn, 'sketch', m === 'sketch'); showProp(jn, 'box', !!g.rt.juneCarry && s.june.state === 'TRANSITION');
     if (s.scene === 'train' && (m === 'sit' || m === 'camera')) { jn.position.y = 0.05; }
   }
+  if (s.mother && worldId === 'kitchen') {
+    const mo = person('elena45'), m = g.rt.mother; mo.position.set(m.x, 0, m.z);
+    const speaking = s.dialog && Array.isArray(s.dialog.line) && s.dialog.line[0] === 'mother';
+    // in conversation she faces Mara; at the stove, before and after, she keeps her back half turned
+    const face = s.dialog && !speaking && s.dialog.line && s.dialog.line[1] === 'p.k.kettleSfx' ? Math.atan2(2.3 - m.x, -2.5 - m.z) : (s.dialog || s.choice ? Math.atan2(b.x - m.x, b.z - m.z) : m.facing);
+    mo.rotation.y = face; const mm = m.state === 'TRANSITION' ? 'walk' : speaking ? 'talk' : (s.dialog ? 'idle' : (m.anim === 'turnaway' ? 'idle' : (m.anim || 'idle')));
+    animate(mo, rt.t, m.phase || 0, m.speed || 0, mm, reduce()); setExpression(mo, lineExpr('mother') || m.expr || 'quiet');
+    mo.userData.lookAt = Math.hypot(b.x - m.x, b.z - m.z) < 5 ? new THREE.Vector3(b.x, (b.y || 0) + 1.55, b.z) : null;
+    if (Math.hypot(b.x - m.x, b.z - m.z) < 5) { me.userData.lookAt = new THREE.Vector3(m.x, 1.55, m.z); }
+  }
   if (s.theo && worldId === 'town') { const th = person('theo'); th.position.set(s.theo.x, 0, s.theo.z); th.rotation.y = g.rt.theo.facing; animate(th, rt.t, g.rt.theo.phase || 0, g.rt.theo.speed || 0, s.dialog && s.dialog.line && s.dialog.line[0] === 'theo' ? 'talk' : (s.theo.state === 'INVITE' && !g.s.seen.includes('c1.theo1') ? 'wave' : 'idle'), reduce()); }
   if (worldId === 'town' && g.rt.iris && world.iris) {
     const ir = g.rt.iris; world.iris.visible = !ir.gone && !ir.boarded; world.iris.position.set(ir.x, 0, ir.z); if (ir.facing !== undefined) { world.iris.rotation.y = ir.facing; }
@@ -536,13 +578,14 @@ function syncCast(dt) {
     const jn = s.june ? person(juneId()) : null, th = s.theo && worldId === 'town' ? person('theo') : null;
     const speaker = s.dialog && Array.isArray(s.dialog.line) ? s.dialog.line[0] : null;
     const near = (a, b) => a && b && a.position.distanceTo(b.position) < 6;
-    me.userData.lookAt = speaker === 'june' && near(me, jn) ? head(jn) : speaker === 'theo' && near(me, th) ? head(th) : (near(me, jn) ? head(jn) : (near(me, th) ? head(th) : null));
+    me.userData.lookAt = speaker === 'june' && near(me, jn) ? head(jn) : speaker === 'theo' && near(me, th) ? head(th) : (near(me, jn) ? head(jn) : (near(me, th) ? head(th) : (s.mother && worldId === 'kitchen' ? head(person('elena45')) : null)));
     if (jn) { jn.userData.lookAt = near(jn, me) && s.scene !== 'ride' ? head(me) : null; }
     if (th) { th.userData.lookAt = near(th, me) ? head(me) : null; }
   }
   if (worldId === 'station' && g.rt.train) { world.setTrain(g.rt.train.x, !g.rt.train.gone && (s.beat !== '5.alone' || g.rt.train.moving)); }
   if (worldId === 'station') { world.setSuitcase(s.beat !== '5.depart' ? 'none' : s.carry === 'suitcase' ? 'carried' : (g.s.flags.suitcase ? (g.rt.boarding ? 'none' : 'door') : 'bench')); }
   if (worldId === 'train') { world.setOutside(g.rt.outsideT || 0); }
+  if ((worldId === 'coast' || worldId === 'town') && world.setBeamAim) { world.setBeamAim(beamAim(s)); }
   if (worldId === 'coast') { world.setLens(g.rt.hold.pulley || 0, !!g.s.flags.lens); world.setBeamAngle(s.beam ? s.beam.a : null); world.setStars(s.stars ? s.stars.linked.length : 0); }
   if (worldId === 'town') { world.setBeamAngle(s.beam ? s.beam.a : null); world.setRope(!(s.iris && s.iris.boarded)); world.setNewPier(s.era === 2004 ? (g.s.edition.pier_walk ? 1 : (g.rt.hold.newPier || 0)) : 0); }
   if (worldId === 'cottage') { const st = {}; ['boxA', 'boxB'].forEach((k) => { st[k] = s.carry === k ? 'carried' : (g.s.flags[k] ? 'placed' : 'floor'); }); world.setBoxes(st); }
@@ -557,7 +600,7 @@ function tip(text, secs) { ui.tip.textContent = text; ui.tip.classList.toggle('o
 function flash() { if (reduce()) { return; } app.classList.add('shift'); setTimeout(() => app.classList.remove('shift'), 380); }
 function fadeBlink() { ui.fade.classList.add('on'); setTimeout(() => ui.fade.classList.remove('on'), reduce() ? 80 : 420); }
 function cardFlash(a, b) { ui.overlay.className = 'overlay card'; ui.overlay.hidden = false; ui.overlay.textContent = ''; ui.overlay.append(el('div', { class: 'cardbox', 'data-testid': 'card' }, [el('div', { class: 'a', text: a }), el('div', { class: 'b', text: b })])); setTimeout(() => { if (ui.overlay.className === 'overlay card') { ui.overlay.hidden = true; } }, reduce() ? 1200 : 3200); }
-const PLAY_SHOTS = ['beamctl', 'town-beam', 'paper', 'seat', 'ride', 'duet'];
+const PLAY_SHOTS = ['beamctl', 'town-beam', 'paper', 'seat', 'ride', 'duet', 'crt'];
 function renderHud() {
   const s = Gm.snapshot(g);
   // prompt near the thing you can use: a key glyph, the verb, the name. Nothing else on screen.
@@ -565,7 +608,7 @@ function renderHud() {
   // guitar, the beam, the drawing paper) are not, so the task bar, tips and prompts stay on screen there
   const pr = s.prompt; const cine = !!s.dialog || (!!s.shot && !PLAY_SHOTS.includes(s.shot)) || s.choice;
   app.classList.toggle('cine', cine);
-  if (pr && !cine && mode === 'play') {
+  if (pr && !cine && mode === 'play' && s.beat !== 'P.restore') {   // R4: on the restore tool the screen itself says what E does
     const key = guide.glyph();
     const sig = pr.id + pr.verb + prefs.lang + (pr.hold ? 'h' : '') + lastDev + key;
     if (ui.prompt.getAttribute('data-sig') !== sig) { ui.prompt.setAttribute('data-sig', sig); ui.prompt.textContent = ''; ui.prompt.append(el('span', { class: 'key', text: key }), el('span', { class: 'verb', text: (pr.hold ? T('ui.hold') + ' · ' : '') + T(pr.verb) }), el('span', { class: 'name', text: T('name.' + pr.id) })); if (pr.hold) { ui.prompt.append(el('span', { class: 'ring' }, [el('span', { class: 'fill' })])); } ui.prompt.setAttribute('data-id', pr.id); }
@@ -611,9 +654,75 @@ function renderHud() {
   ui.paper.hidden = !s.pen; if (s.pen) { drawPaper(s.pen); }
   app.classList.toggle('noDot', s.scene === 'porch' || s.scene === 'train' || s.scene === 'ride' || !!s.tuning || !!s.pen || !!s.duet);   // these have their own frame, reticle or none
   ui.reticle.hidden = !(s.scene === 'porch' && !s.dialog); ui.reticle.classList.toggle('on', !!(s.stars && s.stars.onStar));
-  const act = s.dialog || s.choice ? '' : s.tuning ? T('ui.tune') : s.pen ? T('ui.pen') : s.sketch ? T('ui.sketch') : (s.scene === 'porch' && s.stars && s.stars.i < 5) ? T('ui.stars') : (s.beam && s.beam.ready && !s.beam.done) ? T('ui.beam') : (s.scene === 'ride' && s.ride && s.ride.s < 40) ? T('ui.ride') : '';
+  const act = s.dialog || s.choice ? '' : s.tuning ? T('ui.tune') : s.pen ? T('ui.pen') : s.sketch ? T('ui.sketch') : (s.scene === 'porch' && s.stars && s.stars.i < 5) ? T('ui.stars') : s.beam && !s.beam.done && (s.beam.ready || s.beam.target === 'june') ? beamText(s) : (s.scene === 'ride' && s.ride && s.ride.s < 40) ? T('ui.ride') : '';
   if (ui.act.textContent !== act) { ui.act.textContent = act; ui.act.classList.toggle('on', !!act); }
+  ui.act.classList.toggle('good', !!(s.beam && s.beam.onTarget)); ui.act.classList.toggle('warm', !!(s.beam && !s.beam.onTarget && s.beam.gap < 0.4));
+  // R4: the restore tool on Mom's computer, and the photo unfolded in the epilogue
+  renderCrt(s, cine);
+  ui.photo.hidden = !(s.dialog && s.dialog.id === 'p.e.photo'); if (!ui.photo.hidden && !ui.photo.dataset.drawn) { ui.photo.dataset.drawn = '1'; const c = ui.photo.getContext('2d'); if (c) { drawPhoto(c, ui.photo.width, ui.photo.height, false); } }
 }
+// ---- R4: the beam says where the light lands, which key brings it to the target, and when to hold -------------------
+const BEAM_SPOT = { june: { x: 272.6, z: 33.2, y: 0 }, cottage: { x: 300, z: 30, y: -5 }, pier: { x: 0, z: 24.4, y: 0 } };
+function beamGeom(s) {
+  if (!s.beam) { return null; }
+  const town = s.scene === 'town'; const from = town ? { x: 17.2, z: 19.6 } : LAYOUTS.coast.lamp; const tg = BEAM_SPOT[s.beam.target]; if (!tg) { return null; }
+  return { from, tg, dist: Math.hypot(tg.x - from.x, tg.z - from.z) };
+}
+function beamAim(s) {
+  const bg = beamGeom(s); if (!bg || !s.beam.ready) { return null; }
+  return { dist: bg.dist, groundY: bg.tg.y, target: bg.tg, on: !!s.beam.onTarget, arm: s.beam.arm || 0, hold: s.beam.hold || 0 };
+}
+function beamText(s) {
+  if (!s.beam.ready) { return T('r4.ui.beam.wait'); }
+  if (s.beam.onTarget) { return T('r4.ui.beam.hold'); }
+  const bg = beamGeom(s); if (!bg) { return T('ui.beam'); }
+  // the key comes from the game: the one that closes the gap (the left key raises the angle). No left/right words: as the
+  // light sweeps round the tower the on-screen direction can flip while the right key stays the same.
+  const useLeft = (s.beam.dir || 1) > 0; const key = lastDev === 'kbm' ? keyLabel(useLeft ? keys.left : keys.right) : '{k:steer}';
+  const who = T('r4.beam.' + s.beam.target);
+  if (s.beam.gap < 0.4) { return T('r4.ui.beam.near', { key }); }
+  return T('r4.ui.beam.turn', { who, key });
+}
+function crtLines(s) {
+  const c = s.crt; if (!c) { return null; }
+  if (c.stage === 'mount') { return ['LAST LIGHT ARCHIVE TOOL v0.3', 'backup disk: LAST LIGHT', ' read? (hold E)']; }
+  return ['alt.games.homebrew / Last Light', ...Gm.RECORDS.map((r, i) => (i === c.sel ? '>' : ' ') + (c.opened[r] ? '* ' : '  ') + r), c.stage === 'run' ? (c.sel === Gm.RECORDS.length ? '>' : ' ') + ' RUN summer-0.9' : ''];
+}
+const scramble = (text, k, seed) => { const ch = '#%&@$*+=?/<>'; let out = ''; for (let i = 0; i < text.length; i++) { const r = Math.abs(Math.sin((i + 1) * 12.9898 + seed) * 43758.5453) % 1; out += text[i] === ' ' || r < k ? text[i] : ch[Math.floor(r * ch.length)]; } return out; };
+function renderCrt(s, cine) {
+  const c = s.crt; const on = !!c && s.beat === 'P.restore' && mode === 'play';
+  ui.crt.hidden = !on; if (!on) { return; }
+  const rec = (r) => (r === 'b98' ? (s.flags.repaired ? 'p.r.rec.b98ok' : 'p.r.rec.b98') : 'p.r.rec.' + r);
+  const hold = c.stage === 'mount' ? (c.hold.disk || 0) : c.stage === 'repair' ? (c.hold.repair || 0) : c.stage === 'run' ? (c.hold.run || 0) : 0;
+  const sig = [c.stage, c.sel, Object.keys(c.opened).join(','), s.flags.repaired, prefs.lang, Math.round(hold * 40), !!cine, lastDev].join('|');
+  if (ui.crt.getAttribute('data-sig') === sig) { return; } ui.crt.setAttribute('data-sig', sig); ui.crt.textContent = '';
+  ui.crt.setAttribute('data-stage', c.stage); ui.crt.classList.toggle('dim', !!cine);
+  ui.crt.append(el('div', { class: 'ct', text: T('p.r.title') }));
+  if (c.stage === 'mount') {
+    ui.crt.append(el('div', { class: 'cl', text: T('p.r.mount') }), el('div', { class: 'cl', text: hold > 0 ? T('p.r.reading') : '' }), el('div', { class: 'cbar' }, [el('span', { style: `width:${Math.round(hold * 100)}%` })]));
+  } else if (c.stage === 'repair') {
+    const full = T('p.r.b98.credits'); ui.crt.append(el('div', { class: 'cl bad', text: T('p.r.rec.b98') }), el('div', { class: 'cl', text: T('p.r.damage') }), el('div', { class: 'cl code', 'data-testid': 'crt-repair', text: scramble(full, hold, 3) }), el('div', { class: 'cl', text: hold > 0 ? T('p.r.repairing') : '' }), el('div', { class: 'cbar' }, [el('span', { style: `width:${Math.round(hold * 100)}%` })]));
+  } else {
+    ui.crt.append(el('div', { class: 'cl dimt', text: T('p.r.listHead') }));
+    const list = el('ol', { class: 'crec' }); Gm.RECORDS.forEach((r, i) => list.append(el('li', { class: (i === c.sel ? 'sel ' : '') + (c.opened[r] ? 'open ' : '') + (r === 'b98' && !s.flags.repaired ? 'bad' : ''), 'data-testid': 'crt-rec-' + r, text: (i === c.sel ? '▸ ' : '  ') + (c.opened[r] ? '✓ ' : '  ') + T(rec(r)) })));
+    if (c.stage === 'run') { list.append(el('li', { class: 'run' + (c.sel === Gm.RECORDS.length ? ' sel' : ''), 'data-testid': 'crt-run', text: (c.sel === Gm.RECORDS.length ? '▸ ' : '  ') + 'RUN · ' + T('p.r.runHead') })); }
+    ui.crt.append(list); if (c.stage === 'run' && c.sel === Gm.RECORDS.length) { ui.crt.append(el('div', { class: 'cbar' }, [el('span', { style: `width:${Math.round(hold * 100)}%` })])); }
+  }
+  ui.crt.append(el('div', { class: 'cf', text: c.stage === 'list' || (c.stage === 'run' && c.sel !== Gm.RECORDS.length) ? T('p.ui.crt') : T('p.ui.crtHold') }), el('div', { class: 'cfx', text: T('p.r.fiction') }));
+}
+// the photo from the KEEP box, unfolded: Elena squinting on the left, June laughing with the camera on the right
+function drawPhoto(ctx, w, h) {
+  const g0 = ctx.createLinearGradient(0, 0, 0, h); g0.addColorStop(0, '#9fd0f0'); g0.addColorStop(0.55, '#eef6fa'); g0.addColorStop(0.56, '#5a90b8'); g0.addColorStop(1, '#3a6a90'); ctx.fillStyle = g0; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#b08458'; ctx.fillRect(0, h * 0.74, w, h * 0.26); ctx.fillStyle = '#8a6440'; for (let x = 0; x < w; x += 26) { ctx.fillRect(x, h * 0.74, 2, h * 0.26); }
+  ctx.fillStyle = '#6b4128'; ctx.fillRect(w * 0.47, h * 0.5, 14, h * 0.26);
+  const kid = (x, coat, hair, cam, smile) => { ctx.fillStyle = coat; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - 40, h * 0.42, 80, h * 0.34, 16) : ctx.rect(x - 40, h * 0.42, 80, h * 0.34); ctx.fill(); ctx.fillStyle = '#f2c8a2'; ctx.beginPath(); ctx.arc(x, h * 0.33, 32, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = hair; ctx.beginPath(); ctx.arc(x, h * 0.3, 34, Math.PI * 1.02, Math.PI * 1.98); ctx.fill(); ctx.strokeStyle = '#2b2a38'; ctx.lineWidth = 3; ctx.beginPath(); if (smile) { ctx.arc(x, h * 0.35, 12, 0.2, Math.PI - 0.2); } else { ctx.moveTo(x - 8, h * 0.37); ctx.lineTo(x + 8, h * 0.37); } ctx.stroke(); ctx.beginPath(); ctx.moveTo(x - 14, h * 0.31); ctx.lineTo(x - 6, smile ? h * 0.305 : h * 0.315); ctx.moveTo(x + 6, smile ? h * 0.305 : h * 0.315); ctx.lineTo(x + 14, h * 0.31); ctx.stroke(); if (cam) { ctx.fillStyle = '#2a2a30'; ctx.fillRect(x - 70, h * 0.4, 40, 26); ctx.fillStyle = '#6a6a74'; ctx.beginPath(); ctx.arc(x - 50, h * 0.4 + 13, 8, 0, Math.PI * 2); ctx.fill(); } };
+  kid(w * 0.3, '#f2ad3d', '#4b3568', false, false); kid(w * 0.7, '#6fb8a8', '#c0602a', true, true);
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = '#fffaf0'; ctx.lineWidth = 22; ctx.strokeRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(43,42,56,0.7)'; ctx.font = '18px "Courier New", monospace'; ctx.fillText('summer ’98', 26, h - 22);
+}
+function showPhoto() { ui.photo.dataset.drawn = ''; }
+
 // the sketchbook page in chapter 4: dots to reach, the line so far, the pen
 function drawPaper(pen) {
   const c = ui.paper.getContext('2d'); if (!c) { return; } const W = ui.paper.width, H = ui.paper.height;
@@ -661,7 +770,7 @@ function showLetter(text) {
   ui.overlay.addEventListener('click', () => { ui.overlay.hidden = true; }, { once: true });
 }
 function showCredits() {
-  if (PT.active() && !rt.rated7) { rt.rated7 = true; rateChapter(7, showCredits); return; }
+  if (PT.active() && !rt.rated7) { rt.rated7 = true; rateChapter(8, showCredits); return; }   // R4: the credits come after the epilogue
   PT.finish();
   mode = 'credits'; A.setTheme('ending'); save(true);
   ui.overlay.className = 'overlay credits'; ui.overlay.hidden = false; ui.overlay.textContent = '';
@@ -839,7 +948,7 @@ function tick(now) {
 }
 
 // Read-only view for automated browser tests. It cannot change anything.
-window.V5Debug = { text(k, v) { return T(k, v); }, objective() { return g ? objective(g) : null; }, journal() { return g ? journalCounts(g) : null; }, guide() { return { quest: !guide.el.bar.hidden && guide.el.bar.textContent, tip: guide.el.tipBox.hidden ? null : guide.el.tipBox.getAttribute('data-id'), arrow: !guide.el.arrow.hidden, toast: !guide.el.toast.hidden, device: lastDev, camYaw: cam.yaw, pointerLocked: locked }; }, snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
+window.V5Debug = { text(k, v) { return T(k, v); }, bodySpeed() { const b = g && g.rt.body; return b ? Math.hypot(b.vx || 0, b.vz || 0) : 0; }, cameraClearance() { const c = camera.position; let min = 99, who = null; Object.entries(cast).forEach(([id, p]) => { if (!p.visible || !p.parent || p === person(avatarId())) { return; } const y = Math.max(p.position.y, Math.min(p.position.y + 1.7, c.y)); const d = Math.hypot(c.x - p.position.x, c.y - y, c.z - p.position.z); if (d < min) { min = d; who = id; } }); return { min, who, shot: g ? Gm.snapshot(g).shot : null }; }, objective() { return g ? objective(g) : null; }, journal() { return g ? journalCounts(g) : null; }, guide() { return { quest: !guide.el.bar.hidden && guide.el.bar.textContent, tip: guide.el.tipBox.hidden ? null : guide.el.tipBox.getAttribute('data-id'), arrow: !guide.el.arrow.hidden, toast: !guide.el.toast.hidden, device: lastDev, camYaw: cam.yaw, pointerLocked: locked }; }, snapshot() { const s = g ? Gm.snapshot(g) : null; const shell = { mode, fps: rt.fps, frames: rt.frames, world: worldId, heard: A.heardList(), audio: A.level ? A.level() : null, log: rt.log.slice(-30), locked, lang: prefs.lang, photos: g ? g.s.photos.map((p) => ({ id: p.id, reaction: p.reaction, thumb: !!p.thumb })) : [] }; return Object.assign({}, s || {}, shell); } };
 
 // ---- RC1 review modes: preview a saved moment (?preview=<beat>) and measure frame times (?bench=...) -------------
 async function previewSaves() { const r = await fetch('/v5/data/preview-saves.json'); if (!r.ok) { throw new Error('preview-saves ' + r.status); } return JSON.parse(await r.text()).saves || {}; }

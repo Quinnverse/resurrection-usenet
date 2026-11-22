@@ -90,6 +90,8 @@ export const CAST = {
   elena23: { coat: 0x5a6a80, coatD: 0x46546a, shirt: 0xe8e4dc, pants: 0x2a3040, shoe: 0x22222a, hair: 0x4b3568, hairStyle: 'pony', scarf: 0x8a6a7a },
   june17: { coat: 0x6fb8a8, coatD: 0x4f9888, shirt: 0xfff8e8, pants: 0xd9b678, shoe: 0x6b4128, hair: 0xc0602a, hairStyle: 'short', skin: 0xf6d2aa, prop: 'camera' },
   june23: { coat: 0x2f3a5a, coatD: 0x232c46, shirt: 0xe8e0d0, pants: 0x2a2a34, shoe: 0x1a1a22, hair: 0xa8502a, hairStyle: 'bun', skin: 0xf6d2aa },
+  // R4: Elena at forty-five, February 2026: a cardigan, greying hair in a bun, reading glasses
+  elena45: { coat: 0x8a6a7a, coatD: 0x6e5262, shirt: 0xece4d8, pants: 0x3a3a48, shoe: 0x2a2228, hair: 0x6a5a70, hairStyle: 'bun', glasses: true, skin: 0xf0c8a4 },
   iris: { coat: 0xffffff, coatD: 0xe8dcc8, shirt: 0xf4a8b8, pants: 0x7a5a8a, shoe: 0x4a2c1d, hair: 0x2a1a14, hairStyle: 'long', skin: 0xd9a47a }
 };
 export const makeCast = (id) => makePerson(CAST[id]);

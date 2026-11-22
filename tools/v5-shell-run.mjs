@@ -207,9 +207,11 @@ function check() {
   // a prompt the player can act on: also under the cameras the player plays in (train seat, bike, guitar), which the
   // old condition (!dbg.shot) skipped entirely, so the bike's chain prompt was never looked at
   if (dbg.prompt && dbg.mode === 'play' && !dbg.dialog && !dbg.choice && !appEl.classList.contains('cine')) {
-    stats.promptFrames += 1; if (!pr) { stats.promptOff += 1; b.promptOff = (b.promptOff || 0) + 1; }
+    // R4: on the restore tool the instruction is on Mom's screen (the CRT view), so that must be shown instead
+    const shown = dbg.beat === 'P.restore' ? !!byTestId('crt') : !!pr;
+    stats.promptFrames += 1; if (!shown) { stats.promptOff += 1; b.promptOff = (b.promptOff || 0) + 1; }
     // pinned to the screen edge = the point it labels is off screen, so the player cannot see what it refers to
-    else {
+    else if (pr) {
       const L = parseFloat(pr.style.left), T = parseFloat(pr.style.top); if (L <= 110 || L >= innerWidth - 110 || T <= 90 || T >= innerHeight - 160) { const k = dbg.beat + ':' + dbg.prompt.id; (stats.promptPinned = stats.promptPinned || {})[k] = (stats.promptPinned[k] || 0) + 1; }
       pr.children.forEach((c) => { if (/^(name|ui|verb)\./.test(c.textContent) || c.textContent.includes('.')) { if (/^[a-z]+\.[a-zA-Z.]+$/.test(c.textContent)) { stats.missingText.add(c.textContent); } } }); }
   }
@@ -289,7 +291,7 @@ try {
     const jr = report.journal || {};
     const checks = {
       'no stuck moments': report.stuck.length === 0,
-      'all 20 beats visited': report.beatsVisited.length === 20,
+      'every beat visited': report.beatsVisited.length === Gm.BEATS.length,   // R4: 25 with the prologue and the epilogue
       'every memory found (this run also does the optional things)': jr.of > 0 && jr.found === jr.of,
       'task bar shown in play': report.questShownShare >= 0.99,
       'player never off screen': report.playerOffscreenFrames === 0,

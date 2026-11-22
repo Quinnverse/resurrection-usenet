@@ -284,7 +284,9 @@ export function buildTown(opts) {
   const lampGlowT = glowSprite(0xffd27a, 8, 0); lampGlowT.position.set(0, towerH + 0.8, 0); towerG.add(lampGlowT);
   const lampLightT = new THREE.PointLight(0xffd890, 0, 44, 1.2); lampLightT.position.set(0, towerH + 0.8, 0); towerG.add(lampLightT);
   const beamT = new THREE.Group(); beamT.position.set(0, towerH + 0.8, 0); beamT.visible = false; towerG.add(beamT);
-  [0, Math.PI].forEach((a) => { const b2 = new THREE.Mesh(new THREE.ConeGeometry(2.2, 36, 16, 1, true), glow(0xfff0b0, { additive: true, opacity: 0.16, side: THREE.DoubleSide })); b2.rotation.z = Math.PI / 2; b2.position.x = 18; const arm = new THREE.Group(); arm.rotation.y = a; arm.add(b2); beamT.add(arm); });
+  // R4: the arms tilt down to where the game counts the light (the old pier), with a pool of light where it lands
+  const beamTP = [], beamTC = []; [0, Math.PI].forEach((a) => { const b2 = new THREE.Mesh(new THREE.ConeGeometry(2.2, 36, 16, 1, true), glow(0xfff0b0, { additive: true, opacity: 0.16, side: THREE.DoubleSide })); b2.rotation.z = Math.PI / 2; b2.position.x = 18; const arm = new THREE.Group(); arm.rotation.y = a; const pg = new THREE.Group(); pg.add(b2); arm.add(pg); beamTP.push(pg); beamTC.push(b2); beamT.add(arm); });
+  const poolsT = [0, 1].map(() => { const p2 = glowSprite(0xfff0b0, 3.0, 0); p2.visible = false; scene.add(p2); return p2; }); let aimT = null;
   const scaffG = new THREE.Group(); scaffG.position.copy(LH); scene.add(scaffG); tag(scaffG, 'lighthouse_scaffold');
   const halfH = 4.6;
   scaffG.add(mesh(new THREE.CylinderGeometry(1.45, 1.75, halfH, 10), mat(PAL.white), 0, halfH / 2, 0));
@@ -423,6 +425,7 @@ export function buildTown(opts) {
     setLamp(on, color) { lampGlowT.material.opacity = on ? 0.85 : 0; lampLightT.intensity = on ? 70 : 0; beamT.visible = !!on; if (color) { lampLightT.color.set(color); } },
     // null lets the beam turn by itself; a number holds it where the player points it
     setBeamAngle(a) { beamAngle = a; },
+    setBeamAim(a) { aimT = a; },
     setRope(tied) { rope.visible = !!tied; },
     setNewPier(k) { const n = Math.round(Math.max(0, Math.min(1, k)) * newPlanks.length); newPlanks.forEach((pl, i) => { pl.visible = i < n; }); newLabel.visible = k >= 1; fenceParts.forEach((f) => { f.visible = k < 1; }); },
     get bridgePlanks() { return planks.length; },
@@ -455,6 +458,10 @@ export function buildTown(opts) {
       }
       spout.scale.y = reduce ? 1 : 1 + Math.sin(t * 6) * 0.08; fish.rotation.y = t * 0.5;
       if (beamT.visible) { beamT.rotation.y = beamAngle === null ? t * (reduce ? 0.25 : 0.6) : beamAngle; }
+      { const steer = beamT.visible && aimT && beamAngle !== null; const top = towerH + 0.8;
+        beamTP.forEach((pg) => { pg.rotation.z = steer ? -Math.atan2(top - (aimT.groundY || 0) - 0.4, aimT.dist) : 0; });
+        beamTC.forEach((c, i) => { c.material.opacity = steer ? (aimT.on ? 0.36 : 0.24) * (i === (aimT.arm || 0) ? 1 : 0.5) : 0.16; });
+        poolsT.forEach((p2, i) => { p2.visible = !!steer; if (!steer) { return; } const a = beamAngle + (i ? Math.PI : 0); p2.position.set(LH.x + Math.cos(a) * aimT.dist, (aimT.groundY || 0) + 0.5, LH.z - Math.sin(a) * aimT.dist); p2.material.opacity = (aimT.on ? 0.95 : 0.5) * (i === (aimT.arm || 0) ? 1 : 0.4); }); }
       if (snow.visible && !reduce) { const a2 = snow.geometry.attributes.position.array; for (let i = 0; i < a2.length; i += 3) { a2[i + 1] -= dt * 1.1; a2[i] += Math.sin(t + i) * dt * 0.2; if (a2[i + 1] < 0) { a2[i + 1] = 16; } } snow.geometry.attributes.position.needsUpdate = true; }
       boats.forEach((b, i) => { b.position.y = -0.55 + (reduce ? 0 : Math.sin(t * 1.2 + i) * 0.08); b.rotation.z = reduce ? 0 : Math.sin(t * 0.9 + i) * 0.04; });
       gulls.forEach((g2) => { const u = g2.userData; const a = t * u.sp + u.ph; g2.position.set(u.cx + Math.cos(a) * u.r, u.h + Math.sin(t * 0.7 + u.ph) * 0.6, u.cz + Math.sin(a) * u.r); g2.rotation.y = -a; const f = reduce ? 0.2 : Math.sin(t * 6 + u.ph) * 0.45; u.w1.rotation.z = f; u.w2.rotation.z = -f; });

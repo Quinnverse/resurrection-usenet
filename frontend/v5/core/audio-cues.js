@@ -1,7 +1,7 @@
 // Where each piece of V5 music and each sound effect plays, and what it is meant to do. Used by the listening page
 // (audio.html) and by tools/v5-audio-checklist.mjs. Keep in step with themeFor() in main.js and FX in render/audio.js.
 export const THEMES = {
-  study: { where: 'Ch1 & Ch7 · Mara\'s study (1.study, 7.study)', want: 'Quiet, low, a little lonely; plucked melody an octave down with a soft pad. Mara alone with her mother\'s things.' },
+  study: { where: 'Prologue, Ch7, epilogue · Mom\'s house after the funeral, the study, the restore tool (P.house, 1.study, P.restore, 7.study, E.study)', want: 'Quiet, low, a little lonely; plucked melody an octave down with a soft pad. Mara alone with her mother\'s things.' },
   summer: { where: 'Ch1 town in 1998, the carving (1.carve); Ch4 cottage and between the duets (4.cottage, 4.duet)', want: 'Bright and warm, bass and bells; the summer as Elena remembers it.' },
   train: { where: 'Ch1 the chase (1.chase); Ch2 the train (2.train)', want: 'Quick and bouncing, oom-pah under the tune; running, laughing, the carriage moving.' },
   coast: { where: 'Ch3 the ride, yard, beam, cliff (3.ride … 3.cliff)', want: 'Open and moving, hum underneath; wind, speed, building something together.' },
@@ -19,6 +19,7 @@ export const EFFECTS = {
   crank: 'lamp crank (Ch3)', lit: 'the lamp lights (Ch3)', door: 'doors', page: 'letter, sketch, drawing', choice: 'a choice is made', season: 'seasons created (Ch7)', credit: 'names restored (Ch7)',
   iris: 'Iris revived (Ch7)', lamp: 'study lamp switch', hint: 'a hint is given', can: 'soda can (Ch5)', chain: 'June\'s bike chain (Ch3)', rope: 'Iris\'s rope (Ch7)', touch: 'reaching for June\'s hand in the tunnel (Ch2)',
   express: 'tunnel / the express that does not stop (Ch2, Ch5)', star: 'a star joined (Ch4)', dot: 'a dot reached while drawing (Ch4)', carve: 'carving the post (Ch1)', tuned: 'string in tune (Ch4)',
+  kettle: 'the kettle screams in the middle of the argument (prologue)', machine: 'the answering machine beeps (prologue)', glitch: 'the summer memory breaks where the record does (prologue)', unfold: 'the photo unfolded for good (epilogue)',
   detuned: 'string out of tune (Ch4)', found: 'the beam finds June / the cottage / the pier', lens: 'lens fitted (Ch3)', gate: 'ribbon gate (Ch3)'
 };
 

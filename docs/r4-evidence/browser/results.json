@@ -1,0 +1,184 @@
+{
+  "when": "2026-11-22T09:15:13.189Z",
+  "chromium": "159.0.8154.6",
+  "port": 8750,
+  "passed": 8,
+  "failed": 0,
+  "results": [
+    {
+      "name": "prologue in English with real keys (kitchen → house → study → restore → 1998 → town), then Continue after a reload",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/p01-kitchen-arrive.jpg",
+        "docs/r4-evidence/browser/p02-kitchen-prompt.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_m3.jpg",
+        "docs/r4-evidence/browser/p04-choice-pk1.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_b2.jpg",
+        "docs/r4-evidence/browser/p04-choice-pk2.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_e6.jpg",
+        "docs/r4-evidence/browser/p03-argument-p_k_kettleSfx.jpg",
+        "docs/r4-evidence/browser/p05-take-care.jpg",
+        "docs/r4-evidence/browser/p06-last-time-card.jpg",
+        "docs/r4-evidence/browser/p07-house-card.jpg",
+        "docs/r4-evidence/browser/p08-house.jpg",
+        "docs/r4-evidence/browser/p09-machine-mom.jpg",
+        "docs/r4-evidence/browser/p10-study.jpg",
+        "docs/r4-evidence/browser/p11-folded-photo.jpg",
+        "docs/r4-evidence/browser/p12-restore-disk.jpg",
+        "docs/r4-evidence/browser/p13-restore-list.jpg",
+        "docs/r4-evidence/browser/p14-restore-damaged.jpg",
+        "docs/r4-evidence/browser/p15-restore-repairing.jpg",
+        "docs/r4-evidence/browser/p16-restore-compare.jpg",
+        "docs/r4-evidence/browser/p17-restore-question.jpg",
+        "docs/r4-evidence/browser/p18-restore-run.jpg",
+        "docs/r4-evidence/browser/p19-summer-card.jpg",
+        "docs/r4-evidence/browser/p20-summer.jpg",
+        "docs/r4-evidence/browser/p21-photo-c1_june_oneFace.jpg",
+        "docs/r4-evidence/browser/p21-photo-p_s_j2.jpg",
+        "docs/r4-evidence/browser/p22-record-breaks.jpg",
+        "docs/r4-evidence/browser/p23-town-2004.jpg"
+      ],
+      "notes": [
+        "after S the selection is 3",
+        "selection after the removed record: 2",
+        "choices: {\"pk1\":\"p.choice.k1b\",\"pk2\":\"p.choice.k2a\",\"pk3\":\"p.choice.k3a\",\"ps\":\"p.choice.s2\"}",
+        "journal: {\"found\":6,\"of\":28,\"byChapter\":{\"0\":{\"found\":6,\"of\":6},\"1\":{\"found\":0,\"of\":3},\"2\":{\"found\":0,\"of\":2},\"3\":{\"found\":0,\"of\":2},\"4\":{\"found\":0,\"of\":3},\"5\":{\"found\":0,\"of\":1},\"6\":{\"found\":0,\"of\":4},\"7\":{\"found\":0,\"of\":5},\"8\":{\"found\":0,\"of\":2}}}",
+        "page errors: 0"
+      ],
+      "seconds": 188
+    },
+    {
+      "name": "prologue in Chinese with real keys",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/zh-p01-kitchen-arrive.jpg",
+        "docs/r4-evidence/browser/zh-p02-kitchen-prompt.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_m3.jpg",
+        "docs/r4-evidence/browser/zh-p04-choice-pk1.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_b2.jpg",
+        "docs/r4-evidence/browser/zh-p04-choice-pk2.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_e6.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_kettleSfx.jpg",
+        "docs/r4-evidence/browser/zh-p05-take-care.jpg",
+        "docs/r4-evidence/browser/zh-p06-last-time-card.jpg",
+        "docs/r4-evidence/browser/zh-p07-house-card.jpg",
+        "docs/r4-evidence/browser/zh-p08-house.jpg",
+        "docs/r4-evidence/browser/zh-p09-machine-mom.jpg",
+        "docs/r4-evidence/browser/zh-p10-study.jpg",
+        "docs/r4-evidence/browser/zh-p11-folded-photo.jpg",
+        "docs/r4-evidence/browser/zh-p12-restore-disk.jpg",
+        "docs/r4-evidence/browser/zh-p13-restore-list.jpg",
+        "docs/r4-evidence/browser/zh-p14-restore-damaged.jpg",
+        "docs/r4-evidence/browser/zh-p15-restore-repairing.jpg",
+        "docs/r4-evidence/browser/zh-p16-restore-compare.jpg",
+        "docs/r4-evidence/browser/zh-p17-restore-question.jpg",
+        "docs/r4-evidence/browser/zh-p18-restore-run.jpg",
+        "docs/r4-evidence/browser/zh-p19-summer-card.jpg",
+        "docs/r4-evidence/browser/zh-p20-summer.jpg",
+        "docs/r4-evidence/browser/zh-p21-photo-c1_june_oneFace.jpg",
+        "docs/r4-evidence/browser/zh-p21-photo-p_s_j2.jpg",
+        "docs/r4-evidence/browser/zh-p22-record-breaks.jpg",
+        "docs/r4-evidence/browser/zh-p23-town-2004.jpg"
+      ],
+      "notes": [
+        "after S the selection is 3",
+        "selection after the removed record: 2",
+        "choices: {\"pk1\":\"p.choice.k1b\",\"pk2\":\"p.choice.k2a\",\"pk3\":\"p.choice.k3a\",\"ps\":\"p.choice.s2\"}",
+        "journal: {\"found\":6,\"of\":28,\"byChapter\":{\"0\":{\"found\":6,\"of\":6},\"1\":{\"found\":0,\"of\":3},\"2\":{\"found\":0,\"of\":2},\"3\":{\"found\":0,\"of\":2},\"4\":{\"found\":0,\"of\":3},\"5\":{\"found\":0,\"of\":1},\"6\":{\"found\":0,\"of\":4},\"7\":{\"found\":0,\"of\":5},\"8\":{\"found\":0,\"of\":2}}}",
+        "page errors: 0"
+      ],
+      "seconds": 189
+    },
+    {
+      "name": "chase: after the grab Elena stands still through the whole conversation",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c1-hand-dialogue.jpg"
+      ],
+      "notes": [
+        "during c1.hand: moved 0.000 m in 1.5 s; body speed that drives the run animation: 0.00 m/s"
+      ],
+      "seconds": 23
+    },
+    {
+      "name": "train: every dialogue close-up keeps the camera clear of June and Elena",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c2-train-shot-june.jpg"
+      ],
+      "notes": [
+        "shots seen: june; nearest body to the camera: 1.48 m"
+      ],
+      "seconds": 8
+    },
+    {
+      "name": "beam (ch. 3): following the on-screen line with A/D finds June, then the cottage",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c3-beam-0-wait.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-1.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-2.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-3.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-4.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-5.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-1.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-2.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-3.jpg"
+      ],
+      "notes": [
+        "screen says: June is running out to the rocks…",
+        "screen says: June is further right — hold A",
+        "screen says: June is further left — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "June found after 22.0 s (including her run to the rocks)",
+        "screen says: The cottage is further left — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "cottage found after 10.9 s more"
+      ],
+      "seconds": 42
+    },
+    {
+      "name": "beam (ch. 7): the last light onto the old pier with A/D",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c7-beam-1.jpg",
+        "docs/r4-evidence/browser/c7-beam-2.jpg",
+        "docs/r4-evidence/browser/c7-beam-3.jpg"
+      ],
+      "notes": [
+        "screen says: The old pier is further left — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "pier found after 15.5 s"
+      ],
+      "seconds": 18
+    },
+    {
+      "name": "ride (ch. 3): the chain prompt is on screen and holding E fixes it",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c3-chain-prompt.jpg"
+      ],
+      "notes": [
+        "chain fixed with E"
+      ],
+      "seconds": 35
+    },
+    {
+      "name": "epilogue: unfold the photo, read the letter to M., switch off the screen, credits",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/e01-study-evening.jpg",
+        "docs/r4-evidence/browser/e02-unfold-prompt.jpg",
+        "docs/r4-evidence/browser/e03-photo-unfolded.jpg",
+        "docs/r4-evidence/browser/e04-letter.jpg",
+        "docs/r4-evidence/browser/e05-final-line.jpg",
+        "docs/r4-evidence/browser/e06-credits.jpg"
+      ],
+      "notes": [],
+      "seconds": 42
+    }
+  ]
+}

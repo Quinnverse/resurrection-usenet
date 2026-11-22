@@ -1,0 +1,35 @@
+{
+  "when": "2026-11-22T09:16:18.281Z",
+  "chromium": "159.0.8154.6",
+  "port": 8561,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "name": "beam (ch. 3): following the on-screen line with A/D finds June, then the cottage",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c3-beam-0-wait.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-1.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-2.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-3.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-4.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-1.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-2.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-3.jpg"
+      ],
+      "notes": [
+        "screen says: June is running out to the rocks…",
+        "screen says: Turn the light toward June — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "June found after 20.7 s (including her run to the rocks)",
+        "screen says: Turn the light toward The cottage — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "cottage found after 10.0 s more"
+      ],
+      "seconds": 37
+    }
+  ]
+}

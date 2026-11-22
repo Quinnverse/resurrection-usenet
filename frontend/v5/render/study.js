@@ -254,6 +254,22 @@ export function buildStudy(opts) {
   const dust = new THREE.Points(dustGeo, softPoints('mote', { size: 0.035, opacity: 0.2 }));
   scene.add(dust);
 
+  // ---- R4: the design notebook, the envelope to "J.", the photo (folded, then standing unfolded by the screen) ----
+  const notebook = new THREE.Group(); notebook.position.set(2.1, 0.775, -2.5); notebook.rotation.y = 0.3; scene.add(notebook);
+  notebook.add(box(0.26, 0.02, 0.34, 0xe8dcc0, 0, 0, 0), box(0.26, 0.004, 0.34, 0xfaf4e4, 0, 0.02, 0, { cast: false }), box(0.01, 0.025, 0.34, 0x8a8a92, -0.13, 0, 0));
+  const envelope = box(0.24, 0.005, 0.16, 0xf2ead8, -3.86, 1.1, -0.15, { ry: 0.15, cast: false }); scene.add(envelope);
+  const photoFlat = box(0.12, 0.004, 0.1, 0xf6f0e0, 3.95, 0.78, -2.5, { ry: -0.4, cast: false }); photoFlat.visible = false; scene.add(photoFlat);
+  const pairTex = canvasTex(256, 192, (ctx, w, h) => {
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#9fd0f0'); g.addColorStop(0.6, '#e8f4fa'); g.addColorStop(0.61, '#5a90b8'); g.addColorStop(1, '#3a6a90'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#b08458'; ctx.fillRect(0, h * 0.78, w, h * 0.22);
+    const kid = (x, coat, hair, cam) => { ctx.fillStyle = coat; ctx.fillRect(x - 18, h * 0.42, 36, h * 0.38); ctx.fillStyle = '#f2c8a2'; ctx.beginPath(); ctx.arc(x, h * 0.34, 15, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = hair; ctx.beginPath(); ctx.arc(x, h * 0.31, 16, Math.PI, 0); ctx.fill(); if (cam) { ctx.fillStyle = '#2a2a30'; ctx.fillRect(x - 26, h * 0.4, 22, 14); } };
+    kid(w * 0.32, '#f2ad3d', '#4b3568', false); kid(w * 0.68, '#6fb8a8', '#c0602a', true);
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();   // the old fold
+    ctx.strokeStyle = '#fffaf0'; ctx.lineWidth = 10; ctx.strokeRect(0, 0, w, h);
+  });
+  const photoStand = panel(0.2, 0.15, pairTex, 0xf6f0e0, { lit: true }); photoStand.position.set(3.75, 0.88, -2.47); photoStand.rotation.set(-0.15, 0.25, 0); photoStand.visible = false; scene.add(photoStand);
+  anchors.notebook = notebook; anchors.envelope = envelope; anchors.photoStand = photoStand;
+
   // ---- behaviour --------------------------------------------------------------------------------------
   let crtOn = false, wakeT = -1;
   function setScreen(lines) { if (screenTex) { redraw(screenTex, screenDraw(true, lines)); } }
@@ -267,6 +283,9 @@ export function buildStudy(opts) {
     },
     wake(t) { wakeT = t; api.setCrt(true); },
     setScreenLines: setScreen,
+    // R4: the epilogue is late in the day, the window darker and the lamp doing the work; the photo on the desk
+    setTime(tm) { const eve = tm === 'evening'; sun.intensity = eve ? 0.7 : 3.2; sun.color.set(eve ? 0x8a7ab8 : 0xffa868); hemi.intensity = eve ? 0.45 : 0.75; fill.intensity = eve ? 0.5 : 1.2; if (outside.material && outside.material.color) { outside.material.color.set(eve ? 0x6a6a9a : 0xffffff); } },
+    setPhoto(st) { photoFlat.visible = st === 'flat'; photoStand.visible = st === 'stand'; },
     update(dt, t, reduce) {
       curtains.forEach((c) => { c.rotation.z = reduce ? 0 : Math.sin(t * 0.7 + c.userData.side * 1.3) * 0.025; });
       if (!reduce) {

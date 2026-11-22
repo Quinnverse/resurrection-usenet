@@ -155,6 +155,21 @@
     .jm .jt { font-weight:600; } .jm .jmeta { font-size:.74rem; color:var(--dim); margin-top:2px; } .jm .jd { font-size:.86rem; margin-top:4px; line-height:1.45; } .jm .jsrc { font:11px/1.4 var(--mono); color:#bfe8ff; margin-top:5px; word-break:break-all; }
     .touchui .tb-journal { position:fixed; top:max(52px, env(safe-area-inset-top)); left:max(118px, calc(env(safe-area-inset-left) + 104px)); width:44px; height:44px; font-size:1rem; }
     html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after { animation:none !important; transition-duration:.01s !important; }
+    /* R4: the restore tool on Mom's CRT (in-game fiction), the photo unfolded, the beam's feedback, a record breaking */
+    .crtview { position:absolute; z-index:5; left:50%; top:12%; transform:translateX(-50%); width:min(640px, 88vw); padding:18px 22px 14px; border-radius:18px; background:radial-gradient(ellipse at 50% 40%, #10322c 0%, #071a17 80%); color:#86ffd9; font-family:"Courier New","Noto Sans Mono CJK SC",monospace; font-size:.95rem; line-height:1.45; box-shadow:0 0 0 6px #2a2622, 0 0 0 9px #403a34, 0 0 40px rgba(80,255,200,.18), inset 0 0 60px rgba(0,0,0,.55); text-shadow:0 0 6px rgba(120,255,210,.55); overflow:hidden; }
+    .crtview::after { content:""; position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 2px, transparent 2px 4px); pointer-events:none; }
+    .crtview.dim { opacity:.55; }
+    .crtview .ct { font-weight:bold; letter-spacing:.08em; margin-bottom:6px; }
+    .crtview .cl { min-height:1.3em; } .crtview .dimt, .crtview .cfx { opacity:.6; font-size:.8rem; } .crtview .cf { margin-top:8px; color:#e8ffd0; }
+    .crtview .bad { color:#ff8a7a; text-shadow:0 0 6px rgba(255,120,100,.6); } .crtview .code { word-break:break-all; color:#d8ffe8; }
+    .crtview ol.crec { list-style:none; margin:6px 0 0; padding:0; } .crtview ol.crec li { white-space:pre-wrap; padding:2px 6px; border-radius:4px; }
+    .crtview ol.crec li.sel { background:rgba(134,255,217,.16); color:#ffffff; } .crtview ol.crec li.open { opacity:.8; } .crtview ol.crec li.run { margin-top:6px; color:#ffe9a0; }
+    .crtview .cbar { height:8px; margin-top:8px; background:rgba(134,255,217,.15); border-radius:4px; overflow:hidden; } .crtview .cbar span { display:block; height:100%; background:#86ffd9; box-shadow:0 0 10px #86ffd9; }
+    .photocard { position:absolute; z-index:6; left:50%; top:10%; transform:translateX(-50%) rotate(-1.5deg); width:min(420px, 70vw); height:auto; box-shadow:0 18px 50px rgba(0,0,0,.55); border-radius:3px; animation:unfold 1.1s ease-out; }
+    @keyframes unfold { from { transform:translateX(-50%) rotate(-1.5deg) scaleX(.5); opacity:.3; } to { transform:translateX(-50%) rotate(-1.5deg) scaleX(1); opacity:1; } }
+    .act.warm { color:#ffe2a0; opacity:1; } .act.good { color:#fff3c0; opacity:1; text-shadow:0 0 12px rgba(255,220,120,.9); font-weight:bold; }
+    #app.glitch #stage { animation:glitch .18s steps(2) 7; } @keyframes glitch { 0% { filter:hue-rotate(0) contrast(1.4); transform:translateX(-6px); } 50% { filter:hue-rotate(90deg) saturate(.2) contrast(2); transform:translateX(6px); } 100% { filter:none; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { #app.glitch #stage { animation:none; filter:grayscale(1); } .photocard { animation:none; } }
   </style>
 </head>
 <body>

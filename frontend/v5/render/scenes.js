@@ -1,7 +1,7 @@
 // V5 scenes beyond the town and the study: the station and its train, the carriage interior, the coast road with
 // the half-built lighthouse and the cliff, and the cliffside cottage. Coordinates match core/layout.js.
 // Low-poly, procedural, in the same palette and material language as the town (render/kit.js).
-import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, skyDome, softPoints } from './kit.js';
+import { THREE, PAL, mat, glow, box, cyl, cone, ball, mesh, rng, canvasTex, redraw, FONT, panel, glowSprite, targetRing, skyDome, softPoints } from './kit.js';
 import { LAYOUTS, roadInfo } from '../core/layout.js';
 import { trainTarget, STARS, dirOf } from '../core/toys.js';
 
@@ -192,7 +192,12 @@ export function buildCoast(opts) {
   const lampGlow = glowSprite(0xffd27a, 9, 0); lampGlow.position.set(0, 7.6, 0); lh.add(lampGlow);
   const lampLight = new THREE.PointLight(0xffd890, 0, 50, 1.2); lampLight.position.set(0, 7.6, 0); lh.add(lampLight);
   const beam = new THREE.Group(); beam.position.set(0, 7.6, 0); beam.visible = false; lh.add(beam);
-  const beamCones = []; [0, Math.PI].forEach((a) => { const b2 = new THREE.Mesh(new THREE.ConeGeometry(2.0, 40, 16, 1, true), glow(0xfff0b0, { additive: true, opacity: 0.2, side: THREE.DoubleSide })); b2.rotation.z = Math.PI / 2; b2.position.x = 20; beamCones.push(b2); const arm = new THREE.Group(); arm.rotation.y = a; arm.add(b2); beam.add(arm); });
+  // R4: each arm tilts down (pitch) so that the light lands at the target's distance, where the game counts it; a pool
+  // of light marks where it lands, and a ring marks where it has to land
+  const beamCones = [], beamPitch = []; [0, Math.PI].forEach((a) => { const b2 = new THREE.Mesh(new THREE.ConeGeometry(2.0, 40, 16, 1, true), glow(0xfff0b0, { additive: true, opacity: 0.2, side: THREE.DoubleSide })); b2.rotation.z = Math.PI / 2; b2.position.x = 20; beamCones.push(b2); const arm = new THREE.Group(); arm.rotation.y = a; const pg = new THREE.Group(); pg.add(b2); arm.add(pg); beamPitch.push(pg); beam.add(arm); });
+  const pools = [0, 1].map(() => { const p2 = glowSprite(0xfff0b0, 3.2, 0); scene.add(p2); return p2; });
+  const aimRing = targetRing(0xffd27a); aimRing.visible = false; scene.add(aimRing);
+  let aim = null;
   const lens = new THREE.Mesh(new THREE.OctahedronGeometry(0.45, 0), new THREE.MeshStandardMaterial({ color: 0xfff4d0, emissive: 0xffd27a, emissiveIntensity: 0.05, flatShading: true })); lens.position.set(0, 7.6, 0); lh.add(lens);
   const socket = new THREE.Group(); socket.position.set(Y.socket.x, Y.socket.y, Y.socket.z); socket.rotation.y = Math.atan2(Y.socket.x - 264, Y.socket.z - 28); scene.add(socket);
   const socketFrame = box(1.3, 1.6, 0.1, 0x6b4128, 0, -0.8, -0.02); socket.add(socketFrame);
@@ -233,6 +238,8 @@ export function buildCoast(opts) {
   const only98 = [cart, bikeE, bikeJ, gates, pulley, ropeUp, lensBox, ...ribbons];
   const api0 = {
     setBeamAngle(a) { beamAngle = a; },
+    // R4: { dist, groundY, target: {x,y,z} | null, on (on target), hold 0..1 } or null for the free-turning lamp
+    setBeamAim(a) { aim = a; },
     setLens(k, done) { lensAt(done ? 1 : Math.max(0, Math.min(1, k))); lensBox.visible = era === 1998 && !done; ropeUp.visible = era === 1998 && !done; },
     setStars(n) { if (lines) { starG.remove(lines); lines = null; } if (n > 1) { lines = new THREE.Line(new THREE.BufferGeometry().setFromPoints(starPos.slice(0, n)), lineMat); starG.add(lines); } starSprites.forEach((sp2, i) => { sp2.material.opacity = i < n ? 1 : 0.75; sp2.scale.setScalar(i < n ? 9 : (i === n ? 7.5 : 5.5)); }); },
     // noon (1998 day), night (1998, the porch) or 2004 (the same coast six years later, grey and unlit)
@@ -252,7 +259,13 @@ export function buildCoast(opts) {
     setLit(on, lamp) { const c = lamp && lamp.color ? parseInt(lamp.color, 16) : 0xffd890; lampGlow.material.opacity = on ? 0.85 : 0; lampLight.intensity = on ? 90 : 0; lampLight.color.set(c); beam.visible = !!on; lens.material.emissiveIntensity = on ? 2.2 : 0.05; this.lampSpeed = lamp ? lamp.speed : 0.6; },
     crankAngle(a) { handle.rotation.z = a; },
     setBikes(e, j) { if (e) { bikeE.position.set(e.x, 0, e.z); bikeE.rotation.set(0, e.heading, e.lean || 0); } if (j) { bikeJ.position.set(j.x, 0, j.z); bikeJ.rotation.set(0, j.heading, 0); } bikeE.visible = !!e; bikeJ.visible = !!j; },
-    update(dt, t, reduce) { ribbonT.t += dt; ribbons.forEach((r2, i) => { r2.rotation.y = reduce ? 0.2 : Math.sin(t * 6 + i) * 0.4; }); if (beam.visible) { beam.rotation.y = beamAngle === null ? t * (reduce ? 0.25 : (this.lampSpeed || 0.6)) : beamAngle; } }
+    update(dt, t, reduce) { ribbonT.t += dt; ribbons.forEach((r2, i) => { r2.rotation.y = reduce ? 0.2 : Math.sin(t * 6 + i) * 0.4; }); if (beam.visible) { beam.rotation.y = beamAngle === null ? t * (reduce ? 0.25 : (this.lampSpeed || 0.6)) : beamAngle; }
+      const steer = beam.visible && aim && beamAngle !== null; const lampY = 7.6;
+      beamPitch.forEach((pg) => { pg.rotation.z = steer ? -Math.atan2(lampY - (aim.groundY || 0) - 0.4, aim.dist) : 0; });
+      pools.forEach((p2, i) => { p2.visible = steer; if (!steer) { return; } const a = beamAngle + (i ? Math.PI : 0); p2.position.set(264 + Math.cos(a) * aim.dist, (aim.groundY || 0) + 0.5, 28 - Math.sin(a) * aim.dist); p2.material.opacity = (aim.on ? 0.95 : 0.55) * (i === (aim.arm || 0) ? 1 : 0.45); p2.scale.setScalar(aim.on ? 4.2 : 3.2); });
+      beamCones.forEach((c, i) => { if (steer) { c.material.opacity = (aim.on ? 0.42 : 0.3) * (i === (aim.arm || 0) ? 1 : 0.5); } });
+      aimRing.visible = !!(steer && aim.target); if (aimRing.visible) { aimRing.position.set(aim.target.x, (aim.target.y || 0) + 0.05, aim.target.z); aimRing.scale.setScalar(1 + (reduce ? 0 : Math.sin(t * 4) * 0.08) + (aim.hold || 0) * 0.6); }
+    }
   };
 }
 
