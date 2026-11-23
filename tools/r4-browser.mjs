@@ -15,6 +15,10 @@ const OUT = path.resolve('docs/r4-evidence/browser'); fs.mkdirSync(OUT, { recurs
 const PORT = 8000 + Math.floor(Math.random() * 900);
 const only = process.argv.slice(2);
 const want = (name) => !only.length || only.includes(name);
+// Diagnostics (off by default): R4_CPU_THROTTLE=4 slows the page's JavaScript 4x (Chrome DevTools protocol), R4_TRACE=1 records
+// every key the test sends with the game's state just before and 400 ms after it, written to docs/r4-evidence/diagnosis/.
+const THROTTLE = Number(process.env.R4_CPU_THROTTLE || 1); const TRACE = process.env.R4_TRACE === '1'; const traceLog = [];
+const lite = (page) => page.evaluate(() => { const s = window.V5Debug.snapshot(); const d = s.dialog; return { beat: s.beat, mode: s.mode, prompt: s.prompt && s.prompt.id, dialog: d && d.id, line: d && (Array.isArray(d.line) ? d.line[1] : 'CHOICE:' + d.line.choice), i: d && d.i, crt: s.crt && { stage: s.crt.stage, sel: s.crt.sel, opened: Object.keys(s.crt.opened).join(',') }, flags: ['repaired', 'rec_met', 'rec_b98', 'rec_b04', 'mounted', 'unfolded', 'letterM', 'epilogue'].filter((k) => s.flags[k]).join(','), frames: s.frames, fps: Math.round(s.fps) }; }).catch(() => null);
 const results = []; const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 const srv = spawn('node', ['tools/v5-serve.mjs', '--port', String(PORT)], { stdio: 'ignore' });
@@ -25,6 +29,8 @@ async function open(query, lang) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: lang === 'zh' ? 'zh-CN' : 'en-US' });
   const page = await ctx.newPage(); const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message))); page.on('console', (m) => { if (m.type() === 'error') { errors.push(m.text()); } });
+  if (THROTTLE > 1) { const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE }); }
+  if (TRACE) { const kb = page.keyboard; ['press', 'down', 'up'].forEach((m) => { const orig = kb[m].bind(kb); kb[m] = async (k, ...a) => { const t = Date.now(); const e = { t: new Date(t).toISOString().slice(11, 23), ev: m, key: k, before: m === 'up' ? undefined : await lite(page) }; traceLog.push(e); await orig(k, ...a); if (m !== 'up') { setTimeout(async () => { e.after400ms = await lite(page); }, 400); } }; }); }
   await page.goto(`http://127.0.0.1:${PORT}/v5/${query || ''}`);
   return { page, ctx, errors };
 }
@@ -55,15 +61,29 @@ async function talk(page, picks, onLine) {
     if (onLine) { await onLine(s); }
     if (ch) { const id = ch.id || ch.choice; const k = picks && picks[id] !== undefined ? picks[id] : 0; await page.keyboard.press('Digit' + (k + 1)); await wait(page, 350); continue; }
     if (Array.isArray(s.dialog.line) && s.dialog.line[0] === 'pause') { await wait(page, 300); continue; }
-    await page.keyboard.press('KeyE'); await wait(page, 330);
+    await page.keyboard.press('KeyE'); await wait(page, 330);   // inside a conversation E turns to the next line: the loop re-reads the state every time, so a fixed wait is safe here
   }
   throw new Error('conversation did not end');
+}
+// Press E and wait until the GAME has reacted (a dialogue opens, the beat or the restore screen changes, a flag is set), instead of
+// sleeping a fixed time: on a slow machine one frame takes 250-330 ms and a fixed 400 ms read the state before the key was handled.
+// If nothing happened after a few frames the key is sent once more (the game reads a press once per frame, so it cannot count twice:
+// as soon as the reaction is seen we stop). `react` can narrow what counts as the reaction.
+async function pressE(page, react, ms) {
+  const sig = (s) => JSON.stringify([s.beat, s.dialog && s.dialog.id, s.choice && s.choice.id, s.crt && [s.crt.stage, s.crt.sel], Object.keys(s.flags || {}).length, s.caption]);
+  const s0 = await snap(page); const base = sig(s0); const t0 = Date.now(); let presses = 0;
+  while (Date.now() - t0 < (ms || 20000)) {
+    if (presses === 0 || Date.now() - t0 > presses * 2500) { await page.keyboard.press('KeyE'); presses += 1; }
+    await wait(page, 120); const s = await snap(page);
+    if (react ? react(s) : (s.dialog || s.choice || sig(s) !== base)) { return s; }
+  }
+  throw new Error('pressing E at ' + JSON.stringify({ beat: s0.beat, prompt: s0.prompt && s0.prompt.id }) + ' did nothing for ' + Math.round((Date.now() - t0) / 1000) + ' s (sent ' + presses + ' times)');
 }
 async function holdE(page, done, ms) { await page.keyboard.down('KeyE'); try { await until(page, done, ms || 15000, 100); } finally { await page.keyboard.up('KeyE'); } }
 async function record(name, fn) {
   const t0 = Date.now(); const r = { name, ok: false, shots: [], notes: [] };
   try { await fn(r); r.ok = true; } catch (e) { r.error = String(e && e.message || e).slice(0, 600); }
-  r.seconds = Math.round((Date.now() - t0) / 1000); results.push(r); log(r.ok ? 'PASS' : 'FAIL', name, r.error || '', r.seconds + 's');
+  r.seconds = Math.round((Date.now() - t0) / 1000); if (TRACE) { await new Promise((x) => setTimeout(x, 600)); fs.mkdirSync(path.join(OUT, '..', 'diagnosis'), { recursive: true }); fs.writeFileSync(path.join(OUT, '..', 'diagnosis', `trace-${name.split(':')[0].replace(/[^a-z]+/gi, '-')}-x${THROTTLE}.json`), JSON.stringify({ name, ok: r.ok, error: r.error, throttle: THROTTLE, trace: traceLog.splice(0) }, null, 1)); } results.push(r); log(r.ok ? 'PASS' : 'FAIL', name, r.error || '', r.seconds + 's');
 }
 
 // ---- 1. the prologue from the title screen, real keys, English (and Chinese) -----------------------------------------
@@ -74,7 +94,7 @@ async function prologue(r, lang) {
   await wait(page, 3400); r.shots.push(await shot(page, P + 'p01-kitchen-arrive'));
   // she speaks first; then walk to her and talk
   await walkVia(page, [[-1.6, -1.3]], promptIs('mother')); s = await walkUntil(page, 1.5, -1.0, promptIs('mother'), 30000); r.shots.push(await shot(page, P + 'p02-kitchen-prompt'));
-  await page.keyboard.press('KeyE'); await wait(page, 400);
+  await pressE(page);
   let shotN = 0;
   await talk(page, { pk1: 1, pk2: 0 }, async (q) => {
     const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null;
@@ -84,40 +104,40 @@ async function prologue(r, lang) {
   s = await snap(page); if (!s.flags.kArgued) { throw new Error('the argument did not finish'); }
   // the front door; the last words
   await walkVia(page, [[1.2, -1.3], [-1.6, -1.3]], promptIs('frontdoor')); s = await walkUntil(page, -2.6, 1.6, promptIs('frontdoor'), 30000);
-  await page.keyboard.press('KeyE'); await wait(page, 500);
+  await pressE(page);
   await talk(page, { pk3: 0 }, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'p.k.careful') { await wait(page, 300); r.shots.push(await shot(page, P + 'p05-take-care')); } });
   await wait(page, 700); r.shots.push(await shot(page, P + 'p06-last-time-card'));
   s = await until(page, (q) => q.beat === 'P.house', 15000); await wait(page, 1200); r.shots.push(await shot(page, P + 'p07-house-card'));
   await wait(page, 3500); r.shots.push(await shot(page, P + 'p08-house'));
-  await walkVia(page, [[-1.8, 0.2]], promptIs('machine')); s = await walkUntil(page, -1.7, -1.75, promptIs('machine'), 30000); await page.keyboard.press('KeyE'); await wait(page, 400);
+  await walkVia(page, [[-1.8, 0.2]], promptIs('machine')); s = await walkUntil(page, -1.7, -1.75, promptIs('machine'), 30000); await pressE(page);
   await talk(page, {}, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'p.h.m3') { r.shots.push(await shot(page, P + 'p09-machine-mom')); } });
-  await walkVia(page, [[-1.3, 1.95], [0.9, 1.95]], promptIs('keys')); s = await walkUntil(page, 1.1, 1.3, promptIs('keys'), 30000); await page.keyboard.press('KeyE'); await wait(page, 300);
-  await walkVia(page, [[-0.6, 1.95], [1.4, 1.95]], promptIs('studydoor')); s = await walkUntil(page, 2.6, 2.1, promptIs('studydoor'), 30000); await page.keyboard.press('KeyE'); await wait(page, 300); await talk(page);
+  await walkVia(page, [[-1.3, 1.95], [0.9, 1.95]], promptIs('keys')); s = await walkUntil(page, 1.1, 1.3, promptIs('keys'), 30000); await pressE(page);
+  await walkVia(page, [[-0.6, 1.95], [1.4, 1.95]], promptIs('studydoor')); s = await walkUntil(page, 2.6, 2.1, promptIs('studydoor'), 30000); await pressE(page); await talk(page);
   s = await until(page, (q) => q.beat === '1.study', 15000); await wait(page, 1800); r.shots.push(await shot(page, P + 'p10-study'));
   // the KEEP box, the folded photo, the computer
-  s = await walkUntil(page, -1.1, 2.2, promptIs('keepbox'), 40000); await page.keyboard.press('KeyE'); await wait(page, 400);
+  s = await walkUntil(page, -1.1, 2.2, promptIs('keepbox'), 40000); await pressE(page);
   await talk(page, {}, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'c1.mara.unfold') { r.shots.push(await shot(page, P + 'p11-folded-photo')); } });
-  s = await walkUntil(page, 3.0, -1.7, promptIs('computer'), 40000); await page.keyboard.press('KeyE'); await wait(page, 400); await talk(page);
+  s = await walkUntil(page, 3.0, -1.7, promptIs('computer'), 40000); await pressE(page); await talk(page);
   s = await until(page, (q) => q.beat === 'P.restore' && q.mode === 'play' && q.prompt, 30000); await wait(page, 600); r.shots.push(await shot(page, P + 'p12-restore-disk'));
   await holdE(page, (q) => q.crt && q.crt.stage === 'list'); await wait(page, 300); r.shots.push(await shot(page, P + 'p13-restore-list'));
   // a person reads the list: E opens the first record; the selection moves to the next one by itself
-  await page.keyboard.press('KeyE'); await wait(page, 400); await talk(page);
+  await pressE(page); await talk(page);
   s = await until(page, (q) => q.prompt && q.crt.sel === 1, 6000);
-  await page.keyboard.press('KeyE'); await wait(page, 400); s = await snap(page); if (s.crt.stage !== 'repair') { throw new Error('the damaged record did not ask for repair'); }
+  s = await pressE(page, (q) => q.crt && q.crt.stage === 'repair'); if (s.crt.stage !== 'repair') { throw new Error('the damaged record did not ask for repair'); }
   r.shots.push(await shot(page, P + 'p14-restore-damaged'));
   await page.keyboard.down('KeyE'); await wait(page, 1500); r.shots.push(await shot(page, P + 'p15-restore-repairing')); await until(page, (q) => q.dialog || q.flags.repaired, 8000); await page.keyboard.up('KeyE');
   await talk(page);
   // down to the removed record (S), open it, then up (W) to the 2004 build
-  await until(page, (q) => q.prompt && !q.dialog, 5000); await page.keyboard.press('KeyS'); await wait(page, 250); s = await snap(page); r.notes.push('after S the selection is ' + s.crt.sel);
-  await page.keyboard.press('KeyE'); await wait(page, 400); await talk(page);
+  await until(page, (q) => q.prompt && !q.dialog, 5000); const sel0 = s.crt.sel; await page.keyboard.press('KeyS'); s = await until(page, (q) => q.crt && q.crt.sel !== sel0, 8000); r.notes.push('after S the selection is ' + s.crt.sel);
+  await pressE(page); await talk(page);
   s = await until(page, (q) => q.prompt && !q.dialog, 5000); r.notes.push('selection after the removed record: ' + s.crt.sel);
-  if (s.crt.sel !== 2) { await page.keyboard.press('KeyW'); await wait(page, 250); }
-  await page.keyboard.press('KeyE'); await wait(page, 400);
+  if (s.crt.sel !== 2) { await page.keyboard.press('KeyW'); await until(page, (q) => q.crt && q.crt.sel === 2, 8000); }
+  await pressE(page);
   await talk(page, {}, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'p.r.b04.mara') { r.shots.push(await shot(page, P + 'p16-restore-compare')); } if (k === 'p.r.q2') { r.shots.push(await shot(page, P + 'p17-restore-question')); } });
   s = await until(page, (q) => q.crt && q.crt.stage === 'run' && q.prompt && q.prompt.id === 'run', 8000); r.shots.push(await shot(page, P + 'p18-restore-run'));
   await holdE(page, (q) => q.beat === 'P.summer');
   await wait(page, 1500); r.shots.push(await shot(page, P + 'p19-summer-card')); await wait(page, 2500); r.shots.push(await shot(page, P + 'p20-summer'));
-  s = await walkUntil(page, 0.3, 23.8, promptIs('june'), 30000); await page.keyboard.press('KeyE'); await wait(page, 400);
+  s = await walkUntil(page, 0.3, 23.8, promptIs('june'), 30000); await pressE(page);
   await talk(page, { ps: 1 }, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'c1.june.oneFace' || k === 'p.s.j2') { await wait(page, 200); r.shots.push(await shot(page, P + 'p21-photo-' + k.replace(/\./g, '_'))); } });
   // follow her back along the pier until the record breaks
   s = await walkUntil(page, 0.1, 22.0, (q) => q.dialog && q.dialog.id === 'p.s.break', 30000); await wait(page, 500); r.shots.push(await shot(page, P + 'p22-record-breaks'));
@@ -224,9 +244,9 @@ if (want('epilogue')) {
     await walkUntil(page, 3.8, -1.5, promptIs('unfold'), 30000); r.shots.push(await shot(page, 'e02-unfold-prompt'));
     await holdE(page, (s) => !!s.flags.unfolded || !!s.dialog, 10000); await wait(page, 1300); r.shots.push(await shot(page, 'e03-photo-unfolded'));
     await talk(page);
-    await walkUntil(page, -1.1, 2.2, promptIs('keepbox'), 30000); await page.keyboard.press('KeyE'); await wait(page, 400);
+    await walkUntil(page, -1.1, 2.2, promptIs('keepbox'), 30000); await pressE(page);
     await talk(page, {}, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'p.e.l3') { r.shots.push(await shot(page, 'e04-letter')); } });
-    await walkUntil(page, 3.0, -1.7, promptIs('computer'), 30000); await page.keyboard.press('KeyE'); await wait(page, 400);
+    await walkUntil(page, 3.0, -1.7, promptIs('computer'), 30000); await pressE(page, (q) => q.dialog && q.dialog.id === 'p.e.final');
     await talk(page, {}, async (q) => { const k = q.dialog && Array.isArray(q.dialog.line) ? q.dialog.line[1] : null; if (k === 'p.e.f4') { r.shots.push(await shot(page, 'e05-final-line')); } });
     await page.getByTestId('credits').waitFor({ timeout: 15000 }); await wait(page, 800); r.shots.push(await shot(page, 'e06-credits'));
     if (errors.length) { throw new Error('page errors: ' + errors.slice(0, 3).join(' | ')); }

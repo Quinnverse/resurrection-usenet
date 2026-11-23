@@ -1,0 +1,2520 @@
+{
+ "name": "epilogue: unfold the photo, read the letter to M., switch off the screen, credits",
+ "ok": true,
+ "throttle": 4,
+ "trace": [
+  {
+   "t": "08:36:43.374",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 58,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 61,
+    "fps": 3
+   }
+  },
+  {
+   "t": "08:36:43.495",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:36:43.541",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 60,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 61,
+    "fps": 3
+   }
+  },
+  {
+   "t": "08:36:43.660",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:36:43.680",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 61,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 63,
+    "fps": 3
+   }
+  },
+  {
+   "t": "08:36:43.831",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:36:43.848",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 61,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "unfold",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 65,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:36:43.963",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:36:43.984",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 61,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "unfold",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 65,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:36:44.106",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:36:44.134",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 63,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "unfold",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 65,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:36:44.286",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:36:47.852",
+   "ev": "down",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "unfold",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 79,
+    "fps": 3
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "unfold",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted",
+    "frames": 84,
+    "fps": 3
+   }
+  },
+  {
+   "t": "08:36:50.188",
+   "ev": "up",
+   "key": "KeyE"
+  },
+  {
+   "t": "08:36:54.092",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.photo",
+    "line": "p.e.ph1",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 138,
+    "fps": 5
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.photo",
+    "line": 1,
+    "i": 1,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 144,
+    "fps": 5
+   }
+  },
+  {
+   "t": "08:36:55.389",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.photo",
+    "line": "p.e.ph2",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 153,
+    "fps": 13
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.photo",
+    "line": "p.e.ph2",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 157,
+    "fps": 13
+   }
+  },
+  {
+   "t": "08:36:55.756",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.photo",
+    "line": "p.e.ph2",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 157,
+    "fps": 13
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 161,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:36:56.123",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.photo",
+    "line": "p.e.ph3",
+    "i": 3,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 160,
+    "fps": 13
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 164,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:36:56.505",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 164,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 168,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:36:56.623",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:56.649",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 165,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 169,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:36:56.765",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:56.785",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 167,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 170,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:36:56.909",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:56.934",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 168,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 172,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.052",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:57.089",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 169,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 173,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.211",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:57.226",
+   "ev": "down",
+   "key": "KeyS",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 170,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 176,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.266",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 171,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 176,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.381",
+   "ev": "up",
+   "key": "KeyS"
+  },
+  {
+   "t": "08:36:57.383",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:57.405",
+   "ev": "down",
+   "key": "KeyS",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 172,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 177,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.416",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 172,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 177,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.535",
+   "ev": "up",
+   "key": "KeyS"
+  },
+  {
+   "t": "08:36:57.536",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:57.553",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 174,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 178,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.681",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:57.747",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 176,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 181,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:36:57.863",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:57.884",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 177,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 183,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.000",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.045",
+   "ev": "down",
+   "key": "KeyS",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 179,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 184,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.056",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 179,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 184,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.175",
+   "ev": "up",
+   "key": "KeyS"
+  },
+  {
+   "t": "08:36:58.181",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.202",
+   "ev": "down",
+   "key": "KeyS",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 181,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 186,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.210",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 181,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 186,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.330",
+   "ev": "up",
+   "key": "KeyS"
+  },
+  {
+   "t": "08:36:58.332",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.352",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 183,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 187,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.470",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.494",
+   "ev": "down",
+   "key": "KeyS",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 184,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 189,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.500",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 184,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "keepbox",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 191,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.614",
+   "ev": "up",
+   "key": "KeyS"
+  },
+  {
+   "t": "08:36:58.617",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.637",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 186,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "keepbox",
+    "dialog": "p.e.letter",
+    "line": "p.e.l0",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 192,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.751",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.774",
+   "ev": "down",
+   "key": "KeyA",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 188,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l0",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 193,
+    "fps": 12
+   }
+  },
+  {
+   "t": "08:36:58.924",
+   "ev": "up",
+   "key": "KeyA"
+  },
+  {
+   "t": "08:36:58.962",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "keepbox",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded",
+    "frames": 191,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l0",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 194,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:36:59.387",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l0",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 194,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l1",
+    "i": 1,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 197,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:36:59.730",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l1",
+    "i": 1,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 197,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l2",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 200,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:37:00.091",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l2",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 199,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l3",
+    "i": 3,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 203,
+    "fps": 7
+   }
+  },
+  {
+   "t": "08:37:00.537",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l2",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 202,
+    "fps": 7
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l3",
+    "i": 3,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 205,
+    "fps": 7
+   }
+  },
+  {
+   "t": "08:37:03.504",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l3",
+    "i": 3,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 225,
+    "fps": 6
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": 1.4,
+    "i": 4,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 229,
+    "fps": 6
+   }
+  },
+  {
+   "t": "08:37:05.440",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l4",
+    "i": 5,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 248,
+    "fps": 12
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l4",
+    "i": 5,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 251,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:37:05.790",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.letter",
+    "line": "p.e.l4",
+    "i": 5,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 251,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 253,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:37:06.162",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 253,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 257,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:37:06.278",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:06.299",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 254,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 257,
+    "fps": 11
+   }
+  },
+  {
+   "t": "08:37:06.413",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:06.437",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 255,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 258,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:06.558",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:06.596",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 257,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 259,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:06.612",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 257,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 259,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:06.748",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:06.750",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:06.767",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 257,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 260,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:06.772",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 257,
+    "fps": 11
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 260,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:06.888",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:06.892",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:06.910",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 259,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 263,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:06.957",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 259,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 263,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:07.072",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:07.074",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.092",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 259,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 264,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:07.096",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 259,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 264,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:07.211",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:07.213",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.231",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 260,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 265,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:07.234",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 260,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 265,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:07.347",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:07.357",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.414",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 263,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 267,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:07.536",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.554",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 264,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 268,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:07.670",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.686",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 266,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 270,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:07.829",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.852",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 267,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 273,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:07.858",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 267,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 273,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:07.972",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:07.976",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:07.997",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 268,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 274,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.006",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 268,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 274,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.120",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:08.122",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:08.142",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 270,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 274,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.259",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:08.333",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 273,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 276,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.340",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 273,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 276,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.457",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:08.459",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:08.480",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 274,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "computer",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 277,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.491",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 274,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "computer",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 277,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.605",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:08.606",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:08.642",
+   "ev": "down",
+   "key": "KeyW",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 275,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "computer",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 277,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.652",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 276,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "computer",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 277,
+    "fps": 9
+   }
+  },
+  {
+   "t": "08:37:08.786",
+   "ev": "up",
+   "key": "KeyW"
+  },
+  {
+   "t": "08:37:08.787",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:08.812",
+   "ev": "down",
+   "key": "KeyD",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "notebook",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 276,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f1",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 279,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:08.934",
+   "ev": "up",
+   "key": "KeyD"
+  },
+  {
+   "t": "08:37:08.971",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": "computer",
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 277,
+    "fps": 9
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f1",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 280,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:09.395",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f1",
+    "i": 0,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 280,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f2",
+    "i": 1,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 283,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:09.740",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f2",
+    "i": 1,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 282,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f3",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 285,
+    "fps": 7
+   }
+  },
+  {
+   "t": "08:37:10.094",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f2",
+    "i": 1,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 284,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": 1,
+    "i": 3,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 288,
+    "fps": 7
+   }
+  },
+  {
+   "t": "08:37:10.438",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f3",
+    "i": 2,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 287,
+    "fps": 7
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": 1,
+    "i": 3,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 290,
+    "fps": 7
+   }
+  },
+  {
+   "t": "08:37:14.666",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f4",
+    "i": 4,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 324,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f5a",
+    "i": 5,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 329,
+    "fps": 8
+   }
+  },
+  {
+   "t": "08:37:15.024",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f5a",
+    "i": 5,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 329,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f6",
+    "i": 6,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 333,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:37:15.375",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f6",
+    "i": 6,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 332,
+    "fps": 8
+   },
+   "after400ms": {
+    "beat": "end",
+    "mode": "credits",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM,epilogue",
+    "frames": 337,
+    "fps": 10
+   }
+  },
+  {
+   "t": "08:37:15.725",
+   "ev": "press",
+   "key": "KeyE",
+   "before": {
+    "beat": "E.study",
+    "mode": "play",
+    "prompt": null,
+    "dialog": "p.e.final",
+    "line": "p.e.f6",
+    "i": 6,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM",
+    "frames": 336,
+    "fps": 10
+   },
+   "after400ms": {
+    "beat": "end",
+    "mode": "credits",
+    "prompt": null,
+    "dialog": null,
+    "line": null,
+    "i": null,
+    "crt": null,
+    "flags": "repaired,rec_met,rec_b98,rec_b04,mounted,unfolded,letterM,epilogue",
+    "frames": 337,
+    "fps": 10
+   }
+  }
+ ]
+}

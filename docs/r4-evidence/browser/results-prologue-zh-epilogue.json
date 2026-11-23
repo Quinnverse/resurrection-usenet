@@ -1,0 +1,65 @@
+{
+  "when": "2026-11-23T08:57:12.321Z",
+  "chromium": "159.0.8154.6",
+  "port": 8843,
+  "passed": 2,
+  "failed": 0,
+  "results": [
+    {
+      "name": "prologue in Chinese with real keys",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/zh-p01-kitchen-arrive.jpg",
+        "docs/r4-evidence/browser/zh-p02-kitchen-prompt.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_m3.jpg",
+        "docs/r4-evidence/browser/zh-p04-choice-pk1.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_b2.jpg",
+        "docs/r4-evidence/browser/zh-p04-choice-pk2.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_e6.jpg",
+        "docs/r4-evidence/browser/zh-p03-argument-p_k_kettleSfx.jpg",
+        "docs/r4-evidence/browser/zh-p05-take-care.jpg",
+        "docs/r4-evidence/browser/zh-p06-last-time-card.jpg",
+        "docs/r4-evidence/browser/zh-p07-house-card.jpg",
+        "docs/r4-evidence/browser/zh-p08-house.jpg",
+        "docs/r4-evidence/browser/zh-p09-machine-mom.jpg",
+        "docs/r4-evidence/browser/zh-p10-study.jpg",
+        "docs/r4-evidence/browser/zh-p11-folded-photo.jpg",
+        "docs/r4-evidence/browser/zh-p12-restore-disk.jpg",
+        "docs/r4-evidence/browser/zh-p13-restore-list.jpg",
+        "docs/r4-evidence/browser/zh-p14-restore-damaged.jpg",
+        "docs/r4-evidence/browser/zh-p15-restore-repairing.jpg",
+        "docs/r4-evidence/browser/zh-p16-restore-compare.jpg",
+        "docs/r4-evidence/browser/zh-p17-restore-question.jpg",
+        "docs/r4-evidence/browser/zh-p18-restore-run.jpg",
+        "docs/r4-evidence/browser/zh-p19-summer-card.jpg",
+        "docs/r4-evidence/browser/zh-p20-summer.jpg",
+        "docs/r4-evidence/browser/zh-p21-photo-c1_june_oneFace.jpg",
+        "docs/r4-evidence/browser/zh-p21-photo-p_s_j2.jpg",
+        "docs/r4-evidence/browser/zh-p22-record-breaks.jpg",
+        "docs/r4-evidence/browser/zh-p23-town-2004.jpg"
+      ],
+      "notes": [
+        "after S the selection is 2",
+        "selection after the removed record: 2",
+        "choices: {\"pk1\":\"p.choice.k1b\",\"pk2\":\"p.choice.k2a\",\"pk3\":\"p.choice.k3a\",\"ps\":\"p.choice.s2\"}",
+        "journal: {\"found\":6,\"of\":28,\"byChapter\":{\"0\":{\"found\":6,\"of\":6},\"1\":{\"found\":0,\"of\":3},\"2\":{\"found\":0,\"of\":2},\"3\":{\"found\":0,\"of\":2},\"4\":{\"found\":0,\"of\":3},\"5\":{\"found\":0,\"of\":1},\"6\":{\"found\":0,\"of\":4},\"7\":{\"found\":0,\"of\":5},\"8\":{\"found\":0,\"of\":2}}}",
+        "page errors: 0"
+      ],
+      "seconds": 400
+    },
+    {
+      "name": "epilogue: unfold the photo, read the letter to M., switch off the screen, credits",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/e01-study-evening.jpg",
+        "docs/r4-evidence/browser/e02-unfold-prompt.jpg",
+        "docs/r4-evidence/browser/e03-photo-unfolded.jpg",
+        "docs/r4-evidence/browser/e04-letter.jpg",
+        "docs/r4-evidence/browser/e05-final-line.jpg",
+        "docs/r4-evidence/browser/e06-credits.jpg"
+      ],
+      "notes": [],
+      "seconds": 90
+    }
+  ]
+}

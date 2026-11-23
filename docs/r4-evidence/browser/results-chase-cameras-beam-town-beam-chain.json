@@ -1,0 +1,82 @@
+{
+  "when": "2026-11-23T09:15:15.091Z",
+  "chromium": "159.0.8154.6",
+  "port": 8571,
+  "passed": 5,
+  "failed": 0,
+  "results": [
+    {
+      "name": "chase: after the grab Elena stands still through the whole conversation",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c1-hand-dialogue.jpg"
+      ],
+      "notes": [
+        "during c1.hand: moved 0.000 m in 1.5 s; body speed that drives the run animation: 0.00 m/s"
+      ],
+      "seconds": 35
+    },
+    {
+      "name": "cameras: every dialogue close-up in every beat is clear of coats, hair and other bodies",
+      "ok": true,
+      "shots": [],
+      "notes": [
+        "5.depart 5 probes; 0 blocked; 0 with a body within 0.7 m | 6.cottage 4 probes; 0 blocked; 0 with a body within 0.7 m | 7.town 4 probes; 0 blocked; 0 with a body within 0.7 m | P.kitchen 4 probes; 0 blocked; 0 with a body within 0.7 m | P.summer 6 probes; 0 blocked; 0 with a body within 0.7 m | every dialogue close-up is clear"
+      ],
+      "seconds": 63
+    },
+    {
+      "name": "beam (ch. 3): following the on-screen line with A/D finds June, then the cottage",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c3-beam-0-wait.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-1.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-2.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-3.jpg",
+        "docs/r4-evidence/browser/c3-beam-june-4.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-1.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-2.jpg",
+        "docs/r4-evidence/browser/c3-beam-cottage-3.jpg"
+      ],
+      "notes": [
+        "screen says: June is running out to the rocks…",
+        "screen says: Turn the light toward June — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "June found after 19.8 s (including her run to the rocks)",
+        "screen says: Turn the light toward The cottage — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "cottage found after 9.9 s more"
+      ],
+      "seconds": 36
+    },
+    {
+      "name": "beam (ch. 7): the last light onto the old pier with A/D",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c7-beam-1.jpg",
+        "docs/r4-evidence/browser/c7-beam-2.jpg",
+        "docs/r4-evidence/browser/c7-beam-3.jpg"
+      ],
+      "notes": [
+        "screen says: Turn the light toward The old pier — hold A",
+        "screen says: Almost — tap A",
+        "screen says: That’s it — hold the light there",
+        "pier found after 14.4 s"
+      ],
+      "seconds": 17
+    },
+    {
+      "name": "ride (ch. 3): the chain prompt is on screen and holding E fixes it",
+      "ok": true,
+      "shots": [
+        "docs/r4-evidence/browser/c3-chain-prompt.jpg"
+      ],
+      "notes": [
+        "chain fixed with E"
+      ],
+      "seconds": 34
+    }
+  ]
+}
